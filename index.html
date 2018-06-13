@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Визуальные закладки</title>
-<link rel="stylesheet" href="styles.css">
-<script src="/layout/zen/vb-lib/vb-lib.chromium.ru.bundle.js" async="" crossorigin="anonymous"></script>
+    <meta charset="utf-8">
+    <title>Bomtable example</title>
+    <link rel="stylesheet" href="bomtable.css">
 </head>
-<body></body>
+<body>
+<div class="example"></div>
+</body>
+<script src="bomtable.js"></script>
+<script>
+    window.bi = new BomTable({
+        tableClass: 'ex-tbl',
+        container: '.example',
+        data: [[0, 7, 8, 9], [40, 20, 30], [465, 5]],
+        header: ['ex1', 'ex2', 'ex3']
+    });
+</script>
 </html>
