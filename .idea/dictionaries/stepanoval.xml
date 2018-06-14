@@ -1,7 +1,11 @@
 <component name="ProjectDictionaryState">
   <dictionary name="stepanoval">
     <words>
+      <w>ondblclick</w>
       <w>onmousedown</w>
+      <w>onmouseover</w>
+      <w>onmouseup</w>
+      <w>textarea</w>
     </words>
   </dictionary>
 </component>
