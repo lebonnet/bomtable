@@ -20,7 +20,7 @@ class BomTable {
 
             // context menu
             // [{"name": "Наименование", "action": "name", "class": "name"}, {"name": "H1", "action": "h1", "class": "h"}]
-            contextMain: ''
+            contextMain: '' // TODO
         }, opts);
 
         return this.ini();
@@ -38,6 +38,10 @@ class BomTable {
         return this.callListeners();
     }
 
+    /**
+     * add event listeners
+     * @return {BomTable}
+     */
     callListeners() {
 
         d.addEventListener('mousedown', this._onmousedown.bind(this));
@@ -88,7 +92,6 @@ class BomTable {
     getHeader() {
         return this.instanceHeader;
     }
-
 
     /**
      * get data from selected items
@@ -229,7 +232,7 @@ class BomTable {
     _onmousedown(e) {
         let el = e.target;
 
-        this._removeInput();
+        this._removeInput(false);
 
         if (!BomTable.parents(el).some(p => p === this.dom.table)) {
             this.clearActiveArea();
@@ -242,7 +245,7 @@ class BomTable {
             return;
         }
 
-        this.setActiveCell(el, e.type);
+        this.setActiveCell(e);
 
     }
 
@@ -268,7 +271,7 @@ class BomTable {
             return;
         }
 
-        this.setActiveCell(el, e.type);
+        this.setActiveCell(e);
 
         BomTable.clearSelected();
     }
@@ -285,7 +288,7 @@ class BomTable {
             return;
         }
 
-        this.setActiveCell(el, e.type);
+        this.setActiveCell(e);
 
         this._createInput();
     }
@@ -363,8 +366,6 @@ class BomTable {
                 this.instanceData[rowNum][colNum] = val;
             });
         });
-
-        console.log(pasteData, tableData);
     }
 
     /**
@@ -373,12 +374,11 @@ class BomTable {
      * @private
      */
     _keyUpWatcher(e) {
-        let str = [],
-            textarea;
 
         if (!this.lastSelected) {
             return;
         }
+
         this._inputKeyUp(e);
     }
 
@@ -448,7 +448,7 @@ class BomTable {
         if (moveSelect) {
             e.preventDefault();
             this._removeInput();
-            this._setActiveAria(map);
+            this._setActiveAria(map, 'none');
         }
 
     }
@@ -482,12 +482,20 @@ class BomTable {
 
     /**
      * Set active cell
-     * @param {Node} el - HTMLNode
-     * @param {string} type - event type
+     * @param {object} e - event
      * @return {{el: *, colNum: *, rowNum: *}}
      */
-    setActiveCell(el, type) {
-        let keyMap;
+    setActiveCell(e) {
+        let el = e.target,
+            type = e.type,
+            keyType = 'none',
+            keyMap;
+
+        if (e.shiftKey) {
+            keyType = 'shiftKey'
+        } else if (e.ctrlKey) {
+            keyType = 'ctrlKey'
+        }
 
         BomTable.clearSelected();
 
@@ -516,7 +524,7 @@ class BomTable {
                 colNum,
                 rowNum,
             }
-        });
+        }, keyType);
 
         return this._setLastSelected(el, colNum, rowNum);
     }
@@ -537,11 +545,12 @@ class BomTable {
 
     /**
      * Save and mark active area
-     * @param map
+     * @param {object} map
+     * @param {string} keyType - 'shiftKey' | 'ctrlKey' | 'none'
      * @return {BomTable}
      * @private
      */
-    _setActiveAria(map) {
+    _setActiveAria(map, keyType = 'none') {
         let
             startCol = map.start.colNum,
             endCol = map.end.colNum,
@@ -552,7 +561,11 @@ class BomTable {
             cols = [];
 
         // clear selected
-        this.clearActiveArea();
+        keyType === 'none' && this.clearActiveArea();
+
+        if (keyType === 'shiftKey') {
+
+        }
 
         // revert if right to left
         if (startCol > endCol) {
@@ -595,8 +608,12 @@ class BomTable {
         cols.forEach(col => {
             rows.forEach(row => {
                 let key = `${col}::${row}`;
-                this.dataMap[key].classList.add('area');
-                this.selected.push(key);
+                if (this.selected.includes(key)) {
+                    this.selected = this.selected.filter(s => s !== key);
+                } else {
+                    this.selected.push(key);
+                }
+                this.dataMap[key].classList.toggle('area');
             })
         });
 
@@ -660,17 +677,18 @@ class BomTable {
             colNum = this.input.colNum,
             rowNum = this.input.rowNum;
 
+        this.input.el.remove();
+        this.input = null;
+
         if (saveValue) {
-            val = isNaN(+val) ? val : +val; // number or string
-            if (!val) val = '';
+
+            if (val != 0) {
+                val = isNaN(+val) ? val : +val; // number or string
+            }
 
             this.dataMap[`${colNum}::${rowNum}`].innerHTML = val;
             this.instanceData[rowNum][colNum] = val;
         }
-
-        this.input.el.remove();
-
-        this.input = null;
     }
 
     /**
@@ -678,7 +696,7 @@ class BomTable {
      * @return {BomTable}
      */
     clear() {
-        this._removeInput();
+        this._removeInput(false);
 
         this.instanceData = [];
         this.instanceHeader = [];
@@ -695,7 +713,9 @@ class BomTable {
         return this;
     }
 
-
+    /**
+     * 'destroy' and clear instance
+     */
     destroy() {
 
         d.removeEventListener('mousedown', this._onmousedown.bind(this));
