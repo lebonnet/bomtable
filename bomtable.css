@@ -18,6 +18,8 @@
   outline-width: 0;
   max-width: none;
   max-height: none;
+  position: relative;
+  z-index: 5;
 }
 
 .bomtable tr {
@@ -71,4 +73,14 @@
   color: #000;
   border-radius: 0;
   background-color: #fff;
+}
+
+.bomtable-wrapper .tableBuffer {
+  width: 1px;
+  height: 1px;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  resize: none;
 }

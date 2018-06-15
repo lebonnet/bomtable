@@ -35,15 +35,20 @@ class BomTable {
 
         this.clear()._render();
 
+        return this.callListeners();
+    }
+
+    callListeners() {
+
         d.addEventListener('mousedown', this._onmousedown.bind(this));
         d.addEventListener('mouseup', this._onmouseup.bind(this));
 
         d.addEventListener('mouseover', this._onmouseover.bind(this));
-        // d.addEventListener('click', this.onclick.bind(this));
 
         d.addEventListener('dblclick', this._ondblclick.bind(this));
 
-        d.addEventListener('keyup', this._keyPressWatcher.bind(this));
+        d.addEventListener('keyup', this._keyUpWatcher.bind(this));
+        d.addEventListener('keydown', this._keyDownWatcher.bind(this));
 
         return this;
     }
@@ -60,9 +65,45 @@ class BomTable {
 
     /**
      * Get instance data
+     * @return {Array}
      */
     getData() {
         return this.instanceData;
+    }
+
+    /**
+     * Set new header
+     * @param header
+     */
+    setHeader(header) {
+        if (!Array.isArray(header)) throw new Error('Header must be array');
+        this.config.header = header;
+        this.clear()._render();
+    }
+
+    /**
+     * Get instance header
+     * @return {Array}
+     */
+    getHeader() {
+        return this.instanceHeader;
+    }
+
+
+    /**
+     * get data from selected items
+     * @return {Array}
+     */
+    getSelectedData() {
+        let data = {};
+
+        this.selected.forEach(key => {
+            let [colNum, rowNum] = key.split('::');
+            if (!data[rowNum]) data[rowNum] = [];
+            data[rowNum].push(this.instanceData[rowNum][colNum])
+        });
+
+        return Object.values(data);
     }
 
     /**
@@ -250,21 +291,91 @@ class BomTable {
     }
 
     /**
-     * click listener
-     * @param {event} e
+     * On key down listener
+     * @param e
+     * @private
      */
-    // onclick(e) {
-    //     let el = e.target,
-    //         colNum,
-    //         rowNum;
-    // }
+    _keyDownWatcher(e) {
+
+        if (e.ctrlKey) {
+            this._createBuffer();
+        }
+    }
+
+    /**
+     * On paste listener
+     * @param e
+     * @private
+     */
+    _onPaste(e) {
+
+        e.stopPropagation();
+        e.preventDefault();
+
+        let tableData = {},
+            tmp = [],
+            pasteData = (e.clipboardData || window.clipboardData).getData('Text');
+
+        pasteData = pasteData.split('\n');
+
+        pasteData.forEach(row => {
+            tmp.push(row.split('\t'));
+        });
+        pasteData = tmp;
+
+        this.selected.forEach(key => {
+            let rowNum = key.split('::')[1];
+            if (!tableData[rowNum]) tableData[rowNum] = [];
+            tableData[rowNum].push(key)
+        });
+
+        tableData = Object.values(tableData);
+
+        if (tableData.length > pasteData.length) {
+            let index = 0,
+                lengthPasteData = pasteData.length;
+            while (tableData.length > pasteData.length) {
+                pasteData.push(pasteData[index++]);
+                if (index === lengthPasteData) index = 0;
+            }
+        }
+
+        if (tableData[0].length > pasteData[0].length) {
+            pasteData.forEach(row => {
+                let index = 0,
+                    lengthPasteData = pasteData[0].length;
+                while (tableData[0].length > row.length) {
+                    row.push(row[index++]);
+                    if (index === lengthPasteData) index = 0;
+                }
+            });
+        }
+
+        tableData.forEach((row, rowIndex) => {
+            row.forEach((key, colIndex) => {
+                let val = pasteData[rowIndex][colIndex],
+                    [colNum, rowNum] = key.split('::');
+
+                val = isNaN(+val) ? val : +val;
+                if (!val) val = '';
+
+                this.dataMap[`${colNum}::${rowNum}`].innerHTML = val;
+                this.instanceData[rowNum][colNum] = val;
+            });
+        });
+
+        console.log(pasteData, tableData);
+    }
 
     /**
      * Keys press watcher
      * @param e
      * @private
      */
-    _keyPressWatcher(e) {
+    _keyUpWatcher(e) {
+        let str = [],
+            textarea;
+
         if (!this.lastSelected) {
             return;
         }
@@ -340,6 +451,33 @@ class BomTable {
             this._setActiveAria(map);
         }
 
+    }
+
+    /**
+     * Create copy/paste buffer and set focus
+     * @private
+     */
+    _createBuffer() {
+        let str = [];
+
+        if (!this.dom._buffer) {
+
+            this.dom._buffer = d.createElement('textarea');
+            this.dom.wrapper.appendChild(this.dom._buffer);
+
+            this.dom._buffer.classList.add('tableBuffer');
+
+            this.dom._buffer.addEventListener('paste', this._onPaste.bind(this));
+        }
+
+        this.getSelectedData().forEach(row => {
+            str.push(row.join('\t'));
+        });
+
+        this.dom._buffer.value = str.join('\n');
+
+        this.dom._buffer.select();
+        this.dom._buffer.focus();
     }
 
     /**
@@ -555,6 +693,27 @@ class BomTable {
         this.selected = [];
 
         return this;
+    }
+
+
+    destroy() {
+
+        d.removeEventListener('mousedown', this._onmousedown.bind(this));
+        d.removeEventListener('mouseup', this._onmouseup.bind(this));
+
+        d.removeEventListener('mouseover', this._onmouseover.bind(this));
+
+        d.removeEventListener('dblclick', this._ondblclick.bind(this));
+
+        d.removeEventListener('keyup', this._keyUpWatcher.bind(this));
+        d.removeEventListener('keydown', this._keyDownWatcher.bind(this));
+
+        this.input && this.input.el.removeEventListener('keyup', this._inputKeyUp.bind(this));
+
+        this.dom._buffer && this.dom._buffer.removeEventListener('paste', this._onPaste.bind(this));
+
+        this.destroyed = 1;
+        this.clear();
     }
 
     /**
