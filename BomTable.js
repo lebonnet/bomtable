@@ -451,10 +451,10 @@ class BomTable {
      */
     closeMenu(e) {
 
-        let el = e.target,
+        let el = e && e.target,
             action;
 
-        if (!e.button && this.dom.menu && BomTable._likeArray(this.dom.menu.children).some(li => li === el)) {
+        if (el && !e.button && this.dom.menu && BomTable._likeArray(this.dom.menu.children).some(li => li === el)) {
             action = el.dataset.action;
 
             if (this.config.contextMain.callback) {
@@ -558,7 +558,6 @@ class BomTable {
         }
 
         this.createContextMenu(e);
-
     }
 
     /**
@@ -575,8 +574,8 @@ class BomTable {
         let el = this.input && this.input.el,
             keyCode = e.keyCode,
             val = el && el.value,
-            colNum = this.lastSelected.colNum,
-            rowNum = this.lastSelected.rowNum,
+            colNum = this.lastSelected && this.lastSelected.colNum,
+            rowNum = this.lastSelected && this.lastSelected.rowNum,
             totalCols = this.instanceData[0].length - 1,
             totalRows = this.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
@@ -619,7 +618,6 @@ class BomTable {
                 break;
             case 13: // enter
                 el ? this._removeInput() : this._createInput();
-                console.trace();
                 e.preventDefault();
                 break;
             case 27: // esc
@@ -632,10 +630,11 @@ class BomTable {
             e.preventDefault();
             this._removeInput();
             this._setActiveAria(map, 'none');
-        } else if (!el && !this._keysIgnore.includes(e.keyCode)) {
+        } else if (!el && !e.ctrlKey && !e.shiftKey && !this._keysIgnore.includes(e.keyCode)) {
             this._createInput(false)
         }
 
+        this.closeMenu()
     }
 
     /**
