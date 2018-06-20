@@ -1,6 +1,7 @@
 'use strict';
 
-const d = document,
+const
+    d = document,
     w = window;
 
 class BomTable {
@@ -19,30 +20,43 @@ class BomTable {
             colsClass: '', // css class for table cols
 
             // context menu
-            // [{"name": "Наименование", "action": "name", "class": "name"}, {"name": "H1", "action": "h1", "class": "h"}]
-            contextMain: '' // TODO
+            contextMain: {
+                items: {
+                    addRow: 'add row',
+                    addCol: 'add col',
+                    hr: '',
+                    removeRows: 'remove rows',
+                    removeCols: 'remove cols'
+                },
+                callback: null // function can be call after click context menu item
+            }
         }, opts);
 
-        return this.ini();
+        this._keysIgnore = [
+            0, 9, 10, 13, 16, 17, 18, 19, 20, 33, 34, 35, 36, 37, 38, 39, 40, 45,
+            91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
+        ];
+
+        return this._ini();
     }
 
     /**
      * Initialization
      * @return {BomTable}
      */
-    ini() {
+    _ini() {
         window.BomTable = this;
 
         this.clear()._render();
 
-        return this.callListeners();
+        return this._callListeners();
     }
 
     /**
      * add event listeners
      * @return {BomTable}
      */
-    callListeners() {
+    _callListeners() {
 
         d.addEventListener('mousedown', this._onmousedown.bind(this));
         d.addEventListener('mouseup', this._onmouseup.bind(this));
@@ -50,8 +64,8 @@ class BomTable {
         d.addEventListener('mouseover', this._onmouseover.bind(this));
 
         d.addEventListener('dblclick', this._ondblclick.bind(this));
+        d.addEventListener('contextmenu', this._oncontextmenu.bind(this));
 
-        d.addEventListener('keyup', this._keyUpWatcher.bind(this));
         d.addEventListener('keydown', this._keyDownWatcher.bind(this));
 
         return this;
@@ -82,7 +96,20 @@ class BomTable {
     setHeader(header) {
         if (!Array.isArray(header)) throw new Error('Header must be array');
         this.config.header = header;
-        this.clear()._render();
+        return this.clear()._render();
+    }
+
+    /**
+     * Set new cell value
+     * @param {int} col - col number of cell
+     * @param {int} row - row number of cell
+     * @param {*} val - new value
+     * @return {BomTable}
+     */
+    setDataCell(col, row, val) {
+        this.dataMap[`${col}::${row}`].innerHTML = val;
+        this.instanceData[row][col] = val;
+        return this;
     }
 
     /**
@@ -107,6 +134,16 @@ class BomTable {
         });
 
         return Object.values(data);
+    }
+
+    /**
+     * Get cell value
+     * @param {int} col - col number of cell
+     * @param {int} row - row number of cell
+     * @return {*}
+     */
+    getDataCell(col, row) {
+        return this.instanceData[row][col];
     }
 
     /**
@@ -140,6 +177,154 @@ class BomTable {
     }
 
     /**
+     * AddNew row in table
+     * @return {BomTable}
+     */
+    addRow() {
+        let nextTr = this.lastSelected.el.parentNode.nextSibling,
+            tableBody = this.dom.body,
+            length = this.instanceData.length ? this.instanceData[0].length : this.instanceHeader.length,
+            rowsClass = this.config.rowsClass,
+            colsClass = this.config.colsClass;
+
+        let tr = d.createElement('tr');
+        colsClass && tr.classList.add(colsClass);
+
+        while (length--) {
+            let td = d.createElement('td');
+            rowsClass && td.classList.add(rowsClass);
+
+            tr.appendChild(td);
+        }
+
+        if (nextTr) {
+            tableBody.insertBefore(tr, nextTr)
+        } else {
+            this.dom.body.appendChild(tr);
+        }
+
+        return this._reindex();
+    }
+
+    /**
+     * Add new col
+     * @return {BomTable}
+     */
+    addCol() {
+        let num = this.lastSelected.colNum,
+            rowsClass = this.config.rowsClass;
+
+        Object.keys(this.dataMap).forEach(key => {
+            if (!key.indexOf(`${num}::`)) {
+                let el = this.dataMap[key],
+                    parent = el.parentElement,
+                    nodeType = key.indexOf('-1') > -1 ? 'th' : 'td',
+                    child = d.createElement(nodeType);
+
+                rowsClass && nodeType !== 'th' && child.classList.add(rowsClass);
+                parent.insertBefore(child, el.nextSibling);
+            }
+        });
+
+        return this._reindex();
+    }
+
+    /**
+     * Remove get rows or selected rows
+     * @param {Array} [nums] index removes rows, if array is empty - selected rows be removed
+     * @return {BomTable}
+     */
+    removeRows(nums = []) {
+        let rows = nums.length ? nums : this.getSelectedRows();
+
+        rows.forEach(rowNum => {
+            let firstTd = this.dataMap[`0::${rowNum}`],
+                parentTr = firstTd && firstTd.parentNode;
+            if (!parentTr) return;
+            parentTr.remove();
+        });
+
+        return this._reindex();
+    }
+
+
+    /**
+     * Remove get cols or selected cols
+     * @param {Array} [nums] index removes cols, if array is empty - selected cols be removed
+     * @return {BomTable}
+     */
+    removeCols(nums = []) {
+        let cols = nums.length ? nums : this.getSelectedCols();
+
+        cols.forEach(colNum => {
+            Object.keys(this.dataMap).forEach(key => {
+                if (!key.indexOf(`${colNum}::`)) {
+                    let el = this.dataMap[key],
+                        header = this.dataMap[`${colNum}::-1`];
+                    el && el.remove();
+                    header && header.remove();
+                }
+            });
+        });
+
+        return this._reindex();
+    }
+
+    /**
+     * Get index of selected rows
+     * @return {Array}
+     */
+    getSelectedRows() {
+        let rows = {};
+        this.selected.forEach(key => {
+            rows[key.split('::')[1]] = 1;
+        });
+        return Object.keys(rows);
+    }
+
+    getSelectedCols() {
+        let cols = {};
+        this.selected.forEach(key => {
+            cols[key.split('::')[0]] = 1;
+        });
+        return Object.keys(cols);
+    }
+
+    /**
+     * Create new index DOM
+     * @return {BomTable}
+     * @private
+     */
+    _reindex() {
+        this.dataMap = {};
+        this.instanceData = [];
+
+        this.instanceHeader = [];
+
+        if (this.dom.body && this.dom.body.children) {
+
+            BomTable._likeArray(this.dom.body.children).forEach((tr, rowNum) => {
+                this.instanceData[rowNum] = [];
+
+                BomTable._likeArray(tr.children).forEach((td, colNum) => {
+                    let val = td.innerHTML;
+                    this.dataMap[`${colNum}::${rowNum}`] = td;
+                    this.instanceData[rowNum].push(val);
+                });
+            });
+        }
+
+        if (this.dom.header && this.dom.header.firstElementChild) {
+
+            BomTable._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
+                this.instanceHeader.push(th.innerHTML);
+                this.dataMap[`${colNum}::-1`] = th;
+            });
+        }
+        return this;
+    }
+
+    /**
      * render table
      * @return {BomTable}
      * @private
@@ -158,12 +343,13 @@ class BomTable {
 
         if (!this.dom.header && this.instanceHeader.length) {
             this.dom.header = d.createElement('thead');
+            this.dom.header.appendChild(d.createElement('tr'));
         }
 
         this.instanceHeader.forEach((cell, colNum) => {
             let th = d.createElement('th');
             th.innerHTML = cell;
-            this.dom.header.appendChild(th);
+            this.dom.header.firstElementChild.appendChild(th);
             this.dataMap[`${colNum}::-1`] = th;
         });
 
@@ -182,7 +368,7 @@ class BomTable {
 
             col.forEach((cell, colNum) => {
                 let td = d.createElement('td');
-                rowsClass && tr.classList.add(rowsClass);
+                rowsClass && td.classList.add(rowsClass);
                 td.innerHTML = cell;
 
                 tr.appendChild(td);
@@ -221,6 +407,72 @@ class BomTable {
     }
 
     /**
+     * create context menu
+     * @param e
+     * @return {BomTable}
+     */
+    createContextMenu(e) {
+        let html = '',
+            className;
+
+        if (this.config.contextMain) {
+            e.preventDefault();
+
+            Object.keys(this.config.contextMain.items).forEach(key => {
+
+                if (key === 'hr') {
+                    html += `<li class="${key}"></li>`;
+                } else {
+                    className = key.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
+                    html += `<li data-action="${key}" class="${className}">${this.config.contextMain.items[key]}</li>`;
+                }
+
+            });
+
+            if (!this.dom.menu) {
+                this.dom.menu = d.createElement('ul');
+                this.dom.wrapper.appendChild(this.dom.menu);
+                this.dom.menu.classList.add('bomtable-context-menu');
+            }
+
+            this.dom.menu.innerHTML = html;
+            this.dom.menu.style.display = 'block';
+            this.dom.menu.style.left = e.pageX + 'px';
+            this.dom.menu.style.top = e.pageY + 'px';
+        }
+
+        return this;
+    }
+
+    /**
+     * close menu
+     * @param e
+     * @return {BomTable}
+     */
+    closeMenu(e) {
+
+        let el = e.target,
+            action;
+
+        if (!e.button && this.dom.menu && BomTable._likeArray(this.dom.menu.children).some(li => li === el)) {
+            action = el.dataset.action;
+
+            if (this.config.contextMain.callback) {
+                this.config.contextMain.callback(action, this, e);
+            } else if (this[action]) {
+                this[action]();
+            } else {
+                throw new Error('Undefined action ' + action);
+            }
+        }
+
+        this.dom.menu && this.dom.menu.remove();
+        this.dom.menu = null;
+
+        return this;
+    }
+
+    /**
      * **** events ****
      */
 
@@ -234,6 +486,8 @@ class BomTable {
 
         this._removeInput(false);
 
+        this.closeMenu(e);
+
         if (!BomTable.parents(el).some(p => p === this.dom.table)) {
             this.clearActiveArea();
             return;
@@ -245,7 +499,10 @@ class BomTable {
             return;
         }
 
-        this.setActiveCell(e);
+        // left click on select area
+        if (e.button && this.selected.some(key => this.dataMap[key] === el)) return;
+
+        this._setActiveCell(e);
 
     }
 
@@ -271,7 +528,7 @@ class BomTable {
             return;
         }
 
-        this.setActiveCell(e);
+        this._setActiveCell(e);
 
         BomTable.clearSelected();
     }
@@ -288,9 +545,20 @@ class BomTable {
             return;
         }
 
-        this.setActiveCell(e);
+        this._setActiveCell(e);
 
         this._createInput();
+    }
+
+    _oncontextmenu(e) {
+        let el = e.target;
+
+        if (!BomTable.parents(el).some(p => p === this.dom.table)) {
+            return;
+        }
+
+        this.createContextMenu(e);
+
     }
 
     /**
@@ -303,6 +571,71 @@ class BomTable {
         if (e.ctrlKey) {
             this._createBuffer();
         }
+
+        let el = this.input && this.input.el,
+            keyCode = e.keyCode,
+            val = el && el.value,
+            colNum = this.lastSelected.colNum,
+            rowNum = this.lastSelected.rowNum,
+            totalCols = this.instanceData[0].length - 1,
+            totalRows = this.instanceData.length - 1,
+            moveSelect = false, // признак движения выделения клавишами
+            map = {start: {colNum, rowNum}, end: {colNum, rowNum}};
+
+        el && e.stopPropagation();
+
+        switch (keyCode) {
+            case 37: // left
+                // cursor move inside input
+                if (el && el.selectionStart !== 0) {
+                    return;
+                }
+                if (colNum > 0) {
+                    moveSelect = true;
+                    map.start.colNum = map.end.colNum = colNum - 1;
+                }
+                break;
+            case 39: // right
+                // cursor move inside input
+                if (el && el.selectionEnd < val.length) {
+                    return;
+                }
+                if (totalCols > colNum) {
+                    moveSelect = true;
+                    map.start.colNum = map.end.colNum = colNum + 1;
+                }
+                break;
+            case 38: // up
+                if (rowNum > 0) {
+                    moveSelect = true;
+                    map.start.rowNum = map.end.rowNum = rowNum - 1;
+                }
+                break;
+            case 40: // down
+                if (totalRows > rowNum) {
+                    moveSelect = true;
+                    map.start.rowNum = map.end.rowNum = rowNum + 1;
+                }
+                break;
+            case 13: // enter
+                el ? this._removeInput() : this._createInput();
+                console.trace();
+                e.preventDefault();
+                break;
+            case 27: // esc
+                this._removeInput(false);
+                break;
+        }
+
+        // need move active area
+        if (moveSelect) {
+            e.preventDefault();
+            this._removeInput();
+            this._setActiveAria(map, 'none');
+        } else if (!el && !this._keysIgnore.includes(e.keyCode)) {
+            this._createInput(false)
+        }
+
     }
 
     /**
@@ -359,27 +692,13 @@ class BomTable {
                 let val = pasteData[rowIndex][colIndex],
                     [colNum, rowNum] = key.split('::');
 
-                val = isNaN(+val) ? val : +val;
-                if (!val) val = '';
+                if (val != 0) {
+                    val = isNaN(+val) ? val : +val;
+                }
 
-                this.dataMap[`${colNum}::${rowNum}`].innerHTML = val;
-                this.instanceData[rowNum][colNum] = val;
+                this.setDataCell(colNum, rowNum, val);
             });
         });
-    }
-
-    /**
-     * Keys press watcher
-     * @param e
-     * @private
-     */
-    _keyUpWatcher(e) {
-
-        if (!this.lastSelected) {
-            return;
-        }
-
-        this._inputKeyUp(e);
     }
 
     /**
@@ -389,67 +708,6 @@ class BomTable {
      */
     _inputKeyUp(e) {
 
-        let el = this.input && this.input.el,
-            keyCode = e.keyCode,
-            val = el && el.value,
-            colNum = this.lastSelected.colNum,
-            rowNum = this.lastSelected.rowNum,
-            totalCols = this.instanceData[0].length - 1,
-            totalRows = this.instanceData.length - 1,
-            moveSelect = false, // признак движения выделения клавишами
-            map = {start: {colNum, rowNum}, end: {colNum, rowNum}};
-
-        el && e.stopPropagation();
-
-        switch (keyCode) {
-            case 37: // left
-                // cursor move inside input
-                if (el && el.selectionStart !== 0) {
-                    return;
-                }
-                if (colNum > 0) {
-                    moveSelect = true;
-                    map.start.colNum = map.end.colNum = colNum - 1;
-                }
-                break;
-            case 39: // right
-                // cursor move inside input
-                if (el && el.selectionEnd < val.length) {
-                    return;
-                }
-                if (totalCols > colNum) {
-                    moveSelect = true;
-                    map.start.colNum = map.end.colNum = colNum + 1;
-                }
-                break;
-            case 38: // up
-                if (rowNum > 0) {
-                    moveSelect = true;
-                    map.start.rowNum = map.end.rowNum = rowNum - 1;
-                }
-                break;
-            case 40: // down
-                if (totalRows > rowNum) {
-                    moveSelect = true;
-                    map.start.rowNum = map.end.rowNum = rowNum + 1;
-                }
-                break;
-            case 13: // enter
-                this._removeInput();
-                !el && this._createInput();
-                e.preventDefault();
-                break;
-            case 27: // esc
-                this._removeInput(false);
-                break;
-        }
-
-        // need move active area
-        if (moveSelect) {
-            e.preventDefault();
-            this._removeInput();
-            this._setActiveAria(map, 'none');
-        }
 
     }
 
@@ -485,7 +743,7 @@ class BomTable {
      * @param {object} e - event
      * @return {{el: *, colNum: *, rowNum: *}}
      */
-    setActiveCell(e) {
+    _setActiveCell(e) {
         let el = e.target,
             type = e.type,
             keyType = 'none',
@@ -560,12 +818,22 @@ class BomTable {
             rows = [],
             cols = [];
 
-        // clear selected
-        keyType === 'none' && this.clearActiveArea();
-
-        if (keyType === 'shiftKey') {
-
+        // if press shift key
+        if (keyType === 'shiftKey' && this.lastSelected) {
+            if (this.lastSelected.rowNum > startRow) {
+                endRow = this.lastSelected.rowNum;
+            } else {
+                startRow = this.lastSelected.rowNum;
+            }
+            if (this.lastSelected.colNum > startCol) {
+                endCol = this.lastSelected.colNum;
+            } else {
+                startCol = this.lastSelected.colNum;
+            }
         }
+
+        // clear selected
+        ['shiftKey', 'none'].includes(keyType) && this.clearActiveArea();
 
         // revert if right to left
         if (startCol > endCol) {
@@ -587,7 +855,7 @@ class BomTable {
         // select only headers
         if (rows.length === 1 && rows[0] === -1) {
             // total rows length
-            endRow = this.instanceData[0].length - 1;
+            endRow = this.instanceData.length;
             // select all rows
             for (let i = startRow; endRow > i; i++) {
                 rows.push(i);
@@ -630,20 +898,22 @@ class BomTable {
      * @return {BomTable}
      */
     clearActiveArea() {
-        this.selected.forEach(key => {
-            this.dataMap[key].classList.remove('area');
+        this.instanceData.length && this.selected.forEach(key => {
+            let el = this.dataMap[key];
+            el && el.classList.remove('area');
         });
 
         this.selected = [];
-
+        this.lastSelected = null;
         return this;
     }
 
     /**
      * Create table textarea
+     * @param {boolean} setCellValue - set in input cell value (default - set)
      * @private
      */
-    _createInput() {
+    _createInput(setCellValue = true) {
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
             textarea = d.createElement('textarea');
@@ -654,11 +924,12 @@ class BomTable {
         textarea.style.width = tdRect.width - 1 + 'px';
         textarea.style.height = tdRect.height - 1 + 'px';
 
-        textarea.value = td.innerText;
+        if (setCellValue) {
+            textarea.value = td.innerText;
+        }
 
         this.dom.wrapper.appendChild(textarea);
 
-        textarea.addEventListener('keyup', this._inputKeyUp.bind(this));
         textarea.focus();
 
         this.input = {el: textarea, colNum: this.lastSelected.colNum, rowNum: this.lastSelected.rowNum};
@@ -686,8 +957,7 @@ class BomTable {
                 val = isNaN(+val) ? val : +val; // number or string
             }
 
-            this.dataMap[`${colNum}::${rowNum}`].innerHTML = val;
-            this.instanceData[rowNum][colNum] = val;
+            this.setDataCell(colNum, rowNum, val);
         }
     }
 
@@ -709,6 +979,7 @@ class BomTable {
 
         this.dom = {};
         this.selected = [];
+        this.lastSelected = null;
 
         return this;
     }
@@ -725,10 +996,7 @@ class BomTable {
 
         d.removeEventListener('dblclick', this._ondblclick.bind(this));
 
-        d.removeEventListener('keyup', this._keyUpWatcher.bind(this));
         d.removeEventListener('keydown', this._keyDownWatcher.bind(this));
-
-        this.input && this.input.el.removeEventListener('keyup', this._inputKeyUp.bind(this));
 
         this.dom._buffer && this.dom._buffer.removeEventListener('paste', this._onPaste.bind(this));
 
@@ -740,6 +1008,21 @@ class BomTable {
      * **** static methods ****
      */
 
+    /**
+     * Return array from HTML collection
+     * @param {HTMLCollection} HTMLCollection
+     * @return {[]}
+     * @private
+     */
+    static _likeArray(HTMLCollection) {
+        return Array.prototype.slice.call(HTMLCollection)
+    }
+
+    /**
+     * Get node element parents
+     * @param {Node} el
+     * @return {Array}closeMenu
+     */
     static parents(el) {
         const els = [];
         while (el && el.tagName !== 'BODY') {
@@ -749,6 +1032,9 @@ class BomTable {
         return els;
     };
 
+    /**
+     * Clear selected area
+     */
     static clearSelected() {
         if (w.getSelection) {
             if (w.getSelection().empty) {
