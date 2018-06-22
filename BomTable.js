@@ -61,6 +61,7 @@ class BomTable {
         d.addEventListener('mousedown', this._onmousedown.bind(this));
         d.addEventListener('mouseup', this._onmouseup.bind(this));
 
+        d.addEventListener('mousemove', this._onmousemove.bind(this));
         d.addEventListener('mouseover', this._onmouseover.bind(this));
 
         d.addEventListener('dblclick', this._ondblclick.bind(this));
@@ -489,11 +490,19 @@ class BomTable {
         this.closeMenu(e);
 
         if (!BomTable.parents(el).some(p => p === this.dom.table)) {
-            this.clearActiveArea();
+            if (this.dom.square && this.dom.square === el) {
+                this.squarePressed = 1;
+                this.mouseBtnPressed = 1;
+            } else {
+                this.clearActiveArea();
+                this._removeSquare();
+            }
             return;
         }
 
         this.mouseBtnPressed = 1;
+
+        this._removeSquare();
 
         if (!['TD', 'TH'].includes(el.tagName)) {
             return;
@@ -512,6 +521,7 @@ class BomTable {
      */
     _onmouseup() {
         this.mouseBtnPressed = 0;
+        this.squarePressed = 0;
     }
 
     /**
@@ -528,9 +538,58 @@ class BomTable {
             return;
         }
 
-        this._setActiveCell(e);
+        !this.squarePressed && this._setActiveCell(e);
+    }
 
-        BomTable.clearSelected();
+    _onmousemove(e) {
+
+        let el = e.target;
+        if (!this.mouseBtnPressed || this.lastHover === el) return;
+
+        this.lastHover = el;
+
+        if (this.squarePressed && el.tagName === 'TD') {
+
+            let startTd = this.dataMap[`${this.lastSelectArea.start.col}::${this.lastSelectArea.start.row}`],
+                endTr = this.dataMap[`${this.lastSelectArea.end.col}::${this.lastSelectArea.end.row}`],
+                endRect = endTr.getBoundingClientRect(),
+                start = endRect.right > e.pageX + w.pageXOffset && e.pageY + w.pageYOffset < endRect.bottom ? endTr : startTd,
+                startCol, endCol, startRow, endRow,
+                map = {start: {colNum: 0, rowNum: 0}, end: {colNum: 0, rowNum: 0}};
+
+            Object.keys(this.dataMap).some(key => {
+                let td = this.dataMap[key],
+                    splitKey;
+
+                if (td === start) {
+                    splitKey = key.split('::');
+                    startCol = splitKey[0];
+                    startRow = splitKey[1];
+                }
+
+                if (td === el) {
+                    splitKey = key.split('::');
+                    endCol = splitKey[0];
+                    endRow = splitKey[1];
+                }
+
+                return startCol !== undefined && endCol !== undefined;
+            });
+
+            map.end.colNum = startCol > endCol ? +startCol : +endCol;
+            map.start.colNum = startCol > endCol ? +endCol : +startCol;
+
+            map.end.rowNum = startRow > endRow ? +startRow : +endCol;
+            map.start.rowNum = startRow > endRow ? +endRow : +startRow;
+
+            this.squareDragArea = [];
+
+            this.createCopyAria(map);
+            console.log(map);
+
+            BomTable.clearSelected()
+
+        }
     }
 
     /**
@@ -701,16 +760,6 @@ class BomTable {
     }
 
     /**
-     * watcher keys when cursor set in a textarea
-     * @param e
-     * @private
-     */
-    _inputKeyUp(e) {
-
-
-    }
-
-    /**
      * Create copy/paste buffer and set focus
      * @private
      */
@@ -854,17 +903,12 @@ class BomTable {
         // select only headers
         if (rows.length === 1 && rows[0] === -1) {
             // total rows length
-            endRow = this.instanceData.length;
+            endRow = this.instanceData.length - 1;
             // select all rows
-            for (let i = startRow; endRow > i; i++) {
+            rows = [];
+            for (let i = 0; endRow >= i; i++) {
                 rows.push(i);
             }
-        }
-
-        // if headers selected
-        if (startRow < 0) {
-            // remove headers
-            rows = rows.filter(r => r > -1);
         }
 
         // array cols
@@ -889,6 +933,8 @@ class BomTable {
             this._setLastSelected(this.dataMap[this.selected[0]], +chunks[0], +chunks[1]);
         }
 
+        this.lastSelectArea = {start: {col: startCol, row: startRow}, end: {col: endCol, row: endRow}};
+        this._createSquare(endCol, endRow);
         return this;
     }
 
@@ -902,9 +948,54 @@ class BomTable {
             el && el.classList.remove('area');
         });
 
+        this.lastSelectArea = {};
         this.selected = [];
         this.lastSelected = null;
+
         return this;
+    }
+
+    _createSquare(endCol, endRow) {
+        let downRightTd = this.dataMap[`${endCol}::${endRow}`],
+            rect = downRightTd.getBoundingClientRect();
+
+        if (!this.dom.square) {
+            this.dom.square = d.createElement('div');
+            this.dom.square.classList.add('bomtable-square');
+            this.dom.wrapper.appendChild(this.dom.square);
+        }
+
+        this.dom.square.style.top = rect.bottom + w.pageYOffset + 'px';
+        this.dom.square.style.left = rect.right + w.pageXOffset + 'px';
+
+        return this;
+    }
+
+    _removeSquare() {
+        this.dom.square && this.dom.square.remove();
+        this.dom.square = null;
+        return this;
+    }
+
+    createCopyAria(map) {
+
+        let firstTd = this.dataMap[`${map.start.colNum}::${map.start.rowNum}`],
+            firstRect = firstTd.getBoundingClientRect(),
+            lastTd = this.dataMap[`${map.end.colNum}::${map.end.rowNum}`],
+            lastRect = lastTd.getBoundingClientRect();
+
+        if (!this.dom.copyAria) {
+            this.dom.copyAria = d.createElement('div');
+            this.dom.copyAria.classList.add('bomtable-copy-aria');
+            this.dom.wrapper.appendChild(this.dom.copyAria);
+        }
+
+        this.dom.copyAria.style.top = firstRect.top + w.pageYOffset + 'px';
+        this.dom.copyAria.style.left = firstRect.left + w.pageXOffset + 'px';
+        this.dom.copyAria.style.width = lastRect.right + w.pageXOffset + 'px';
+        this.dom.copyAria.style.height = lastRect.bottom + w.pageXOffset + 'px';
+
+        console.log(firstTd, lastTd);
     }
 
     /**
@@ -913,6 +1004,9 @@ class BomTable {
      * @private
      */
     _createInput(setCellValue = true) {
+
+        if (!this.lastSelected || this.lastSelected.el.tagName !== 'TD') return;
+
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
             textarea = d.createElement('textarea');
@@ -932,6 +1026,8 @@ class BomTable {
         textarea.focus();
 
         this.input = {el: textarea, colNum: this.lastSelected.colNum, rowNum: this.lastSelected.rowNum};
+
+        return this._removeSquare();
     }
 
     /**
@@ -971,6 +1067,7 @@ class BomTable {
         this.instanceHeader = [];
         this.dataMap = {};
 
+        this.lastSelectArea = {};
         this.dom && Object.keys(this.dom).forEach(nodeName => {
             this.dom[nodeName].remove();
             delete this.dom[nodeName];
@@ -980,6 +1077,7 @@ class BomTable {
         this.selected = [];
         this.lastSelected = null;
 
+        this.lastHover = null;
         return this;
     }
 
@@ -991,6 +1089,7 @@ class BomTable {
         d.removeEventListener('mousedown', this._onmousedown.bind(this));
         d.removeEventListener('mouseup', this._onmouseup.bind(this));
 
+        d.removeEventListener('mouseenter', this._onmousemove.bind(this));
         d.removeEventListener('mouseover', this._onmouseover.bind(this));
 
         d.removeEventListener('dblclick', this._ondblclick.bind(this));
