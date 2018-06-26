@@ -7,6 +7,7 @@
   font-family: 'Roboto', Verdana, sans-serif;
   font-size: 13px;
   position: relative;
+  display: inline-block;
 }
 
 .bomtable {
@@ -70,10 +71,15 @@
   cursor: crosshair;
 }
 
-.bomtable-copy-aria {
+.bomtable-copy-area-left,
+.bomtable-copy-area-right,
+.bomtable-copy-area-top,
+.bomtable-copy-area-bottom {
   position: absolute;
   z-index: 8;
-  background-color: rgba(251, 93, 241, 0.3);
+  background-color: rgb(0, 119, 158);
+  width: 1px;
+  height: 1px;
 }
 
 .bomtable td::selection {
@@ -81,7 +87,7 @@
   color: inherit;
 }
 
-.bomtableInput {
+.bomtable-input {
   position: absolute;
   z-index: 10;
   overflow-y: hidden;
@@ -104,7 +110,7 @@
   background-color: #fff;
 }
 
-.bomtable-wrapper .tableBuffer {
+.bomtable-wrapper .bomtable-buffer {
   width: 1px;
   height: 1px;
   position: absolute;

@@ -102,8 +102,8 @@ class BomTable {
 
     /**
      * Set new cell value
-     * @param {int} col - col number of cell
-     * @param {int} row - row number of cell
+     * @param {number} col - col number of cell
+     * @param {number} row - row number of cell
      * @param {*} val - new value
      * @return {BomTable}
      */
@@ -139,8 +139,8 @@ class BomTable {
 
     /**
      * Get cell value
-     * @param {int} col - col number of cell
-     * @param {int} row - row number of cell
+     * @param {number} col - col number of cell
+     * @param {number} row - row number of cell
      * @return {*}
      */
     getDataCell(col, row) {
@@ -164,7 +164,7 @@ class BomTable {
 
     /**
      * Prepare header table
-     * @param header
+     * @param {Array} header
      * @private
      */
     _prepareHeader(header) {
@@ -232,7 +232,7 @@ class BomTable {
 
     /**
      * Remove get rows or selected rows
-     * @param {Array} [nums] index removes rows, if array is empty - selected rows be removed
+     * @param {Array} [nums] - index removes rows, if array is empty - selected rows be removed
      * @return {BomTable}
      */
     removeRows(nums = []) {
@@ -251,7 +251,7 @@ class BomTable {
 
     /**
      * Remove get cols or selected cols
-     * @param {Array} [nums] index removes cols, if array is empty - selected cols be removed
+     * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
      * @return {BomTable}
      */
     removeCols(nums = []) {
@@ -283,6 +283,10 @@ class BomTable {
         return Object.keys(rows);
     }
 
+    /**
+     * Get index of selected cols
+     * @return {string[]}
+     */
     getSelectedCols() {
         let cols = {};
         this.selected.forEach(key => {
@@ -335,8 +339,7 @@ class BomTable {
             colsClass = this.config.colsClass;
 
         // create table
-        this.dom.table = d.createElement('table');
-        this.dom.table.classList.add('bomtable');
+        this.dom.table = BomTable.createElement('table', 'bomtable');
         this.config.tableClass && this.dom.table.classList.add(this.config.tableClass);
 
         this._prepareData(this.config.data);
@@ -360,8 +363,7 @@ class BomTable {
 
         this.dom.header && this.dom.table.appendChild(this.dom.header);
 
-        this.dom.body = d.createElement('tbody');
-        this.dom.table.appendChild(this.dom.body);
+        this.dom.body = BomTable.createElement('tbody', '', this.dom.table);
 
         this.instanceData.forEach((col, rowNum) => {
             let tr = d.createElement('tr');
@@ -385,12 +387,10 @@ class BomTable {
                     ? d.querySelector(this.config.container)
                     : this.config.container;
 
-            this.dom.wrapper = d.createElement('div');
-            this.dom.wrapper.classList.add('bomtable-wrapper');
+            this.dom.wrapper = BomTable.createElement('div', 'bomtable-wrapper', this.container);
 
             this.dom.wrapper.appendChild(this.dom.table);
 
-            this.container.appendChild(this.dom.wrapper);
             this.container.style.position = 'relative';
         }
 
@@ -398,7 +398,7 @@ class BomTable {
     }
 
     /**
-     * Remove
+     * Remove table header
      * @return {BomTable}
      */
     removeHeader() {
@@ -431,9 +431,7 @@ class BomTable {
             });
 
             if (!this.dom.menu) {
-                this.dom.menu = d.createElement('ul');
-                this.dom.wrapper.appendChild(this.dom.menu);
-                this.dom.menu.classList.add('bomtable-context-menu');
+                this.dom.menu = BomTable.createElement('ul', 'bomtable-context-menu', this.dom.wrapper);
             }
 
             this.dom.menu.innerHTML = html;
@@ -485,6 +483,8 @@ class BomTable {
     _onmousedown(e) {
         let el = e.target;
 
+        if (this.input && el === this.input.el) return;
+
         this._removeInput(false);
 
         this.closeMenu(e);
@@ -522,10 +522,11 @@ class BomTable {
     _onmouseup() {
         this.mouseBtnPressed = 0;
         this.squarePressed = 0;
+        this._removeCopyArea();
     }
 
     /**
-     * mouse over listener
+     * Mouse over listener
      * @param {event} e
      * @private
      */
@@ -541,8 +542,12 @@ class BomTable {
         !this.squarePressed && this._setActiveCell(e);
     }
 
+    /**
+     * Mouse move listener
+     * @param {event} e
+     * @private
+     */
     _onmousemove(e) {
-
         let el = e.target;
         if (!this.mouseBtnPressed || this.lastHover === el) return;
 
@@ -550,45 +555,7 @@ class BomTable {
 
         if (this.squarePressed && el.tagName === 'TD') {
 
-            let startTd = this.dataMap[`${this.lastSelectArea.start.col}::${this.lastSelectArea.start.row}`],
-                endTr = this.dataMap[`${this.lastSelectArea.end.col}::${this.lastSelectArea.end.row}`],
-                endRect = endTr.getBoundingClientRect(),
-                start = endRect.right > e.pageX + w.pageXOffset && e.pageY + w.pageYOffset < endRect.bottom ? endTr : startTd,
-                startCol, endCol, startRow, endRow,
-                map = {start: {colNum: 0, rowNum: 0}, end: {colNum: 0, rowNum: 0}};
-
-            Object.keys(this.dataMap).some(key => {
-                let td = this.dataMap[key],
-                    splitKey;
-
-                if (td === start) {
-                    splitKey = key.split('::');
-                    startCol = splitKey[0];
-                    startRow = splitKey[1];
-                }
-
-                if (td === el) {
-                    splitKey = key.split('::');
-                    endCol = splitKey[0];
-                    endRow = splitKey[1];
-                }
-
-                return startCol !== undefined && endCol !== undefined;
-            });
-
-            map.end.colNum = startCol > endCol ? +startCol : +endCol;
-            map.start.colNum = startCol > endCol ? +endCol : +startCol;
-
-            map.end.rowNum = startRow > endRow ? +startRow : +endCol;
-            map.start.rowNum = startRow > endRow ? +endRow : +startRow;
-
-            this.squareDragArea = [];
-
-            this.createCopyAria(map);
-            console.log(map);
-
-            BomTable.clearSelected()
-
+            this._squareAreaListener(e);
         }
     }
 
@@ -609,6 +576,11 @@ class BomTable {
         this._createInput();
     }
 
+    /**
+     * Context menu listener
+     * @param {event} e
+     * @private
+     */
     _oncontextmenu(e) {
         let el = e.target;
 
@@ -621,7 +593,7 @@ class BomTable {
 
     /**
      * On key down listener
-     * @param e
+     * @param {event} e
      * @private
      */
     _keyDownWatcher(e) {
@@ -688,7 +660,7 @@ class BomTable {
         if (moveSelect) {
             e.preventDefault();
             this._removeInput();
-            this._setActiveAria(map, 'none');
+            this._setActiveArea(map);
         } else if (!el && !e.ctrlKey && !e.shiftKey && !this._keysIgnore.includes(e.keyCode)) {
             this._createInput(false)
         }
@@ -698,7 +670,7 @@ class BomTable {
 
     /**
      * On paste listener
-     * @param e
+     * @param {event} e
      * @private
      */
     _onPaste(e) {
@@ -710,13 +682,6 @@ class BomTable {
             tmp = [],
             pasteData = (e.clipboardData || window.clipboardData).getData('Text');
 
-        pasteData = pasteData.split('\n');
-
-        pasteData.forEach(row => {
-            tmp.push(row.split('\t'));
-        });
-        pasteData = tmp;
-
         this.selected.forEach(key => {
             let rowNum = key.split('::')[1];
             if (!tableData[rowNum]) tableData[rowNum] = [];
@@ -724,6 +689,13 @@ class BomTable {
         });
 
         tableData = Object.values(tableData);
+
+        pasteData = pasteData.split('\n');
+
+        pasteData.forEach(row => {
+            tmp.push(row.split('\t'));
+        });
+        pasteData = tmp;
 
         if (tableData.length > pasteData.length) {
             let index = 0,
@@ -767,12 +739,7 @@ class BomTable {
         let str = [];
 
         if (!this.dom._buffer) {
-
-            this.dom._buffer = d.createElement('textarea');
-            this.dom.wrapper.appendChild(this.dom._buffer);
-
-            this.dom._buffer.classList.add('tableBuffer');
-
+            this.dom._buffer = BomTable.createElement('textarea', 'bomtable-buffer', this.dom.wrapper);
             this.dom._buffer.addEventListener('paste', this._onPaste.bind(this));
         }
 
@@ -789,7 +756,7 @@ class BomTable {
     /**
      * Set active cell
      * @param {object} e - event
-     * @return {{el: *, colNum: *, rowNum: *}}
+     * @return {{el: HTMLElement, colNum: number, rowNum: number}}
      */
     _setActiveCell(e) {
         let el = e.target,
@@ -821,7 +788,7 @@ class BomTable {
             this.mouseDownElement = {el, colNum, rowNum};
         }
 
-        this._setActiveAria({
+        this._setActiveArea({
             start: {
                 colNum: this.mouseDownElement.colNum,
                 rowNum: this.mouseDownElement.rowNum,
@@ -837,7 +804,7 @@ class BomTable {
 
     /**
      * Save last selected cell
-     * @param {Node} el
+     * @param {HTMLElement} el
      * @param {number} colNum
      * @param {number} rowNum
      * @return {{el: *, colNum: *, rowNum: *}}
@@ -856,7 +823,7 @@ class BomTable {
      * @return {BomTable}
      * @private
      */
-    _setActiveAria(map, keyType = 'none') {
+    _setActiveArea(map, keyType = 'none') {
         let
             startCol = map.start.colNum,
             endCol = map.end.colNum,
@@ -955,14 +922,19 @@ class BomTable {
         return this;
     }
 
+    /**
+     * Create square
+     * @param {number} endCol - end col
+     * @param {number} endRow - end row
+     * @return {BomTable}
+     * @private
+     */
     _createSquare(endCol, endRow) {
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
             rect = downRightTd.getBoundingClientRect();
 
         if (!this.dom.square) {
-            this.dom.square = d.createElement('div');
-            this.dom.square.classList.add('bomtable-square');
-            this.dom.wrapper.appendChild(this.dom.square);
+            this.dom.square = BomTable.createElement('div', 'bomtable-square', this.dom.wrapper);
         }
 
         this.dom.square.style.top = rect.bottom + w.pageYOffset + 'px';
@@ -971,31 +943,251 @@ class BomTable {
         return this;
     }
 
+    /**
+     * Remove square
+     * @return {BomTable}
+     * @private
+     */
     _removeSquare() {
         this.dom.square && this.dom.square.remove();
         this.dom.square = null;
         return this;
     }
 
-    createCopyAria(map) {
+    /**
+     * Listener move square
+     * @param {event} e
+     * @private
+     */
+    _squareAreaListener(e) {
 
-        let firstTd = this.dataMap[`${map.start.colNum}::${map.start.rowNum}`],
-            firstRect = firstTd.getBoundingClientRect(),
-            lastTd = this.dataMap[`${map.end.colNum}::${map.end.rowNum}`],
-            lastRect = lastTd.getBoundingClientRect();
+        let bottomRightSelectTr = this.dataMap[`${this.lastSelectArea.end.col}::${this.lastSelectArea.end.row}`],
+            rectBRSTr = bottomRightSelectTr.getBoundingClientRect(),
+            elMap = {},
+            firstTd, firstRect, lastTd, lastRect,
+            startCol, endCol, startRow, endRow;
 
-        if (!this.dom.copyAria) {
-            this.dom.copyAria = d.createElement('div');
-            this.dom.copyAria.classList.add('bomtable-copy-aria');
-            this.dom.wrapper.appendChild(this.dom.copyAria);
+        this.direction = {};
+
+        Object.keys(this.dataMap).some(key => {
+            let td = this.dataMap[key],
+                splitKey;
+
+            if (td !== e.target) return false;
+
+            splitKey = key.split('::');
+            elMap.col = +splitKey[0];
+            elMap.row = +splitKey[1];
+
+            return true;
+        });
+
+        endCol = elMap.col;
+        endRow = elMap.row;
+
+        if (rectBRSTr.right > e.pageX + w.pageXOffset) { // left
+
+            startCol = this.lastSelectArea.end.col;
+            endCol = this.lastSelectArea.end.col;
+
+            this.direction.x = 'left';
+
+            if (startCol > elMap.col) {
+                startCol = elMap.col;
+            }
+        } else { // right
+
+            this.direction.x = 'right';
+            startCol = this.lastSelectArea.start.col;
         }
 
-        this.dom.copyAria.style.top = firstRect.top + w.pageYOffset + 'px';
-        this.dom.copyAria.style.left = firstRect.left + w.pageXOffset + 'px';
-        this.dom.copyAria.style.width = lastRect.right + w.pageXOffset + 'px';
-        this.dom.copyAria.style.height = lastRect.bottom + w.pageXOffset + 'px';
+        if (startCol > this.lastSelectArea.start.col) {
+            startCol = this.lastSelectArea.start.col;
+        }
 
-        console.log(firstTd, lastTd);
+        if (rectBRSTr.top > e.pageY + w.pageYOffset) { // up
+
+            startRow = this.lastSelectArea.start.row;
+            endRow = this.lastSelectArea.end.row;
+
+            this.direction.y = 'up';
+
+            if (startRow > elMap.row) {
+                startRow = elMap.row;
+            }
+        } else { // down
+
+            this.direction.y = 'down';
+            startRow = this.lastSelectArea.start.row;
+        }
+
+        firstTd = this.dataMap[`${startCol}::${startRow}`];
+        firstRect = firstTd.getBoundingClientRect();
+
+        lastTd = this.dataMap[`${endCol}::${endRow}`];
+        lastRect = lastTd.getBoundingClientRect();
+
+        BomTable.clearSelected();
+
+        this
+            ._renderSquareDragArea({
+                left: firstRect.left - 1,
+                top: firstRect.top - 1,
+                bottom: lastRect.bottom - 1,
+                right: lastRect.right - 1
+            })
+            ._setSquareDragCell({startCol, endCol, startRow, endRow})
+    }
+
+    /**
+     * Draw drag area
+     * @param position
+     * @return {BomTable}
+     * @private
+     */
+    _renderSquareDragArea(position) {
+
+        if (!this.dom.copyAreaLeft) {
+            this.dom.copyAreaLeft = BomTable.createElement('div', 'bomtable-copy-area-left', this.dom.wrapper);
+            this.dom.copyAreaRight = BomTable.createElement('div', 'bomtable-copy-area-right', this.dom.wrapper);
+            this.dom.copyAreaTop = BomTable.createElement('div', 'bomtable-copy-area-top', this.dom.wrapper);
+            this.dom.copyAreaBottom = BomTable.createElement('div', 'bomtable-copy-area-bottom', this.dom.wrapper);
+        }
+
+        this.dom.copyAreaLeft.style.top = position.top + w.pageYOffset + 'px';
+        this.dom.copyAreaLeft.style.left = position.left + w.pageXOffset + 'px';
+        this.dom.copyAreaLeft.style.height = position.bottom - position.top + 'px';
+
+        this.dom.copyAreaRight.style.top = position.top + w.pageYOffset + 'px';
+        this.dom.copyAreaRight.style.left = position.right + w.pageXOffset + 'px';
+        this.dom.copyAreaRight.style.height = position.bottom - position.top + 'px';
+
+        this.dom.copyAreaTop.style.top = position.top + w.pageYOffset + 'px';
+        this.dom.copyAreaTop.style.left = position.left + w.pageXOffset + 'px';
+        this.dom.copyAreaTop.style.width = position.right - position.left + 'px';
+
+        this.dom.copyAreaBottom.style.top = position.bottom + w.pageYOffset + 'px';
+        this.dom.copyAreaBottom.style.left = position.left + w.pageXOffset + 'px';
+        this.dom.copyAreaBottom.style.width = position.right - position.left + 'px';
+
+        return this;
+    }
+
+    /**
+     * Draw square
+     * @param {Object} map coords {startCol, endCol, startRow, endRow}
+     * @return {BomTable}
+     * @private
+     */
+    _setSquareDragCell(map) {
+        this.squareDragArea = [];
+
+        for (let col = map.startCol; map.endCol >= col; col++) {
+            for (let row = map.startRow; map.endRow >= row; row++) {
+                this.squareDragArea.push(`${col}::${row}`)
+            }
+        }
+
+        return this;
+    }
+
+    /**
+     * Remove drag area
+     * @param {boolean} saveValue - save value after remove area
+     * @return {BomTable}
+     * @private
+     */
+    _removeCopyArea(saveValue = true) {
+
+        this.dom.copyAreaLeft && this.dom.copyAreaLeft.remove();
+        this.dom.copyAreaRight && this.dom.copyAreaRight.remove();
+        this.dom.copyAreaTop && this.dom.copyAreaTop.remove();
+        this.dom.copyAreaBottom && this.dom.copyAreaBottom.remove();
+
+        this.dom.copyAreaLeft = this.dom.copyAreaRight = this.dom.copyAreaTop = this.dom.copyAreaBottom = null;
+
+        if (saveValue && this.squareDragArea.length) {
+
+            let tableData = {},
+                squareAreaData = {},
+                map = {start: {colNum: null, rowNum: null}, end: {colNum: null, rowNum: null}};
+
+            this.selected.forEach(key => {
+                let rowNum = key.split('::')[1];
+                if (!tableData[rowNum]) tableData[rowNum] = [];
+                tableData[rowNum].push(key)
+            });
+            tableData = Object.values(tableData);
+
+            this.squareDragArea.forEach(key => {
+                let rowNum = key.split('::')[1];
+                if (!squareAreaData[rowNum]) squareAreaData[rowNum] = [];
+                squareAreaData[rowNum].push(key)
+            });
+            squareAreaData = Object.values(squareAreaData);
+
+            // if dif count set and selected cols or rows
+            if (tableData.length !== squareAreaData.length || squareAreaData[0].length !== tableData[0].length) {
+
+                if (squareAreaData.length > tableData.length) {
+
+                    let index = 0,
+                        lengthData = tableData.length;
+                    while (squareAreaData.length > tableData.length) {
+                        if (this.direction.x === 'down') {
+                            tableData.push(tableData[index++]);
+                            if (index === lengthData) index = 0;
+                        } else {
+                            tableData.unshift(tableData[tableData.length - (++index)]);
+                        }
+                    }
+
+                }
+
+                if (squareAreaData[0].length > tableData[0].length) {
+                    tableData.forEach(row => {
+                        let index = 0,
+                            lengthData = tableData[0].length;
+                        while (squareAreaData[0].length > row.length) {
+                            if (this.direction.y === 'right') {
+                                row.push(row[index++]);
+                                if (index === lengthData) index = 0;
+                            } else {
+                                row.unshift(row[row.length - (++index)]);
+                            }
+                        }
+                    });
+                }
+
+                squareAreaData.forEach((row, rowIndex) => {
+                    row.forEach((key, colIndex) => {
+                        let copyKey = tableData[rowIndex][colIndex],
+                            [colNum, rowNum] = key.split('::');
+
+                        if (map.start.colNum === null || map.start.colNum > colNum) map.start.colNum = +colNum;
+                        if (map.start.rowNum === null || map.start.colNum > rowNum) map.start.rowNum = +rowNum;
+
+                        if (map.end.colNum === null || colNum > map.end.colNum) map.end.colNum = +colNum;
+                        if (map.end.colNum === null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
+
+                        if (copyKey === key) return;
+
+                        let [colCopyNum, rowCopyNum] = copyKey.split('::'),
+                            val = this.getDataCell(+colCopyNum, +rowCopyNum);
+
+                        this.setDataCell(+colNum, +rowNum, val);
+                    })
+                });
+
+                this._setActiveArea(map);
+            }
+
+        }
+
+        this.squareDragArea = [];
+        this.direction = {};
+
+        return this;
     }
 
     /**
@@ -1009,19 +1201,16 @@ class BomTable {
 
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
-            textarea = d.createElement('textarea');
-
-        textarea.classList.add('bomtableInput');
-        textarea.style.left = tdRect.left - 1 + 'px';
-        textarea.style.top = tdRect.top - 1 + 'px';
-        textarea.style.width = tdRect.width - 1 + 'px';
-        textarea.style.height = tdRect.height - 1 + 'px';
+            textarea = BomTable.createElement('textarea', 'bomtable-input', this.dom.wrapper, {
+                left: tdRect.left - 1 + 'px',
+                top: tdRect.top - 1 + 'px',
+                width: tdRect.width - 1 + 'px',
+                height: tdRect.height - 1 + 'px',
+            });
 
         if (setCellValue) {
             textarea.value = td.innerText;
         }
-
-        this.dom.wrapper.appendChild(textarea);
 
         textarea.focus();
 
@@ -1061,7 +1250,10 @@ class BomTable {
      * @return {BomTable}
      */
     clear() {
+
+        this.dom = {};
         this._removeInput(false);
+        this._removeCopyArea(false);
 
         this.instanceData = [];
         this.instanceHeader = [];
@@ -1069,11 +1261,10 @@ class BomTable {
 
         this.lastSelectArea = {};
         this.dom && Object.keys(this.dom).forEach(nodeName => {
-            this.dom[nodeName].remove();
+            this.dom[nodeName] && this.dom[nodeName].remove();
             delete this.dom[nodeName];
         });
 
-        this.dom = {};
         this.selected = [];
         this.lastSelected = null;
 
@@ -1102,9 +1293,27 @@ class BomTable {
         this.clear();
     }
 
+
     /**
      * **** static methods ****
      */
+
+    /**
+     * Create new HTML element
+     * @param {string} tagName - name created tag
+     * @param {string} selector - css selectors ('class1 class2...')
+     * @param {HTMLElement} parent - parent of new tag
+     * @param {Object} css - css styles
+     * @return {HTMLElement}
+     */
+    static createElement(tagName, selector = '', parent = null, css = {}) {
+        let el = d.createElement(tagName);
+        el.className = selector;
+        Object.assign(el.style, css);
+
+        parent && parent.appendChild(el);
+        return el;
+    }
 
     /**
      * Return array from HTML collection
