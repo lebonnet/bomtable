@@ -121,6 +121,10 @@ class BomTable {
         return this.instanceHeader;
     }
 
+    getSelected() {
+        return this.selected.sort();
+    }
+
     /**
      * get data from selected items
      * @return {Array}
@@ -128,7 +132,7 @@ class BomTable {
     getSelectedData() {
         let data = {};
 
-        this.selected.forEach(key => {
+        this.getSelected().forEach(key => {
             let [colNum, rowNum] = key.split('::');
             if (!data[rowNum]) data[rowNum] = [];
             data[rowNum].push(this.instanceData[rowNum][colNum])
@@ -277,7 +281,7 @@ class BomTable {
      */
     getSelectedRows() {
         let rows = {};
-        this.selected.forEach(key => {
+        this.getSelected().forEach(key => {
             rows[key.split('::')[1]] = 1;
         });
         return Object.keys(rows);
@@ -289,7 +293,7 @@ class BomTable {
      */
     getSelectedCols() {
         let cols = {};
-        this.selected.forEach(key => {
+        this.getSelected().forEach(key => {
             cols[key.split('::')[0]] = 1;
         });
         return Object.keys(cols);
@@ -682,7 +686,7 @@ class BomTable {
             tmp = [],
             pasteData = (e.clipboardData || window.clipboardData).getData('Text');
 
-        this.selected.forEach(key => {
+        this.getSelected().forEach(key => {
             let rowNum = key.split('::')[1];
             if (!tableData[rowNum]) tableData[rowNum] = [];
             tableData[rowNum].push(key)
@@ -759,6 +763,7 @@ class BomTable {
      * @return {{el: HTMLElement, colNum: number, rowNum: number}}
      */
     _setActiveCell(e) {
+
         let el = e.target,
             type = e.type,
             keyType = 'none',
@@ -885,6 +890,7 @@ class BomTable {
 
         cols.forEach(col => {
             rows.forEach(row => {
+                if (row === -1) return;
                 let key = `${col}::${row}`;
                 if (this.selected.includes(key)) {
                     this.selected = this.selected.filter(s => s !== key);
@@ -910,7 +916,7 @@ class BomTable {
      * @return {BomTable}
      */
     clearActiveArea() {
-        this.instanceData.length && this.selected.forEach(key => {
+        this.instanceData.length && this.getSelected().forEach(key => {
             let el = this.dataMap[key];
             el && el.classList.remove('area');
         });
@@ -1112,7 +1118,7 @@ class BomTable {
                 squareAreaData = {},
                 map = {start: {colNum: null, rowNum: null}, end: {colNum: null, rowNum: null}};
 
-            this.selected.forEach(key => {
+            this.getSelected().forEach(key => {
                 let rowNum = key.split('::')[1];
                 if (!tableData[rowNum]) tableData[rowNum] = [];
                 tableData[rowNum].push(key)
@@ -1134,7 +1140,7 @@ class BomTable {
                     let index = 0,
                         lengthData = tableData.length;
                     while (squareAreaData.length > tableData.length) {
-                        if (this.direction.x === 'down') {
+                        if (this.direction.y === 'down') {
                             tableData.push(tableData[index++]);
                             if (index === lengthData) index = 0;
                         } else {
@@ -1149,7 +1155,7 @@ class BomTable {
                         let index = 0,
                             lengthData = tableData[0].length;
                         while (squareAreaData[0].length > row.length) {
-                            if (this.direction.y === 'right') {
+                            if (this.direction.x === 'right') {
                                 row.push(row[index++]);
                                 if (index === lengthData) index = 0;
                             } else {
