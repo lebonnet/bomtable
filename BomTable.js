@@ -33,7 +33,7 @@ class BomTable {
         }, opts);
 
         this._keysIgnore = [
-            0, 9, 10, 13, 16, 17, 18, 19, 20, 33, 34, 35, 36, 37, 38, 39, 40, 45,
+            0, 9, 10, 13, 16, 17, 18, 19, 20, 27, 33, 34, 35, 36, 37, 38, 39, 40, 45,
             91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
         ];
 
@@ -77,7 +77,7 @@ class BomTable {
      * @param data
      */
     setData(data) {
-        if (!Array.isArray(data)) throw new Error('Data must be array');
+        if (!Array.isArray(data)) throw new Error('Data must be an array');
         this.config.data = data;
         this.clear()._render();
     }
@@ -95,7 +95,7 @@ class BomTable {
      * @param header
      */
     setHeader(header) {
-        if (!Array.isArray(header)) throw new Error('Header must be array');
+        if (!Array.isArray(header)) throw new Error('Header must be an array');
         this.config.header = header;
         return this.clear()._render();
     }
@@ -558,7 +558,6 @@ class BomTable {
         this.lastHover = el;
 
         if (this.squarePressed && el.tagName === 'TD') {
-
             this._squareAreaListener(e);
         }
     }
@@ -656,7 +655,10 @@ class BomTable {
                 e.preventDefault();
                 break;
             case 27: // esc
+                this.mouseBtnPressed = 0;
+                this.squarePressed = 0;
                 this._removeInput(false);
+                this._removeCopyArea(false);
                 break;
         }
 
@@ -1171,10 +1173,10 @@ class BomTable {
                             [colNum, rowNum] = key.split('::');
 
                         if (map.start.colNum === null || map.start.colNum > colNum) map.start.colNum = +colNum;
-                        if (map.start.rowNum === null || map.start.colNum > rowNum) map.start.rowNum = +rowNum;
+                        if (map.start.rowNum === null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
 
                         if (map.end.colNum === null || colNum > map.end.colNum) map.end.colNum = +colNum;
-                        if (map.end.colNum === null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
+                        if (map.end.rowNum === null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
 
                         if (copyKey === key) return;
 
@@ -1184,7 +1186,7 @@ class BomTable {
                         this.setDataCell(+colNum, +rowNum, val);
                     })
                 });
-
+                console.log(squareAreaData);
                 this._setActiveArea(map);
             }
 
