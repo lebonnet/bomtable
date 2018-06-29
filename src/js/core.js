@@ -1,10 +1,11 @@
-'use strict';
 
+import * as helper from "./helper";
 const
     d = document,
     w = window;
 
-class BomTable {
+export default class BomTable {
+
     constructor(opts = {}) {
 
         /**
@@ -45,7 +46,8 @@ class BomTable {
      * @return {BomTable}
      */
     _ini() {
-        window.BomTable = this;
+
+        w.BomTable = this;
 
         this.clear()._render();
 
@@ -312,10 +314,10 @@ class BomTable {
 
         if (this.dom.body && this.dom.body.children) {
 
-            BomTable._likeArray(this.dom.body.children).forEach((tr, rowNum) => {
+            helper._likeArray(this.dom.body.children).forEach((tr, rowNum) => {
                 this.instanceData[rowNum] = [];
 
-                BomTable._likeArray(tr.children).forEach((td, colNum) => {
+                helper._likeArray(tr.children).forEach((td, colNum) => {
                     let val = td.innerHTML;
                     this.dataMap[`${colNum}::${rowNum}`] = td;
                     this.instanceData[rowNum].push(val);
@@ -325,7 +327,7 @@ class BomTable {
 
         if (this.dom.header && this.dom.header.firstElementChild) {
 
-            BomTable._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
+            helper._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
                 this.instanceHeader.push(th.innerHTML);
                 this.dataMap[`${colNum}::-1`] = th;
             });
@@ -343,7 +345,7 @@ class BomTable {
             colsClass = this.config.colsClass;
 
         // create table
-        this.dom.table = BomTable.createElement('table', 'bomtable');
+        this.dom.table = helper.createElement('table', 'bomtable');
         this.config.tableClass && this.dom.table.classList.add(this.config.tableClass);
 
         this._prepareData(this.config.data);
@@ -367,7 +369,7 @@ class BomTable {
 
         this.dom.header && this.dom.table.appendChild(this.dom.header);
 
-        this.dom.body = BomTable.createElement('tbody', '', this.dom.table);
+        this.dom.body = helper.createElement('tbody', '', this.dom.table);
 
         this.instanceData.forEach((col, rowNum) => {
             let tr = d.createElement('tr');
@@ -391,7 +393,7 @@ class BomTable {
                     ? d.querySelector(this.config.container)
                     : this.config.container;
 
-            this.dom.wrapper = BomTable.createElement('div', 'bomtable-wrapper', this.container);
+            this.dom.wrapper = helper.createElement('div', 'bomtable-wrapper', this.container);
 
             this.dom.wrapper.appendChild(this.dom.table);
 
@@ -435,7 +437,7 @@ class BomTable {
             });
 
             if (!this.dom.menu) {
-                this.dom.menu = BomTable.createElement('ul', 'bomtable-context-menu', this.dom.wrapper);
+                this.dom.menu = helper.createElement('ul', 'bomtable-context-menu', this.dom.wrapper);
             }
 
             this.dom.menu.innerHTML = html;
@@ -457,7 +459,7 @@ class BomTable {
         let el = e && e.target,
             action;
 
-        if (el && !e.button && this.dom.menu && BomTable._likeArray(this.dom.menu.children).some(li => li === el)) {
+        if (el && !e.button && this.dom.menu && helper._likeArray(this.dom.menu.children).some(li => li === el)) {
             action = el.dataset.action;
 
             if (this.config.contextMain.callback) {
@@ -493,7 +495,7 @@ class BomTable {
 
         this.closeMenu(e);
 
-        if (!BomTable.parents(el).some(p => p === this.dom.table)) {
+        if (!helper.parents(el).some(p => p === this.dom.table)) {
             if (this.dom.square && this.dom.square === el) {
                 this.squarePressed = 1;
                 this.mouseBtnPressed = 1;
@@ -587,7 +589,7 @@ class BomTable {
     _oncontextmenu(e) {
         let el = e.target;
 
-        if (!BomTable.parents(el).some(p => p === this.dom.table)) {
+        if (!helper.parents(el).some(p => p === this.dom.table)) {
             return;
         }
 
@@ -745,7 +747,7 @@ class BomTable {
         let str = [];
 
         if (!this.dom._buffer) {
-            this.dom._buffer = BomTable.createElement('textarea', 'bomtable-buffer', this.dom.wrapper);
+            this.dom._buffer = helper.createElement('textarea', 'bomtable-buffer', this.dom.wrapper);
             this.dom._buffer.addEventListener('paste', this._onPaste.bind(this));
         }
 
@@ -777,7 +779,7 @@ class BomTable {
             keyType = 'ctrlKey'
         }
 
-        BomTable.clearSelected();
+        helper.clearSelected();
 
         Object.keys(this.dataMap).some(key => {
             if (this.dataMap[key] === el) {
@@ -942,7 +944,7 @@ class BomTable {
             rect = downRightTd.getBoundingClientRect();
 
         if (!this.dom.square) {
-            this.dom.square = BomTable.createElement('div', 'bomtable-square', this.dom.wrapper);
+            this.dom.square = helper.createElement('div', 'bomtable-square', this.dom.wrapper);
         }
 
         this.dom.square.style.top = rect.bottom + w.pageYOffset + 'px';
@@ -1035,7 +1037,7 @@ class BomTable {
         lastTd = this.dataMap[`${endCol}::${endRow}`];
         lastRect = lastTd.getBoundingClientRect();
 
-        BomTable.clearSelected();
+        helper.clearSelected();
 
         this
             ._renderSquareDragArea({
@@ -1056,10 +1058,10 @@ class BomTable {
     _renderSquareDragArea(position) {
 
         if (!this.dom.copyAreaLeft) {
-            this.dom.copyAreaLeft = BomTable.createElement('div', 'bomtable-copy-area-left', this.dom.wrapper);
-            this.dom.copyAreaRight = BomTable.createElement('div', 'bomtable-copy-area-right', this.dom.wrapper);
-            this.dom.copyAreaTop = BomTable.createElement('div', 'bomtable-copy-area-top', this.dom.wrapper);
-            this.dom.copyAreaBottom = BomTable.createElement('div', 'bomtable-copy-area-bottom', this.dom.wrapper);
+            this.dom.copyAreaLeft = helper.createElement('div', 'bomtable-copy-area-left', this.dom.wrapper);
+            this.dom.copyAreaRight = helper.createElement('div', 'bomtable-copy-area-right', this.dom.wrapper);
+            this.dom.copyAreaTop = helper.createElement('div', 'bomtable-copy-area-top', this.dom.wrapper);
+            this.dom.copyAreaBottom = helper.createElement('div', 'bomtable-copy-area-bottom', this.dom.wrapper);
         }
 
         this.dom.copyAreaLeft.style.top = position.top + w.pageYOffset + 'px';
@@ -1186,7 +1188,7 @@ class BomTable {
                         this.setDataCell(+colNum, +rowNum, val);
                     })
                 });
-                console.log(squareAreaData);
+
                 this._setActiveArea(map);
             }
 
@@ -1209,7 +1211,7 @@ class BomTable {
 
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
-            textarea = BomTable.createElement('textarea', 'bomtable-input', this.dom.wrapper, {
+            textarea = helper.createElement('textarea', 'bomtable-input', this.dom.wrapper, {
                 left: tdRect.left - 1 + 'px',
                 top: tdRect.top - 1 + 'px',
                 width: tdRect.width - 1 + 'px',
@@ -1301,64 +1303,4 @@ class BomTable {
         this.clear();
     }
 
-
-    /**
-     * **** static methods ****
-     */
-
-    /**
-     * Create new HTML element
-     * @param {string} tagName - name created tag
-     * @param {string} selector - css selectors ('class1 class2...')
-     * @param {HTMLElement} parent - parent of new tag
-     * @param {Object} css - css styles
-     * @return {HTMLElement}
-     */
-    static createElement(tagName, selector = '', parent = null, css = {}) {
-        let el = d.createElement(tagName);
-        el.className = selector;
-        Object.assign(el.style, css);
-
-        parent && parent.appendChild(el);
-        return el;
-    }
-
-    /**
-     * Return array from HTML collection
-     * @param {HTMLCollection} HTMLCollection
-     * @return {[]}
-     * @private
-     */
-    static _likeArray(HTMLCollection) {
-        return Array.prototype.slice.call(HTMLCollection)
-    }
-
-    /**
-     * Get node element parents
-     * @param {Node} el
-     * @return {Array}closeMenu
-     */
-    static parents(el) {
-        const els = [];
-        while (el && el.tagName !== 'BODY') {
-            els.unshift(el);
-            el = el.parentNode;
-        }
-        return els;
-    };
-
-    /**
-     * Clear selected area
-     */
-    static clearSelected() {
-        if (w.getSelection) {
-            if (w.getSelection().empty) {
-                w.getSelection().empty();
-            } else if (w.getSelection().removeAllRanges) {
-                w.getSelection().removeAllRanges();
-            }
-        } else if (d.selection) {
-            d.selection.empty();
-        }
-    }
 }
