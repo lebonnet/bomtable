@@ -4,7 +4,7 @@ const
     d = document,
     w = window;
 
-export default class BomTable {
+export default class Core {
 
     constructor(opts = {}) {
 
@@ -38,16 +38,14 @@ export default class BomTable {
             91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
         ];
 
-        return this._ini();
+        return this;
     }
 
     /**
      * Initialization
-     * @return {BomTable}
+     * @return {Core}
      */
     _ini() {
-
-        w.BomTable = this;
 
         this.clear()._render();
 
@@ -56,7 +54,7 @@ export default class BomTable {
 
     /**
      * add event listeners
-     * @return {BomTable}
+     * @return {Core}
      */
     _callListeners() {
 
@@ -107,7 +105,7 @@ export default class BomTable {
      * @param {number} col - col number of cell
      * @param {number} row - row number of cell
      * @param {*} val - new value
-     * @return {BomTable}
+     * @return {Core}
      */
     setDataCell(col, row, val) {
         this.dataMap[`${col}::${row}`].innerHTML = val;
@@ -185,7 +183,7 @@ export default class BomTable {
 
     /**
      * AddNew row in table
-     * @return {BomTable}
+     * @return {Core}
      */
     addRow() {
         let nextTr = this.lastSelected.el.parentNode.nextSibling,
@@ -215,7 +213,7 @@ export default class BomTable {
 
     /**
      * Add new col
-     * @return {BomTable}
+     * @return {Core}
      */
     addCol() {
         let num = this.lastSelected.colNum,
@@ -239,7 +237,7 @@ export default class BomTable {
     /**
      * Remove get rows or selected rows
      * @param {Array} [nums] - index removes rows, if array is empty - selected rows be removed
-     * @return {BomTable}
+     * @return {Core}
      */
     removeRows(nums = []) {
         let rows = nums.length ? nums : this.getSelectedRows();
@@ -258,7 +256,7 @@ export default class BomTable {
     /**
      * Remove get cols or selected cols
      * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
-     * @return {BomTable}
+     * @return {Core}
      */
     removeCols(nums = []) {
         let cols = nums.length ? nums : this.getSelectedCols();
@@ -303,7 +301,7 @@ export default class BomTable {
 
     /**
      * Create new index DOM
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _reindex() {
@@ -337,7 +335,7 @@ export default class BomTable {
 
     /**
      * render table
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _render() {
@@ -405,7 +403,7 @@ export default class BomTable {
 
     /**
      * Remove table header
-     * @return {BomTable}
+     * @return {Core}
      */
     removeHeader() {
         this.dom.header && this.dom.header.remove();
@@ -416,7 +414,7 @@ export default class BomTable {
     /**
      * create context menu
      * @param e
-     * @return {BomTable}
+     * @return {Core}
      */
     createContextMenu(e) {
         let html = '',
@@ -452,7 +450,7 @@ export default class BomTable {
     /**
      * close menu
      * @param e
-     * @return {BomTable}
+     * @return {Core}
      */
     closeMenu(e) {
 
@@ -829,7 +827,7 @@ export default class BomTable {
      * Save and mark active area
      * @param {object} map
      * @param {string} keyType - 'shiftKey' | 'ctrlKey' | 'none'
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _setActiveArea(map, keyType = 'none') {
@@ -917,7 +915,7 @@ export default class BomTable {
 
     /**
      * Clear active area
-     * @return {BomTable}
+     * @return {Core}
      */
     clearActiveArea() {
         this.instanceData.length && this.getSelected().forEach(key => {
@@ -936,7 +934,7 @@ export default class BomTable {
      * Create square
      * @param {number} endCol - end col
      * @param {number} endRow - end row
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _createSquare(endCol, endRow) {
@@ -955,7 +953,7 @@ export default class BomTable {
 
     /**
      * Remove square
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _removeSquare() {
@@ -1052,7 +1050,7 @@ export default class BomTable {
     /**
      * Draw drag area
      * @param position
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _renderSquareDragArea(position) {
@@ -1086,7 +1084,7 @@ export default class BomTable {
     /**
      * Draw square
      * @param {Object} map coords {startCol, endCol, startRow, endRow}
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _setSquareDragCell(map) {
@@ -1104,7 +1102,7 @@ export default class BomTable {
     /**
      * Remove drag area
      * @param {boolean} saveValue - save value after remove area
-     * @return {BomTable}
+     * @return {Core}
      * @private
      */
     _removeCopyArea(saveValue = true) {
@@ -1257,7 +1255,7 @@ export default class BomTable {
 
     /**
      * Clear data of instance
-     * @return {BomTable}
+     * @return {Core}
      */
     clear() {
 

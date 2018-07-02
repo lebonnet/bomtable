@@ -6,8 +6,8 @@
  * @param {Object} css - css styles
  * @return {HTMLElement}
  */
-function createElement(tagName, selector = '', parent = null, css = {}) {
-    let el = d.createElement(tagName);
+export function createElement(tagName, selector = '', parent = null, css = {}) {
+    let el = document.createElement(tagName);
     el.className = selector;
     Object.assign(el.style, css);
 
@@ -21,7 +21,7 @@ function createElement(tagName, selector = '', parent = null, css = {}) {
  * @return {[]}
  * @private
  */
-function _likeArray(HTMLCollection) {
+export function _likeArray(HTMLCollection) {
     return Array.prototype.slice.call(HTMLCollection)
 }
 
@@ -30,7 +30,7 @@ function _likeArray(HTMLCollection) {
  * @param {Node} el
  * @return {Array}closeMenu
  */
-function parents(el) {
+export function parents(el) {
     const els = [];
     while (el && el.tagName !== 'BODY') {
         els.unshift(el);
@@ -42,7 +42,8 @@ function parents(el) {
 /**
  * Clear selected area
  */
-function clearSelected() {
+export function clearSelected() {
+    let w = window;
     if (w.getSelection) {
         if (w.getSelection().empty) {
             w.getSelection().empty();
