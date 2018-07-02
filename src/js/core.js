@@ -1,5 +1,5 @@
-
 import * as helper from "./helper";
+
 const
     d = document,
     w = window;
@@ -246,7 +246,7 @@ export default class Core {
             let firstTd = this.dataMap[`0::${rowNum}`],
                 parentTr = firstTd && firstTd.parentNode;
             if (!parentTr) return;
-            parentTr.remove();
+            helper.removeElement(parentTr);
         });
 
         return this._reindex();
@@ -266,8 +266,8 @@ export default class Core {
                 if (!key.indexOf(`${colNum}::`)) {
                     let el = this.dataMap[key],
                         header = this.dataMap[`${colNum}::-1`];
-                    el && el.remove();
-                    header && header.remove();
+                    el && helper.removeElement(el);
+                    header && helper.removeElement(header);
                 }
             });
         });
@@ -406,7 +406,7 @@ export default class Core {
      * @return {Core}
      */
     removeHeader() {
-        this.dom.header && this.dom.header.remove();
+        this.dom.header && helper.removeElement(this.dom.header);
         this.dom.header = null;
         return this;
     }
@@ -469,7 +469,7 @@ export default class Core {
             }
         }
 
-        this.dom.menu && this.dom.menu.remove();
+        this.dom.menu && helper.removeElement(this.dom.menu);
         this.dom.menu = null;
 
         return this;
@@ -941,6 +941,8 @@ export default class Core {
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
             rect = downRightTd.getBoundingClientRect();
 
+        if (downRightTd.tagName !== 'TD') return this;
+
         if (!this.dom.square) {
             this.dom.square = helper.createElement('div', 'bomtable-square', this.dom.wrapper);
         }
@@ -957,7 +959,7 @@ export default class Core {
      * @private
      */
     _removeSquare() {
-        this.dom.square && this.dom.square.remove();
+        this.dom.square && helper.removeElement(this.dom.square);
         this.dom.square = null;
         return this;
     }
@@ -1107,10 +1109,10 @@ export default class Core {
      */
     _removeCopyArea(saveValue = true) {
 
-        this.dom.copyAreaLeft && this.dom.copyAreaLeft.remove();
-        this.dom.copyAreaRight && this.dom.copyAreaRight.remove();
-        this.dom.copyAreaTop && this.dom.copyAreaTop.remove();
-        this.dom.copyAreaBottom && this.dom.copyAreaBottom.remove();
+        this.dom.copyAreaLeft && helper.removeElement(this.dom.copyAreaLeft);
+        this.dom.copyAreaRight && helper.removeElement(this.dom.copyAreaRight);
+        this.dom.copyAreaTop && helper.removeElement(this.dom.copyAreaTop);
+        this.dom.copyAreaBottom && helper.removeElement(this.dom.copyAreaBottom);
 
         this.dom.copyAreaLeft = this.dom.copyAreaRight = this.dom.copyAreaTop = this.dom.copyAreaBottom = null;
 
@@ -1240,7 +1242,7 @@ export default class Core {
             colNum = this.input.colNum,
             rowNum = this.input.rowNum;
 
-        this.input.el.remove();
+        helper.removeElement(this.input.el);
         this.input = null;
 
         if (saveValue) {
@@ -1269,7 +1271,7 @@ export default class Core {
 
         this.lastSelectArea = {};
         this.dom && Object.keys(this.dom).forEach(nodeName => {
-            this.dom[nodeName] && this.dom[nodeName].remove();
+            this.dom[nodeName] && helper.removeElement(this.dom[nodeName]);
             delete this.dom[nodeName];
         });
 

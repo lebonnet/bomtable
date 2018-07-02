@@ -16,6 +16,14 @@ export function createElement(tagName, selector = '', parent = null, css = {}) {
 }
 
 /**
+ * Remove dom element
+ * @param {HTMLElement} el
+ */
+export function removeElement(el) {
+    el.remove ? el.remove() : el.parentNode ? el.parentNode.removeChild(el) : null;
+}
+
+/**
  * Return array from HTML collection
  * @param {HTMLCollection} HTMLCollection
  * @return {[]}
@@ -43,12 +51,17 @@ export function parents(el) {
  * Clear selected area
  */
 export function clearSelected() {
-    let w = window;
+    let w = window,
+        d = document;
     if (w.getSelection) {
         if (w.getSelection().empty) {
             w.getSelection().empty();
         } else if (w.getSelection().removeAllRanges) {
-            w.getSelection().removeAllRanges();
+            try {
+                w.getSelection().removeAllRanges();
+            } catch (e) {
+                // skip IE edge
+            }
         }
     } else if (d.selection) {
         d.selection.empty();
