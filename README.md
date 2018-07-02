@@ -6,8 +6,7 @@ Simple javascript application for working with data, use familiar interface exce
 <br/>
 
 <div align="center">
-**BomTable**  
-<img src="http://lebonnet.ru/bomtable/favicon/apple-icon-72x72.png" alt="bomtable logo" />
+<img src="http://lebonnet.ru/bomtable/bt_lg.png" alt="bomtable logo" />
 </div>
 
 <br/>
@@ -121,5 +120,5 @@ Chrome 67+, Mozilla Firefox 59+, IE9+
 
 <br/>
 
-### Licence
+### license
 Standard MIT license
