@@ -121,6 +121,10 @@ export default class Core {
         return this.instanceHeader;
     }
 
+    /**
+     * Get selected map
+     * @return {*|Array}
+     */
     getSelected() {
         return this.selected.sort();
     }
@@ -186,7 +190,7 @@ export default class Core {
      * @return {Core}
      */
     addRow() {
-        let nextTr = this.lastSelected.el.parentNode.nextSibling,
+        let nextTr = this.lastSelected && this.lastSelected.el.parentNode.nextSibling,
             tableBody = this.dom.body,
             length = this.instanceData.length ? this.instanceData[0].length : this.instanceHeader.length,
             rowsClass = this.config.rowsClass,
@@ -216,20 +220,30 @@ export default class Core {
      * @return {Core}
      */
     addCol() {
-        let num = this.lastSelected.colNum,
-            rowsClass = this.config.rowsClass;
+        let num = this.lastSelected && this.lastSelected.colNum,
+            lastColIndex,
+            it = 0,
+            rowsClass = this.config.rowsClass || '';
 
-        Object.keys(this.dataMap).forEach(key => {
-            if (!key.indexOf(`${num}::`)) {
-                let el = this.dataMap[key],
-                    parent = el.parentElement,
-                    nodeType = key.indexOf('-1') > -1 ? 'th' : 'td',
-                    child = d.createElement(nodeType);
+        if (num) {
+            Object.keys(this.dataMap).forEach(key => {
+                if (!key.indexOf(`${num}::`)) {
+                    let el = this.dataMap[key],
+                        parent = el.parentElement,
+                        nodeType = key.indexOf('-1') > -1 ? 'th' : 'td',
+                        child = d.createElement(nodeType);
 
-                rowsClass && nodeType !== 'th' && child.classList.add(rowsClass);
-                parent.insertBefore(child, el.nextSibling);
+                    rowsClass && nodeType !== 'th' && child.classList.add(rowsClass);
+                    parent.insertBefore(child, el.nextSibling);
+                }
+            });
+        } else {
+            this.dom.header && helper.createElement('th', '', this.dom.header.firstChild);
+            lastColIndex = this.instanceData[0].length - 1;
+            while (it !== this.instanceData.length) {
+                helper.createElement('td', rowsClass, this.dataMap[`${lastColIndex}::${it++}`].parentElement);
             }
-        });
+        }
 
         return this._reindex();
     }
