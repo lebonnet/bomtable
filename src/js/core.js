@@ -681,7 +681,7 @@ export default class Core {
             e.preventDefault();
             this._removeInput();
             this._setActiveArea(map);
-        } else if (!el && !e.ctrlKey && !e.shiftKey && !this._keysIgnore.includes(e.keyCode)) {
+        } else if (!el && !e.ctrlKey && !e.shiftKey && !this._keysIgnore.includes(e.keyCode) && !this.mouseBtnPressed) {
             this._createInput(false)
         }
 
@@ -944,6 +944,10 @@ export default class Core {
         return this;
     }
 
+    _getRectWrapper() {
+        return this.container.getBoundingClientRect();
+    }
+
     /**
      * Create square
      * @param {number} endCol - end col
@@ -953,6 +957,7 @@ export default class Core {
      */
     _createSquare(endCol, endRow) {
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
+            wrapRect = this._getRectWrapper(),
             rect = downRightTd.getBoundingClientRect();
 
         if (downRightTd.tagName !== 'TD') return this;
@@ -961,8 +966,8 @@ export default class Core {
             this.dom.square = helper.createElement('div', 'bomtable-square', this.dom.wrapper);
         }
 
-        this.dom.square.style.top = rect.bottom + w.pageYOffset + 'px';
-        this.dom.square.style.left = rect.right + w.pageXOffset + 'px';
+        this.dom.square.style.top = rect.bottom - wrapRect.top + 'px';
+        this.dom.square.style.left = rect.right - wrapRect.left + 'px';
 
         return this;
     }
@@ -1071,6 +1076,7 @@ export default class Core {
      */
     _renderSquareDragArea(position) {
 
+        let wrapRect = this._getRectWrapper();
         if (!this.dom.copyAreaLeft) {
             this.dom.copyAreaLeft = helper.createElement('div', 'bomtable-copy-area-left', this.dom.wrapper);
             this.dom.copyAreaRight = helper.createElement('div', 'bomtable-copy-area-right', this.dom.wrapper);
@@ -1078,20 +1084,20 @@ export default class Core {
             this.dom.copyAreaBottom = helper.createElement('div', 'bomtable-copy-area-bottom', this.dom.wrapper);
         }
 
-        this.dom.copyAreaLeft.style.top = position.top + w.pageYOffset + 'px';
-        this.dom.copyAreaLeft.style.left = position.left + w.pageXOffset + 'px';
+        this.dom.copyAreaLeft.style.top = position.top - wrapRect.top + 'px';
+        this.dom.copyAreaLeft.style.left = position.left - wrapRect.left + 'px';
         this.dom.copyAreaLeft.style.height = position.bottom - position.top + 'px';
 
-        this.dom.copyAreaRight.style.top = position.top + w.pageYOffset + 'px';
-        this.dom.copyAreaRight.style.left = position.right + w.pageXOffset + 'px';
+        this.dom.copyAreaRight.style.top = position.top - wrapRect.top + 'px';
+        this.dom.copyAreaRight.style.left = position.right - wrapRect.left + 'px';
         this.dom.copyAreaRight.style.height = position.bottom - position.top + 'px';
 
-        this.dom.copyAreaTop.style.top = position.top + w.pageYOffset + 'px';
-        this.dom.copyAreaTop.style.left = position.left + w.pageXOffset + 'px';
+        this.dom.copyAreaTop.style.top = position.top - wrapRect.top + 'px';
+        this.dom.copyAreaTop.style.left = position.left - wrapRect.left + 'px';
         this.dom.copyAreaTop.style.width = position.right - position.left + 'px';
 
-        this.dom.copyAreaBottom.style.top = position.bottom + w.pageYOffset + 'px';
-        this.dom.copyAreaBottom.style.left = position.left + w.pageXOffset + 'px';
+        this.dom.copyAreaBottom.style.top = position.bottom - wrapRect.top + 'px';
+        this.dom.copyAreaBottom.style.left = position.left - wrapRect.left + 'px';
         this.dom.copyAreaBottom.style.width = position.right - position.left + 'px';
 
         return this;
@@ -1225,9 +1231,10 @@ export default class Core {
 
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
+            wrapRect = this._getRectWrapper(),
             textarea = helper.createElement('textarea', 'bomtable-input', this.dom.wrapper, {
-                left: tdRect.left - 1 + 'px',
-                top: tdRect.top - 1 + 'px',
+                left: tdRect.left - wrapRect.left - 1 + 'px',
+                top: tdRect.top - wrapRect.top - 1 + 'px',
                 width: tdRect.width - 1 + 'px',
                 height: tdRect.height - 1 + 'px',
             });

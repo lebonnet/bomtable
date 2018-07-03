@@ -22,7 +22,7 @@ Simple javascript library for working with data, use familiar interface excel<br
 <br/>
 
 ### How to use
-### как использовать
+##### как использовать
 
 ```javascript
 let instance = new BomTable({
