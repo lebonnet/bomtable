@@ -432,6 +432,7 @@ export default class Core {
      */
     createContextMenu(e) {
         let html = '',
+            wrapRect = this._getRectWrapper(),
             className;
 
         if (this.config.contextMain) {
@@ -454,8 +455,8 @@ export default class Core {
 
             this.dom.menu.innerHTML = html;
             this.dom.menu.style.display = 'block';
-            this.dom.menu.style.left = e.pageX + 'px';
-            this.dom.menu.style.top = e.pageY + 'px';
+            this.dom.menu.style.left = e.pageX - wrapRect.left - w.pageXOffset + 'px';
+            this.dom.menu.style.top = e.pageY - wrapRect.top - w.pageYOffset + 'px';
         }
 
         return this;
