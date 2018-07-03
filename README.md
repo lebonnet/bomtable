@@ -1,27 +1,28 @@
-# bomtable
-web table like simple excel
-
-Simple javascript application for working with data, use familiar interface excel
-
-<br/>
-
 <div align="center">
 <img src="http://lebonnet.ru/bomtable/bt_lg.png" alt="bomtable logo" />
 </div>
 
 <br/>
 
-1. [How to use](#how-to-use)
-2. [Examples](#examples)
-3. [Options](#options)
-4. [Methods](#methods)
-5. [Browser support](#browser-support)
-6. [License](#license)
+web table like simple excel
+web таблица - упрощенная версия excel
+
+Simple javascript library for working with data, use familiar interface excel
+Простая javascript библиотека для работы с табличными данным, используя привычный интерфейс excel
+
+<br/>
+
+1. [How to use | как использовать](#how-to-use)
+2. [Examples | примеры](#examples)
+3. [Options | параметры](#options)
+4. [Methods | методы](#methods)
+5. [Browser support | поддержка браузерами](#browser-support)
+6. [License | лицензия](#license)
 
 <br/>
 
 
-### How to use
+### How to use | как использовать
 
 ```javascript
 let instance = new BomTable({
@@ -35,24 +36,24 @@ let instance = new BomTable({
 <br/>
 
 ### Examples
-- [See a live demo](http://lebonnet.ru/bomtable/index.html)
+- [See a live demo | посмотреть пример](http://lebonnet.ru/bomtable/index.html)
 
 <br/>
 
-### Options
+### Options | параметры
 ```javascript
 let opts = {
-    data: [], // data for table body (default empty array)
-    header: '', // table header (default empty string)
-    tableClass: '', // css class for table (default empty)
-    container: null, // node or selector for mount table (default null)
-    rowsClass: '', // css class for table rows (default empty string)
-    colsClass: '', // css class for table cols (default empty string)
+    data: [], // data for table body (default empty array) | массив с данными
+    header: '', // table header (default empty string) | массив с заголовками для таблицы
+    tableClass: '', // css class for table (default empty) | css класс для таблицы
+    container: null, // node or selector for mount table (default null) | HTML элемент или селектор для монтирования таблицы
+    rowsClass: '', // css class for table rows (default empty string) | css класс для строк
+    colsClass: '', // css class for table cols (default empty string) | css класс для столбцов
     
-    // context menu 
+    // context menu | контекстное меню
     contextMain: {
-        items: {}, // items - object with list item
-        callback: (action, instance, event) => {} // default null
+        items: {}, // items - object with list item | объект со списком элементов меню
+        callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
     } 
 };
 ```
@@ -61,64 +62,59 @@ let opts = {
 
 ### Methods
 ```
-getData() - get table data ({Array})
+getData() - get table data | получить данные из таблицы ({Array})
 
-getHeader() - get table header ({Array})
+getHeader() - get table header | получить заголовки таблицы ({Array})
 
-getSelected() - get selected map ({Array})
+getSelected() - get selected map | получить карту выделенных элементов ({Array})
 
-getSelectedData() - get data of selected map ({Array})
+getSelectedData() - get data of selected area | получить данные с выделенной области ({Array})
 
-getDataCell({col - number}, {row - number}) - get cell value
+getDataCell({col - number}, {row - number}) - get cell value | получить значение ячейки
 
-getSelectedRows() - get index of selected rows ({Array})
+getSelectedRows() - get index of selected rows | получить индексы выделенных строк ({Array})
 
-getSelectedCols() - get index of selected cols ({Array})
-
-getSelectedRows() - get index of selected rows
-
-getSelectedCols() - get index of selected cols
+getSelectedCols() - get index of selected cols | получить индексы выделенных столбцов ({Array})
 
 ```
 <br/>
 
 ```
-setData({Array}) - set new data
+setData({Array}) - set new data | установить новые данные
 
-setHeader({Array}) - set new data header
+setHeader({Array}) - set new data header | установить новые заголовки
 
-setDataCell({col - number}, {row - number}, {*}) - set new data in cell
+setDataCell({col - number}, {row - number}, {*}) - set new value in cell | установить новое значение ячейки
 
-setDataCell({col - number}, {row - number}, {*}) - set new data in cell
 ```
 <br/>
 
 ```
-addRow() - create new row
+addRow() - create new row | создать новую строку
 
-addCol() - create new col
+addCol() - create new col | создать новый столбец
 
-removeRows({Array}) - remove get rows or selected rows
+removeRows({Array}) - remove get rows or selected rows | удалить строки по индексам передающихся входным параметром
 
-removeCols({Array}) - remove get cols or selected cols
+removeCols({Array}) - remove get cols or selected cols | удалить столбцы по индексам передающихся входным параметром
 
-removeHeader() - remove table header
+removeHeader() - remove table header | удалить заголовок таблицы
 ```
 <br/>
 
 ```
-clear() - clear data of instance
+clear() - clear data of instance | очистить instance
 
-destroy() - destroy instance
+destroy() - destroy instance | разрушить instance
 ```
 
 
 <br/>
 
-### Browser support
+### Browser support | поддержка браузерами
 Chrome 67+, Mozilla Firefox 59+, IE9+
 
 <br/>
 
-### license
+### license | лицензия
 Standard MIT license
