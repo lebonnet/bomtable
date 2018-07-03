@@ -4,10 +4,10 @@
 
 <br/>
 
-web table like simple excel
+web table like simple excel<br/>
 web таблица - упрощенная версия excel
-
-Simple javascript library for working with data, use familiar interface excel
+<br/>
+Simple javascript library for working with data, use familiar interface excel<br/>
 Простая javascript библиотека для работы с табличными данным, используя привычный интерфейс excel
 
 <br/>
@@ -21,8 +21,8 @@ Simple javascript library for working with data, use familiar interface excel
 
 <br/>
 
-
-### How to use | как использовать
+### How to use
+### как использовать
 
 ```javascript
 let instance = new BomTable({
@@ -40,7 +40,8 @@ let instance = new BomTable({
 
 <br/>
 
-### Options | параметры
+### Options
+### параметры
 ```javascript
 let opts = {
     data: [], // data for table body (default empty array) | массив с данными
@@ -61,6 +62,7 @@ let opts = {
 <br/>
 
 ### Methods
+### методы
 ```
 getData() - get table data | получить данные из таблицы ({Array})
 
@@ -108,13 +110,14 @@ clear() - clear data of instance | очистить instance
 destroy() - destroy instance | разрушить instance
 ```
 
-
 <br/>
 
-### Browser support | поддержка браузерами
+### Browser support
+### поддержка браузерами
 Chrome 67+, Mozilla Firefox 59+, IE9+
 
 <br/>
 
-### license | лицензия
+### license
+### лицензия
 Standard MIT license
