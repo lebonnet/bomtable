@@ -37,6 +37,7 @@ export default class Core {
             0, 9, 10, 13, 16, 17, 18, 19, 20, 27, 33, 34, 35, 36, 37, 38, 39, 40, 45,
             91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
         ];
+        this.isTouch = 'ontouchstart' in window;
 
         return this;
     }
@@ -58,8 +59,15 @@ export default class Core {
      */
     _callListeners() {
 
-        d.addEventListener('mousedown', this._onmousedown.bind(this));
-        d.addEventListener('mouseup', this._onmouseup.bind(this));
+        if (this.isTouch) {
+            d.addEventListener('touchstart', this._onmousedown.bind(this));
+            d.addEventListener('touchend', this._onmouseup.bind(this));
+
+            w.addEventListener('touchmove', this._ontouchmove.bind(this), {passive: false, cancelable: true});
+        } else {
+            d.addEventListener('mousedown', this._onmousedown.bind(this));
+            d.addEventListener('mouseup', this._onmouseup.bind(this));
+        }
 
         d.addEventListener('mousemove', this._onmousemove.bind(this));
         d.addEventListener('mouseover', this._onmouseover.bind(this));
@@ -523,9 +531,7 @@ export default class Core {
 
         this._removeSquare();
 
-        if (!['TD', 'TH'].includes(el.tagName)) {
-            return;
-        }
+        if (!helper.isTableCell(el)) return;
 
         // left click on select area
         if (e.button && this.selected.some(key => this.dataMap[key] === el)) return;
@@ -545,6 +551,47 @@ export default class Core {
     }
 
     /**
+     * touch move listener
+     * @param e
+     * @private
+     */
+    _ontouchmove(e) {
+        if (!this.mouseBtnPressed) return;
+        e.preventDefault();
+
+        let touch = e.targetTouches[0],
+            windowYScroll = w.pageYOffset,
+            el, X = touch.pageX, Y = touch.pageY;
+
+        // find hover element
+        Object.keys(this.dataMap).some(key => {
+
+            let i = this.dataMap[key],
+                rect = i.getBoundingClientRect(),
+                isHover = rect.left < X && windowYScroll + rect.top < Y &&
+                    rect.left + rect.width > X && windowYScroll + rect.top + rect.height > Y;
+
+            if (isHover) {
+                el = i;
+                return true;
+            }
+        });
+
+        if (!el || this.lastHover === el) return;
+
+        if (!helper.isTableCell(el)) return;
+
+        this.lastHover = el;
+
+        if (!this.squarePressed) {
+            this._setActiveCell(e, el);
+        } else if (el.tagName === 'TD') {
+            this._squareAreaListener(e, el);
+        }
+
+    }
+
+    /**
      * Mouse over listener
      * @param {event} e
      * @private
@@ -552,11 +599,7 @@ export default class Core {
     _onmouseover(e) {
         let el = e.target;
 
-        if (!this.mouseBtnPressed) return;
-
-        if (!['TD', 'TH'].includes(el.tagName)) {
-            return;
-        }
+        if (!this.mouseBtnPressed || !helper.isTableCell(el)) return;
 
         !this.squarePressed && this._setActiveCell(e);
     }
@@ -777,14 +820,16 @@ export default class Core {
     /**
      * Set active cell
      * @param {object} e - event
+     * @param {HTMLElement|null} el - target over element
      * @return {{el: HTMLElement, colNum: number, rowNum: number}}
      */
-    _setActiveCell(e) {
+    _setActiveCell(e, el = null) {
 
-        let el = e.target,
-            type = e.type,
+        let type = e.type,
             keyType = 'none',
             keyMap;
+
+        if (!el) el = e.target;
 
         if (e.shiftKey) {
             keyType = 'shiftKey'
@@ -806,7 +851,7 @@ export default class Core {
         colNum = +colNum;
         rowNum = +rowNum;
 
-        if (type === 'mousedown') {
+        if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = {el, colNum, rowNum};
         }
 
@@ -992,15 +1037,21 @@ export default class Core {
     /**
      * Listener move square
      * @param {event} e
+     * @param {HTMLElement|null} el - target over element
      * @private
      */
-    _squareAreaListener(e) {
+    _squareAreaListener(e, el = null) {
+
+        if (!el) el = e.target;
 
         let bottomRightSelectTr = this.dataMap[`${this.lastSelectArea.end.col}::${this.lastSelectArea.end.row}`],
             rectBRSTr = bottomRightSelectTr.getBoundingClientRect(),
             elMap = {},
             firstTd, firstRect, lastTd, lastRect,
-            startCol, endCol, startRow, endRow;
+            startCol, endCol, startRow, endRow,
+            touch = this.isTouch && e.targetTouches[0],
+            X = this.isTouch ? touch.pageX : e.pageX,
+            Y = this.isTouch ? touch.pageY : e.pageY;
 
         this.direction = {};
 
@@ -1008,7 +1059,7 @@ export default class Core {
             let td = this.dataMap[key],
                 splitKey;
 
-            if (td !== e.target) return false;
+            if (td !== el) return false;
 
             splitKey = key.split('::');
             elMap.col = +splitKey[0];
@@ -1020,7 +1071,7 @@ export default class Core {
         endCol = elMap.col;
         endRow = elMap.row;
 
-        if (rectBRSTr.right > e.pageX + w.pageXOffset) { // left
+        if (rectBRSTr.right + w.pageXOffset > X) { // left
 
             startCol = this.lastSelectArea.end.col;
             endCol = this.lastSelectArea.end.col;
@@ -1040,7 +1091,7 @@ export default class Core {
             startCol = this.lastSelectArea.start.col;
         }
 
-        if (rectBRSTr.top > e.pageY + w.pageYOffset) { // up
+        if (rectBRSTr.top + w.pageYOffset > Y) { // up
 
             startRow = this.lastSelectArea.start.row;
             endRow = this.lastSelectArea.end.row;
@@ -1050,6 +1101,7 @@ export default class Core {
             if (startRow > elMap.row) {
                 startRow = elMap.row;
             }
+
         } else { // down
 
             this.direction.y = 'down';

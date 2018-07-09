@@ -67,3 +67,12 @@ export function clearSelected() {
         d.selection.empty();
     }
 }
+
+/**
+ * Detect element is td|th
+ * @param el
+ * @return {boolean}
+ */
+export function isTableCell(el) {
+    return ['TD', 'TH'].includes(el.tagName);
+}
