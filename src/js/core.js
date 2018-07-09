@@ -945,6 +945,11 @@ export default class Core {
         return this;
     }
 
+    /**
+     * Get container position prop
+     * @return {ClientRect | DOMRect}
+     * @private
+     */
     _getRectWrapper() {
         return this.container.getBoundingClientRect();
     }
