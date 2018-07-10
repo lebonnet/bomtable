@@ -46,6 +46,7 @@ let instance = new BomTable({
 let opts = {
     data: [], // data for table body (default empty array) | массив с данными
     header: '', // table header (default empty string) | массив с заголовками для таблицы
+    touchSupport: true, // support touch in browsers | поддержка касаний в браузерах
     tableClass: '', // css class for table (default empty) | css класс для таблицы
     container: null, // node or selector for mount table (default null) | HTML элемент или селектор для монтирования таблицы
     rowsClass: '', // css class for table rows (default empty string) | css класс для строк
@@ -114,8 +115,8 @@ destroy() - destroy instance | разрушить instance
 
 ### Browser support
 ### поддержка браузерами
-Chrome 67+, Mozilla Firefox 59+, IE9+
-
+Chrome 67+, Mozilla Firefox 59+, IE9+,
+Touch support
 <br/>
 
 ### license

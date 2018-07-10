@@ -3,9 +3,13 @@ const path = require('path'),
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
-
     isDevelopment = argv.mode === 'development',
-    distPath = path.join(__dirname, '/dist');
+    distPath = path.join(__dirname, '/dist'),
+
+    WebpackVersionFilePlugin = require('webpack-version-file-plugin'),
+    execa = require('execa'),
+
+    gitHash = execa.sync('git', ['rev-parse', '--short', 'HEAD']).stdout;
 
 const config = {
     entry: {
@@ -51,7 +55,15 @@ const config = {
         }),
         new HtmlWebpackPlugin({
             template: './index.html'
-        })
+        }),
+        new WebpackVersionFilePlugin({
+            packageFile: path.join(__dirname, 'package.json'),
+            template: path.join(__dirname, 'version.ejs'),
+            outputFile: path.join(__dirname, 'version.json'),
+            extras: {
+                'githash': gitHash
+            }
+        }),
     ],
     optimization: !isDevelopment ? {
         minimizer: [

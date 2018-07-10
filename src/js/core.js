@@ -1,4 +1,5 @@
 import * as helper from "./helper";
+import * as v from "../../version.json";
 
 const
     d = document,
@@ -16,6 +17,7 @@ export default class Core {
             data: [], // data for table body
             header: '', // table header
             tableClass: '', // css class table
+            touchSupport: true, // support touch in browsers
             container: null, // node or selector for mount table
             rowsClass: '', // css class for table rows
             colsClass: '', // css class for table cols
@@ -37,7 +39,10 @@ export default class Core {
             0, 9, 10, 13, 16, 17, 18, 19, 20, 27, 33, 34, 35, 36, 37, 38, 39, 40, 45,
             91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
         ];
-        this.isTouch = 'ontouchstart' in window;
+
+
+        this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
+        this.version = v.version;
 
         return this;
     }
@@ -510,6 +515,9 @@ export default class Core {
     _onmousedown(e) {
         let el = e.target;
 
+        if (this.isTouch) {
+            this.countTouch++;
+        }
         if (this.input && el === this.input.el) return;
 
         this._removeInput(false);
@@ -545,6 +553,9 @@ export default class Core {
      * @private
      */
     _onmouseup() {
+        if (this.isTouch) {
+            this.countTouch--;
+        }
         this.mouseBtnPressed = 0;
         this.squarePressed = 0;
         this._removeCopyArea();
@@ -556,7 +567,8 @@ export default class Core {
      * @private
      */
     _ontouchmove(e) {
-        if (!this.mouseBtnPressed) return;
+
+        if (!this.mouseBtnPressed || this.countTouch > 1) return true;
         e.preventDefault();
 
         let touch = e.targetTouches[0],
@@ -1348,6 +1360,8 @@ export default class Core {
         this.instanceHeader = [];
         this.dataMap = {};
 
+        this.countTouch = 0;
+
         this.lastSelectArea = {};
         this.dom && Object.keys(this.dom).forEach(nodeName => {
             this.dom[nodeName] && helper.removeElement(this.dom[nodeName]);
@@ -1381,5 +1395,4 @@ export default class Core {
         this.destroyed = 1;
         this.clear();
     }
-
 }
