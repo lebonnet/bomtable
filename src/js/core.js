@@ -671,10 +671,6 @@ export default class Core {
      */
     _keyDownWatcher(e) {
 
-        if (e.ctrlKey) {
-            this._createBuffer();
-        }
-
         let el = this.input && this.input.el,
             keyCode = e.keyCode,
             val = el && el.value,
@@ -684,6 +680,10 @@ export default class Core {
             totalRows = this.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
             map = {start: {colNum, rowNum}, end: {colNum, rowNum}};
+
+        if (e.ctrlKey && this.selected.length > 1) {
+            this._createBuffer();
+        }
 
         el && e.stopPropagation();
 
