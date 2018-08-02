@@ -1,4 +1,5 @@
-const path = require('path'),
+const
+    path = require('path'),
     argv = require('yargs').argv,
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     UglifyJsPlugin = require('uglifyjs-webpack-plugin'),

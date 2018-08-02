@@ -672,6 +672,7 @@ export default class Core {
     _keyDownWatcher(e) {
 
         let el = this.input && this.input.el,
+            data,
             keyCode = e.keyCode,
             val = el && el.value,
             colNum = this.lastSelected && this.lastSelected.colNum,
@@ -730,6 +731,21 @@ export default class Core {
                 this._removeInput(false);
                 this._removeCopyArea(false);
                 break;
+        }
+
+
+        // ctrl + a
+        if (e.ctrlKey && keyCode === 65) {
+            moveSelect = false;
+            data = this.getData();
+            map.start.rowNum = 0;
+            map.start.colNum = 0;
+
+            map.end.rowNum = data.length - 1;
+            map.end.colNum = data[0].length - 1;
+            this._setActiveArea(map);
+            // setTimeout()
+            helper.clearSelected();
         }
 
         // need move active area

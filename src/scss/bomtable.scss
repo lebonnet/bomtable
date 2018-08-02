@@ -80,7 +80,8 @@ $gray: #ccc;
   height: 1px;
 }
 
-.bomtable td::selection {
+.bomtable td::selection,
+.bomtable th::selection {
   background: transparent;
   color: inherit;
 }
