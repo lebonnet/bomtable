@@ -744,8 +744,6 @@ export default class Core {
             map.end.rowNum = data.length - 1;
             map.end.colNum = data[0].length - 1;
             this._setActiveArea(map);
-            // setTimeout()
-            helper.clearSelected();
         }
 
         // need move active area
