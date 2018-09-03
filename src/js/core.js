@@ -65,7 +65,7 @@ export default class Core {
     _callListeners() {
 
         if (this.isTouch) {
-            d.addEventListener('touchstart', this._onmousedown.bind(this));
+            d.addEventListener('touchstart', this._onmousedown.bind(this), {passive: false, cancelable: true});
             d.addEventListener('touchend', this._onmouseup.bind(this));
 
             w.addEventListener('touchmove', this._ontouchmove.bind(this), {passive: false, cancelable: true});
@@ -520,22 +520,21 @@ export default class Core {
         if (this.isTouch) {
             this.countTouch++;
 
-            if (this.countTouch === 1) {
-
-                if (this.tapped) {
-                    this._ondblclick(e);
+            if (this.tapped === el) {
+                this._ondblclick(e);
+                e.preventDefault();
+                clearTimeout(this.tapTimeout);
+                this.tapped = false;
+                return false;
+            } else {
+                this.tapped = el;
+                this.tapTimeout = setTimeout(() => {
                     this.tapped = false;
-                    return false;
-                } else {
-                    this.tapped = true;
-                    setTimeout(() => {
-                        this.tapped = false;
-                    }, 300)
-                }
-
+                }, 500)
             }
 
         }
+
         if (this.input && el === this.input.el) return;
 
         this._removeInput(this.isTouch);
@@ -573,6 +572,7 @@ export default class Core {
     _onmouseup() {
         if (this.isTouch) {
             this.countTouch--;
+            console.log('remove', this.countTouch);
         }
         this.mouseBtnPressed = 0;
         this.squarePressed = 0;
