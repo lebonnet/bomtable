@@ -420,6 +420,8 @@ export default class Core {
 
             this.dom.wrapper = helper.createElement('div', 'bomtable-wrapper', this.container);
 
+            this.isTouch && this.dom.wrapper.classList.add('touched');
+
             this.dom.wrapper.appendChild(this.dom.table);
 
             this.container.style.position = 'relative';
@@ -509,7 +511,7 @@ export default class Core {
 
     /**
      * mouse down listener
-     * @param {event} e
+     * @param {Event} e
      * @private
      */
     _onmousedown(e) {
@@ -517,10 +519,26 @@ export default class Core {
 
         if (this.isTouch) {
             this.countTouch++;
+
+            if (this.countTouch === 1) {
+
+                if (this.tapped) {
+                    this._ondblclick(e);
+                    this.tapped = false;
+                    return false;
+                } else {
+                    this.tapped = true;
+                    setTimeout(() => {
+                        this.tapped = false;
+                    }, 300)
+                }
+
+            }
+
         }
         if (this.input && el === this.input.el) return;
 
-        this._removeInput(false);
+        this._removeInput(this.isTouch);
 
         this.closeMenu(e);
 
@@ -1375,6 +1393,7 @@ export default class Core {
         this.dataMap = {};
 
         this.countTouch = 0;
+        this.tapped = false;
 
         this.lastSelectArea = {};
         this.dom && Object.keys(this.dom).forEach(nodeName => {
