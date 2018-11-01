@@ -1342,7 +1342,7 @@ export default class Core {
             });
 
         if (setCellValue) {
-            textarea.value = td.innerText;
+            textarea.value = td.innerHTML;
         }
 
         textarea.focus();
