@@ -59,7 +59,7 @@ export default class Core {
     }
 
     /**
-     * add event listeners
+     * Add event listeners
      * @return {Core}
      */
     _callListeners() {
@@ -87,7 +87,7 @@ export default class Core {
 
     /**
      * Set new data
-     * @param data
+     * @param {Array} data
      */
     setData(data) {
         if (!Array.isArray(data)) throw new Error('Data must be an array');
@@ -143,7 +143,7 @@ export default class Core {
     }
 
     /**
-     * get data from selected items
+     * Get data from selected items
      * @return {Array}
      */
     getSelectedData() {
@@ -170,7 +170,7 @@ export default class Core {
 
     /**
      * Prepare data (add empty value in short columns) and set copy data in instance
-     * @param data
+     * @param {Array} data
      * @private
      */
     _prepareData(data) {
@@ -304,26 +304,26 @@ export default class Core {
 
     /**
      * Get index of selected rows
-     * @return {Array}
+     * @return {[]}
      */
     getSelectedRows() {
         let rows = {};
         this.getSelected().forEach(key => {
             rows[key.split('::')[1]] = 1;
         });
-        return Object.keys(rows);
+        return Object.keys(rows).map(r => +r);
     }
 
     /**
      * Get index of selected cols
-     * @return {string[]}
+     * @return {[]}
      */
     getSelectedCols() {
         let cols = {};
         this.getSelected().forEach(key => {
             cols[key.split('::')[0]] = 1;
         });
-        return Object.keys(cols);
+        return Object.keys(cols).map(c => +c);
     }
 
     /**
@@ -361,7 +361,7 @@ export default class Core {
     }
 
     /**
-     * render table
+     * Render table
      * @return {Core}
      * @private
      */
@@ -441,8 +441,8 @@ export default class Core {
     }
 
     /**
-     * create context menu
-     * @param e
+     * Create context menu
+     * @param {MouseEvent} e
      * @return {Core}
      */
     createContextMenu(e) {
@@ -478,8 +478,8 @@ export default class Core {
     }
 
     /**
-     * close menu
-     * @param e
+     * Close menu
+     * @param {MouseEvent} e
      * @return {Core}
      */
     closeMenu(e) {
@@ -510,8 +510,8 @@ export default class Core {
      */
 
     /**
-     * mouse down listener
-     * @param {Event} e
+     * Mouse down listener
+     * @param {MouseEvent}  e
      * @private
      */
     _onmousedown(e) {
@@ -566,7 +566,7 @@ export default class Core {
     }
 
     /**
-     * mouse up listener
+     * Mouse up listener
      * @private
      */
     _onmouseup() {
@@ -580,8 +580,8 @@ export default class Core {
     }
 
     /**
-     * touch move listener
-     * @param e
+     * Touch move listener
+     * @param {MouseEvent} e
      * @private
      */
     _ontouchmove(e) {
@@ -623,7 +623,7 @@ export default class Core {
 
     /**
      * Mouse over listener
-     * @param {event} e
+     * @param {MouseEvent} e
      * @private
      */
     _onmouseover(e) {
@@ -636,7 +636,7 @@ export default class Core {
 
     /**
      * Mouse move listener
-     * @param {event} e
+     * @param {MouseEvent} e
      * @private
      */
     _onmousemove(e) {
@@ -652,7 +652,7 @@ export default class Core {
 
     /**
      * On mouse double click listener
-     * @param e
+     * @param {MouseEvent} e
      * @private
      */
     _ondblclick(e) {
@@ -669,7 +669,7 @@ export default class Core {
 
     /**
      * Context menu listener
-     * @param {event} e
+     * @param {MouseEvent} e
      * @private
      */
     _oncontextmenu(e) {
@@ -684,7 +684,7 @@ export default class Core {
 
     /**
      * On key down listener
-     * @param {event} e
+     * @param {KeyboardEvent} e
      * @private
      */
     _keyDownWatcher(e) {
@@ -700,7 +700,7 @@ export default class Core {
             moveSelect = false, // признак движения выделения клавишами
             map = {start: {colNum, rowNum}, end: {colNum, rowNum}};
 
-        if (e.ctrlKey && this.selected.length > 1) {
+        if (e.ctrlKey) {
             this._createBuffer();
         }
 
@@ -778,7 +778,7 @@ export default class Core {
 
     /**
      * On paste listener
-     * @param {event} e
+     * @param {KeyboardEvent} e
      * @private
      */
     _onPaste(e) {
@@ -786,17 +786,20 @@ export default class Core {
         e.stopPropagation();
         e.preventDefault();
 
-        let tableData = {},
+        let
             tmp = [],
-            pasteData = (e.clipboardData || window.clipboardData).getData('Text');
+            selectedArea = [],
+            pasteData = (e.clipboardData || window.clipboardData).getData('Text'),
+            selectedCols = this.getSelectedCols(),
+            selectedRows = this.getSelectedRows(),
+            oneSelected = selectedCols.length === selectedRows.length && selectedRows.length === 1;
 
-        this.getSelected().forEach(key => {
-            let rowNum = key.split('::')[1];
-            if (!tableData[rowNum]) tableData[rowNum] = [];
-            tableData[rowNum].push(key)
+        console.log(oneSelected);
+        selectedRows.forEach(r => {
+            let row = [];
+            selectedCols.forEach(c => row.push(`${c}::${r}`));
+            selectedArea.push(row);
         });
-
-        tableData = Object.values(tableData);
 
         pasteData = pasteData.split('\n');
 
@@ -805,27 +808,45 @@ export default class Core {
         });
         pasteData = tmp;
 
-        if (tableData.length > pasteData.length) {
+        if (selectedArea.length > pasteData.length) {
             let index = 0,
                 lengthPasteData = pasteData.length;
-            while (tableData.length > pasteData.length) {
+            while (selectedArea.length > pasteData.length) {
                 pasteData.push(pasteData[index++]);
                 if (index === lengthPasteData) index = 0;
             }
+        } else if (oneSelected && pasteData.length > selectedArea.length) {
+            let lastRowIndex = selectedRows[selectedRows.length - 1];
+            while (pasteData.length > selectedArea.length) {
+                let nextRow = [];
+                lastRowIndex++;
+                selectedCols.forEach(c => {
+                    nextRow.push(`${c}::${lastRowIndex}`)
+                });
+                selectedArea.push(nextRow);
+            }
         }
 
-        if (tableData[0].length > pasteData[0].length) {
+        if (selectedArea[0].length > pasteData[0].length) {
             pasteData.forEach(row => {
                 let index = 0,
                     lengthPasteData = pasteData[0].length;
-                while (tableData[0].length > row.length) {
+                while (selectedArea[0].length > row.length) {
                     row.push(row[index++]);
                     if (index === lengthPasteData) index = 0;
                 }
             });
+        } else if (oneSelected && pasteData[0].length > selectedArea[0].length) {
+            let lastColIndex = selectedCols[selectedCols.length - 1];
+            while (pasteData[0].length > selectedArea[0].length) {
+                lastColIndex++;
+                selectedArea.forEach(r => {
+                    r.push(`${lastColIndex}::${r[0].split('::')[1]}`);
+                });
+            }
         }
 
-        tableData.forEach((row, rowIndex) => {
+        selectedArea.forEach((row, rowIndex) => {
             row.forEach((key, colIndex) => {
                 let val = pasteData[rowIndex][colIndex],
                     [colNum, rowNum] = key.split('::');
@@ -834,7 +855,7 @@ export default class Core {
                     val = isNaN(+val) ? val : +val;
                 }
 
-                this.setDataCell(colNum, rowNum, val);
+                this.dataMap[`${colNum}::${rowNum}`] && this.setDataCell(colNum, rowNum, val);
             });
         });
     }
@@ -863,7 +884,7 @@ export default class Core {
 
     /**
      * Set active cell
-     * @param {object} e - event
+     * @param {MouseEvent} e - event
      * @param {HTMLElement|null} el - target over element
      * @return {{el: HTMLElement, colNum: number, rowNum: number}}
      */
@@ -1080,7 +1101,7 @@ export default class Core {
 
     /**
      * Listener move square
-     * @param {event} e
+     * @param {MouseEvent} e
      * @param {HTMLElement|null} el - target over element
      * @private
      */

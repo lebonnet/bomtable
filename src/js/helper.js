@@ -35,8 +35,8 @@ export function _likeArray(HTMLCollection) {
 
 /**
  * Get node element parents
- * @param {Node} el
- * @return {Array}closeMenu
+ * @param {HTMLElement} el
+ * @return {[]}
  */
 export function parents(el) {
     const els = [];
