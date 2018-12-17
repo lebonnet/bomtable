@@ -794,7 +794,6 @@ export default class Core {
             selectedRows = this.getSelectedRows(),
             oneSelected = selectedCols.length === selectedRows.length && selectedRows.length === 1;
 
-        console.log(oneSelected);
         selectedRows.forEach(r => {
             let row = [];
             selectedCols.forEach(c => row.push(`${c}::${r}`));
