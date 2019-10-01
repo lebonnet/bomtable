@@ -5,6 +5,8 @@ const
     d = document,
     w = window;
 
+let instance = null;
+
 export default class Core {
 
     constructor(opts = {}) {
@@ -45,7 +47,7 @@ export default class Core {
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
         this.version = v.version;
 
-        return this;
+        return instance = this;
     }
 
     /**
@@ -66,22 +68,22 @@ export default class Core {
     _callListeners() {
 
         if (this.isTouch) {
-            d.addEventListener('touchstart', this._onmousedown.bind(this), {passive: false, cancelable: true});
-            d.addEventListener('touchend', this._onmouseup.bind(this));
+            d.addEventListener('touchstart', this._onmousedown, {passive: false, cancelable: true});
+            d.addEventListener('touchend', this._onmouseup);
 
-            w.addEventListener('touchmove', this._ontouchmove.bind(this), {passive: false, cancelable: true});
+            w.addEventListener('touchmove', this._ontouchmove, {passive: false, cancelable: true});
         } else {
-            d.addEventListener('mousedown', this._onmousedown.bind(this));
-            d.addEventListener('mouseup', this._onmouseup.bind(this));
+            d.addEventListener('mousedown', this._onmousedown);
+            d.addEventListener('mouseup', this._onmouseup);
         }
 
-        d.addEventListener('mousemove', this._onmousemove.bind(this));
-        d.addEventListener('mouseover', this._onmouseover.bind(this));
+        d.addEventListener('mousemove', this._onmousemove);
+        d.addEventListener('mouseover', this._onmouseover);
 
-        d.addEventListener('dblclick', this._ondblclick.bind(this));
-        d.addEventListener('contextmenu', this._oncontextmenu.bind(this));
+        d.addEventListener('dblclick', this._ondblclick);
+        d.addEventListener('contextmenu', this._oncontextmenu);
 
-        d.addEventListener('keydown', this._keyDownWatcher.bind(this));
+        d.addEventListener('keydown', this._keyDownWatcher);
 
         return this;
     }
@@ -560,53 +562,55 @@ export default class Core {
      * @private
      */
     _onmousedown(e) {
+        if (instance.destroyed) return;
+
         let el = e.target;
 
-        if (this.isTouch) {
-            this.countTouch++;
+        if (instance.isTouch) {
+            instance.countTouch++;
 
-            if (this.tapped === el) {
-                this._ondblclick(e);
+            if (instance.tapped === el) {
+                instance._ondblclick(e);
                 e.preventDefault();
-                clearTimeout(this.tapTimeout);
-                this.tapped = false;
+                clearTimeout(instance.tapTimeout);
+                instance.tapped = false;
                 return false;
             } else {
-                this.tapped = el;
-                this.tapTimeout = setTimeout(() => {
-                    this.tapped = false;
+                instance.tapped = el;
+                instance.tapTimeout = setTimeout(() => {
+                    instance.tapped = false;
                 }, 500)
             }
 
         }
 
-        if (this.input && el === this.input.el) return;
+        if (instance.input && el === instance.input.el) return;
 
-        this._removeInput(this.isTouch);
+        instance._removeInput(instance.isTouch);
 
-        this.closeMenu(e);
+        instance.closeMenu(e);
 
-        if (!helper.parents(el).some(p => p === this.dom.table)) {
-            if (this.dom.square && this.dom.square === el) {
-                this.squarePressed = 1;
-                this.mouseBtnPressed = 1;
+        if (!helper.parents(el).some(p => p === instance.dom.table)) {
+            if (instance.dom.square && instance.dom.square === el) {
+                instance.squarePressed = 1;
+                instance.mouseBtnPressed = 1;
             } else {
-                this.clearActiveArea();
-                this._removeSquare();
+                instance.clearActiveArea();
+                instance._removeSquare();
             }
             return;
         }
 
-        this.mouseBtnPressed = 1;
+        instance.mouseBtnPressed = 1;
 
-        this._removeSquare();
+        instance._removeSquare();
 
         if (!helper.isTableCell(el)) return;
 
         // left click on select area
-        if (e.button && this.selected.some(key => this.dataMap[key] === el)) return;
+        if (e.button && instance.selected.some(key => instance.dataMap[key] === el)) return;
 
-        this._setActiveCell(e);
+        instance._setActiveCell(e);
 
     }
 
@@ -615,13 +619,15 @@ export default class Core {
      * @private
      */
     _onmouseup() {
-        if (this.isTouch) {
-            this.countTouch--;
-            console.log('remove', this.countTouch);
+        if (instance.destroyed) return;
+
+        if (instance.isTouch) {
+            instance.countTouch--;
+            console.log('remove', instance.countTouch);
         }
-        this.mouseBtnPressed = 0;
-        this.squarePressed = 0;
-        this._removeCopyArea();
+        instance.mouseBtnPressed = 0;
+        instance.squarePressed = 0;
+        instance._removeCopyArea();
     }
 
     /**
@@ -630,8 +636,9 @@ export default class Core {
      * @private
      */
     _ontouchmove(e) {
+        if (instance.destroyed) return;
 
-        if (!this.mouseBtnPressed || this.countTouch > 1) return true;
+        if (!instance.mouseBtnPressed || instance.countTouch > 1) return true;
         e.preventDefault();
 
         let touch = e.targetTouches[0],
@@ -639,9 +646,9 @@ export default class Core {
             el, X = touch.pageX, Y = touch.pageY;
 
         // find hover element
-        Object.keys(this.dataMap).some(key => {
+        Object.keys(instance.dataMap).some(key => {
 
-            let i = this.dataMap[key],
+            let i = instance.dataMap[key],
                 rect = i.getBoundingClientRect(),
                 isHover = rect.left < X && windowYScroll + rect.top < Y &&
                     rect.left + rect.width > X && windowYScroll + rect.top + rect.height > Y;
@@ -652,16 +659,16 @@ export default class Core {
             }
         });
 
-        if (!el || this.lastHover === el) return;
+        if (!el || instance.lastHover === el) return;
 
         if (!helper.isTableCell(el)) return;
 
-        this.lastHover = el;
+        instance.lastHover = el;
 
-        if (!this.squarePressed) {
-            this._setActiveCell(e, el);
+        if (!instance.squarePressed) {
+            instance._setActiveCell(e, el);
         } else if (el.tagName === 'TD') {
-            this._squareAreaListener(e, el);
+            instance._squareAreaListener(e, el);
         }
 
     }
@@ -672,11 +679,13 @@ export default class Core {
      * @private
      */
     _onmouseover(e) {
+        if (instance.destroyed) return;
+
         let el = e.target;
 
-        if (!this.mouseBtnPressed || !helper.isTableCell(el)) return;
+        if (!instance.mouseBtnPressed || !helper.isTableCell(el)) return;
 
-        !this.squarePressed && this._setActiveCell(e);
+        !instance.squarePressed && instance._setActiveCell(e);
     }
 
     /**
@@ -685,13 +694,15 @@ export default class Core {
      * @private
      */
     _onmousemove(e) {
+        if (instance.destroyed) return;
+
         let el = e.target;
-        if (!this.mouseBtnPressed || this.lastHover === el) return;
+        if (!instance.mouseBtnPressed || instance.lastHover === el) return;
 
-        this.lastHover = el;
+        instance.lastHover = el;
 
-        if (this.squarePressed && el.tagName === 'TD') {
-            this._squareAreaListener(e);
+        if (instance.squarePressed && el.tagName === 'TD') {
+            instance._squareAreaListener(e);
         }
     }
 
@@ -701,15 +712,17 @@ export default class Core {
      * @private
      */
     _ondblclick(e) {
+        if (instance.destroyed) return;
+
         let el = e.target;
 
         if (el.tagName !== 'TD') {
             return;
         }
 
-        this._setActiveCell(e);
+        instance._setActiveCell(e);
 
-        this._createInput();
+        instance._createInput();
     }
 
     /**
@@ -718,13 +731,15 @@ export default class Core {
      * @private
      */
     _oncontextmenu(e) {
+        if (instance.destroyed) return;
+
         let el = e.target;
 
-        if (!helper.parents(el).some(p => p === this.dom.table)) {
+        if (!helper.parents(el).some(p => p === instance.dom.table)) {
             return;
         }
 
-        this.createContextMenu(e);
+        instance.createContextMenu(e);
     }
 
     /**
@@ -733,20 +748,21 @@ export default class Core {
      * @private
      */
     _keyDownWatcher(e) {
+        if (instance.destroyed) return;
 
-        let el = this.input && this.input.el,
+        let el = instance.input && instance.input.el,
             data,
             key = e.key,
             val = el && el.value,
-            colNum = this.lastSelected && this.lastSelected.colNum,
-            rowNum = this.lastSelected && this.lastSelected.rowNum,
-            totalCols = this.instanceData[0].length - 1,
-            totalRows = this.instanceData.length - 1,
+            colNum = instance.lastSelected && instance.lastSelected.colNum,
+            rowNum = instance.lastSelected && instance.lastSelected.rowNum,
+            totalCols = instance.instanceData[0].length - 1,
+            totalRows = instance.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
             map = {start: {colNum, rowNum}, end: {colNum, rowNum}};
 
         if (e.ctrlKey) {
-            this._createBuffer();
+            instance._createBuffer();
         }
 
         el && e.stopPropagation();
@@ -813,14 +829,14 @@ export default class Core {
                 }
                 break;
             case 'Enter': // enter
-                el ? this._removeInput() : this._createInput();
+                el ? instance._removeInput() : instance._createInput();
                 e.preventDefault();
                 break;
             case 'Escape': // esc
-                this.mouseBtnPressed = 0;
-                this.squarePressed = 0;
-                this._removeInput(false);
-                this._removeCopyArea(false);
+                instance.mouseBtnPressed = 0;
+                instance.squarePressed = 0;
+                instance._removeInput(false);
+                instance._removeCopyArea(false);
                 break;
         }
 
@@ -828,25 +844,25 @@ export default class Core {
         // ctrl + a
         if (e.ctrlKey && key.toLowerCase() === 'a') {
             moveSelect = false;
-            data = this.getData();
+            data = instance.getData();
             map.start.rowNum = 0;
             map.start.colNum = 0;
 
             map.end.rowNum = data.length - 1;
             map.end.colNum = data[0].length - 1;
-            this._setActiveArea(map);
+            instance._setActiveArea(map);
         }
 
         // need move active area
         if (moveSelect) {
             e.preventDefault();
-            this._removeInput();
-            this._setActiveArea(map);
-        } else if (!el && !e.ctrlKey && !e.shiftKey && !this._keysIgnore.includes(e.keyCode) && !this.mouseBtnPressed) {
-            this._createInput(false)
+            instance._removeInput();
+            instance._setActiveArea(map);
+        } else if (!el && !e.ctrlKey && !e.shiftKey && !instance._keysIgnore.includes(e.keyCode) && !instance.mouseBtnPressed) {
+            instance._createInput(false)
         }
 
-        this.closeMenu()
+        instance.closeMenu(e)
     }
 
     /**
@@ -855,6 +871,7 @@ export default class Core {
      * @private
      */
     _onPaste(e) {
+        if (instance.destroyed) return;
 
         e.stopPropagation();
         e.preventDefault();
@@ -863,8 +880,8 @@ export default class Core {
             tmp = [],
             selectedArea = [],
             pasteData = (e.clipboardData || window.clipboardData).getData('Text'),
-            selectedCols = this.getSelectedCols(),
-            selectedRows = this.getSelectedRows(),
+            selectedCols = instance.getSelectedCols(),
+            selectedRows = instance.getSelectedRows(),
             oneSelected = selectedCols.length === selectedRows.length && selectedRows.length === 1;
 
         selectedRows.forEach(r => {
@@ -927,7 +944,7 @@ export default class Core {
                     val = isNaN(+val) ? val : +val;
                 }
 
-                this.dataMap[`${colNum}::${rowNum}`] && this.setDataCell(colNum, rowNum, val);
+                instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, val);
             });
         });
     }
@@ -941,7 +958,7 @@ export default class Core {
 
         if (!this.dom._buffer) {
             this.dom._buffer = helper.createElement('textarea', 'bomtable-buffer', this.dom.wrapper);
-            this.dom._buffer.addEventListener('paste', this._onPaste.bind(this));
+            this.dom._buffer.addEventListener('paste', this._onPaste);
         }
 
         this.getSelectedData().forEach(row => {
@@ -1492,7 +1509,7 @@ export default class Core {
         this.tapped = false;
 
         this.lastSelectArea = {};
-        this.dom && Object.keys(this.dom).forEach(nodeName => {
+        Object.keys(this.dom).forEach(nodeName => {
             this.dom[nodeName] && helper.removeElement(this.dom[nodeName]);
             delete this.dom[nodeName];
         });
@@ -1509,19 +1526,19 @@ export default class Core {
      */
     destroy() {
 
-        d.removeEventListener('mousedown', this._onmousedown.bind(this));
-        d.removeEventListener('mouseup', this._onmouseup.bind(this));
+        d.removeEventListener('mousedown', instance._onmousedown);
+        d.removeEventListener('mouseup', instance._onmouseup);
 
-        d.removeEventListener('mouseenter', this._onmousemove.bind(this));
-        d.removeEventListener('mouseover', this._onmouseover.bind(this));
+        d.removeEventListener('mouseenter', instance._onmousemove);
+        d.removeEventListener('mouseover', instance._onmouseover);
 
-        d.removeEventListener('dblclick', this._ondblclick.bind(this));
+        d.removeEventListener('dblclick', instance._ondblclick);
 
-        d.removeEventListener('keydown', this._keyDownWatcher.bind(this));
+        d.removeEventListener('keydown', instance._keyDownWatcher);
 
-        this.dom._buffer && this.dom._buffer.removeEventListener('paste', this._onPaste.bind(this));
+        instance.dom._buffer && instance.dom._buffer.removeEventListener('paste', instance._onPaste);
 
-        this.destroyed = 1;
-        this.clear();
+        instance.destroyed = 1;
+        instance.clear();
     }
 }

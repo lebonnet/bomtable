@@ -1,6 +1,6 @@
 {
   "name": "bomtable",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "web table like simple excel",
   "main": "src/js/bomtable.js",
   "scripts": {
