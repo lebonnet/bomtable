@@ -29,7 +29,9 @@ export default class Core {
                     addCol: 'add col',
                     hr: '',
                     removeRows: 'remove rows',
-                    removeCols: 'remove cols'
+                    removeCols: 'remove cols',
+                    hr1: '',
+                    unionCols: 'union cols'
                 },
                 callback: null // function can be call after click context menu item
             }
@@ -304,6 +306,46 @@ export default class Core {
     }
 
     /**
+     * Union cols
+     * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
+     * @return {Core}
+     */
+    unionCols(nums = []) {
+        let cols = nums.length ? nums : this.getSelectedCols();
+
+        if (cols.length === 1) return this;
+
+        let firstColNum = cols.shift(),
+            header = this.getHeader().filter((h, num) => !cols.includes(num)),
+            data = this.getData();
+
+        data.forEach((row, rowNum) => {
+            let firstVal = '',
+                newRow = [];
+            row.forEach((cell, colNum) => {
+                cell = cell ? cell.toString().trim() : '';
+
+                if (cols.includes(colNum) && firstVal !== cell) {
+                    if (!newRow[firstColNum]) newRow[firstColNum] = '';
+                    newRow[firstColNum] += ' ' + cell;
+                }
+
+                if (cell && firstColNum === colNum) {
+                    firstVal = cell;
+                }
+
+                !cols.includes(colNum) && newRow.push(cell);
+            });
+
+            data[rowNum] = newRow;
+        });
+
+        this.config.data = data;
+        this.config.header = header;
+        this.clear()._render();
+    }
+
+    /**
      * Get index of selected rows
      * @return {[]}
      */
@@ -391,8 +433,9 @@ export default class Core {
 
         if (!this.dom.header) {
             this.removeHeader();
-            this.dom.table.classList.add('bomtable-no-header');
         }
+
+        !this.dom.header && this.dom.table.classList.add('bomtable-no-header');
 
         this.dom.header && this.dom.table.appendChild(this.dom.header);
 
@@ -457,8 +500,8 @@ export default class Core {
 
             Object.keys(this.config.contextMain.items).forEach(key => {
 
-                if (key === 'hr') {
-                    html += `<li class="${key}"></li>`;
+                if (/^hr+[0-9]*$/.test(key)) {
+                    html += `<li class="bomtable-hr"></li>`;
                 } else {
                     className = key.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
                     html += `<li data-action="${key}" class="${className}">${this.config.contextMain.items[key]}</li>`;
