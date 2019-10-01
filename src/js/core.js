@@ -40,7 +40,6 @@ export default class Core {
             91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
         ];
 
-
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
         this.version = v.version;
 
@@ -691,7 +690,7 @@ export default class Core {
 
         let el = this.input && this.input.el,
             data,
-            keyCode = e.keyCode,
+            key = e.key,
             val = el && el.value,
             colNum = this.lastSelected && this.lastSelected.colNum,
             rowNum = this.lastSelected && this.lastSelected.rowNum,
@@ -706,8 +705,12 @@ export default class Core {
 
         el && e.stopPropagation();
 
-        switch (keyCode) {
-            case 37: // left
+        if (key === 'Tab') {
+            key = 'ArrowRight'
+        }
+
+        switch (key) {
+            case 'ArrowLeft':
                 // cursor move inside input
                 if (el && el.selectionStart !== 0) {
                     return;
@@ -716,34 +719,58 @@ export default class Core {
                     moveSelect = true;
                     map.start.colNum = map.end.colNum = colNum - 1;
                 }
+                if (!colNum) {
+                    moveSelect = true;
+                    if (!rowNum) rowNum = totalRows + 1;
+                    map.start.rowNum = map.end.rowNum = rowNum - 1;
+                    map.start.colNum = map.end.colNum = totalCols;
+                }
                 break;
-            case 39: // right
+            case 'ArrowRight':
                 // cursor move inside input
                 if (el && el.selectionEnd < val.length) {
                     return;
+                }
+                if (totalCols === colNum) {
+                    moveSelect = true;
+                    if (rowNum === totalRows) rowNum = -1;
+                    map.start.colNum = map.end.colNum = 0;
+                    map.start.rowNum = map.end.rowNum = rowNum + 1;
                 }
                 if (totalCols > colNum) {
                     moveSelect = true;
                     map.start.colNum = map.end.colNum = colNum + 1;
                 }
                 break;
-            case 38: // up
+            case 'ArrowUp':
                 if (rowNum > 0) {
                     moveSelect = true;
                     map.start.rowNum = map.end.rowNum = rowNum - 1;
                 }
+                if (!rowNum) {
+                    moveSelect = true;
+                    if (!colNum) colNum = totalCols + 1;
+                    map.start.rowNum = map.end.rowNum = totalRows;
+                    map.start.colNum = map.end.colNum = colNum - 1;
+                }
                 break;
-            case 40: // down
+            case 'ArrowDown':
                 if (totalRows > rowNum) {
                     moveSelect = true;
                     map.start.rowNum = map.end.rowNum = rowNum + 1;
                 }
+                if (rowNum === totalRows) {
+                    moveSelect = true;
+                    if (colNum === totalCols) colNum = -1;
+                    map.start.rowNum = map.end.rowNum = 0;
+                    map.start.colNum = map.end.colNum = colNum + 1;
+                }
                 break;
-            case 13: // enter
+            case 'Enter': // enter
                 el ? this._removeInput() : this._createInput();
                 e.preventDefault();
                 break;
-            case 27: // esc
+            case 'Escape': // esc
                 this.mouseBtnPressed = 0;
                 this.squarePressed = 0;
                 this._removeInput(false);
@@ -753,7 +780,7 @@ export default class Core {
 
 
         // ctrl + a
-        if (e.ctrlKey && keyCode === 65) {
+        if (e.ctrlKey && key.toLowerCase() === 'a') {
             moveSelect = false;
             data = this.getData();
             map.start.rowNum = 0;

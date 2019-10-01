@@ -1,5 +1,6 @@
 {
-    "name":       "bomtable",
-    "version":    "1.0.7",
-    "hash":       "0e1d83b"
+  "version": {
+    "buildDate": "Tue Oct 01 2019 10:31:23 GMT+0300 (GMT+03:00)",
+    "version": "1.0.8"
+  }
 }

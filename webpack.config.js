@@ -29,8 +29,11 @@ const config = {
             exclude: /node_modules/,
             use: [{
                 loader: 'babel-loader',
+
                 options: {
-                    presets: ['env']
+                    presets: [
+                        "@babel/preset-env"
+                    ]
                 }
             }]
         }, {
@@ -40,9 +43,9 @@ const config = {
                 isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
                 {
                     loader: 'css-loader',
-                    options: {
-                        minimize: !isDevelopment
-                    }
+                    // options: {
+                    //     minimize: !isDevelopment
+                    // }
                 },
                 'sass-loader',
                 'resolve-url-loader'
