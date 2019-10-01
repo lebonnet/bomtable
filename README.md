@@ -24,6 +24,12 @@ Simple javascript library for working with data, use familiar interface excel<br
 ### How to use
 ##### как использовать
 
+Yarn install
+
+```text
+yarn add bomtable
+```
+
 ```javascript
 let instance = new BomTable({
     tableClass: 'ex-tbl',
