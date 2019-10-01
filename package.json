@@ -1,8 +1,8 @@
 {
   "name": "bomtable",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "web table like simple excel",
-  "main": "bomtable.js",
+  "main": "src/js/bomtable.js",
   "scripts": {
     "start": "webpack-dev-server --mode development --hot --colors --progress",
     "build": "webpack --mode production --colors --progress"

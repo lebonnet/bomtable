@@ -87,11 +87,12 @@ export default class Core {
     /**
      * Set new data
      * @param {Array} data
+     * @return Core
      */
     setData(data) {
         if (!Array.isArray(data)) throw new Error('Data must be an array');
         this.config.data = data;
-        this.clear()._render();
+        return this.clear()._render();
     }
 
     /**
@@ -105,9 +106,10 @@ export default class Core {
     /**
      * Set new header
      * @param header
+     * @return Core
      */
     setHeader(header) {
-        if (!Array.isArray(header)) throw new Error('Header must be an array');
+        if (header && !Array.isArray(header)) throw new Error('Header must be an array');
         this.config.header = header;
         return this.clear()._render();
     }
@@ -389,6 +391,7 @@ export default class Core {
 
         if (!this.dom.header) {
             this.removeHeader();
+            this.dom.table.classList.add('bomtable-no-header');
         }
 
         this.dom.header && this.dom.table.appendChild(this.dom.header);
@@ -412,18 +415,18 @@ export default class Core {
         });
 
         if (!this.dom.wrapper) {
-            this.container =
+            this._container =
                 typeof this.config.container === 'string'
                     ? d.querySelector(this.config.container)
                     : this.config.container;
 
-            this.dom.wrapper = helper.createElement('div', 'bomtable-wrapper', this.container);
+            this.dom.wrapper = helper.createElement('div', 'bomtable-wrapper', this._container);
 
             this.isTouch && this.dom.wrapper.classList.add('touched');
 
             this.dom.wrapper.appendChild(this.dom.table);
 
-            this.container.style.position = 'relative';
+            this._container.style.position = 'relative';
         }
 
         return this;
@@ -1087,7 +1090,7 @@ export default class Core {
      * @private
      */
     _getRectWrapper() {
-        return this.container.getBoundingClientRect();
+        return this._container.getBoundingClientRect();
     }
 
     /**
@@ -1431,7 +1434,10 @@ export default class Core {
      */
     clear() {
 
-        this.dom = {};
+        if (!this.dom) {
+            this.dom = {};
+        }
+
         this._removeInput(false);
         this._removeCopyArea(false);
 
