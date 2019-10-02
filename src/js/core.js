@@ -25,7 +25,7 @@ export default class Core {
             colsClass: '', // css class for table cols
 
             // context menu
-            contextMain: {
+            contextMenu: {
                 items: {
                     addRow: 'add row',
                     addCol: 'add col',
@@ -36,7 +36,9 @@ export default class Core {
                     unionCols: 'union cols'
                 },
                 callback: null // function can be call after click context menu item
-            }
+            },
+            // header menu, cooking like context menu
+            headerMenu: null
         }, opts);
 
         this._keysIgnore = [
@@ -214,12 +216,10 @@ export default class Core {
             rowsClass = this.config.rowsClass,
             colsClass = this.config.colsClass;
 
-        let tr = d.createElement('tr');
-        colsClass && tr.classList.add(colsClass);
+        let tr = helper.createElement({tagName: 'tr', selector: colsClass});
 
         while (length--) {
-            let td = d.createElement('td');
-            rowsClass && td.classList.add(rowsClass);
+            let td = helper.createElement({tagName: 'td', selector: rowsClass});
 
             tr.appendChild(td);
         }
@@ -248,18 +248,22 @@ export default class Core {
                 if (!key.indexOf(`${num}::`)) {
                     let el = this.dataMap[key],
                         parent = el.parentElement,
-                        nodeType = key.indexOf('-1') > -1 ? 'th' : 'td',
-                        child = d.createElement(nodeType);
+                        tagName = key.indexOf('-1') > -1 ? 'th' : 'td',
+                        child = helper.createElement({tagName});
 
-                    rowsClass && nodeType !== 'th' && child.classList.add(rowsClass);
+                    rowsClass && tagName !== 'th' && child.classList.add(rowsClass);
                     parent.insertBefore(child, el.nextSibling);
                 }
             });
         } else {
-            this.dom.header && helper.createElement('th', '', this.dom.header.firstChild);
+            this.dom.header && helper.createElement({tagName: 'th', parent: this.dom.header.firstChild});
             lastColIndex = this.instanceData[0].length - 1;
             while (it !== this.instanceData.length) {
-                helper.createElement('td', rowsClass, this.dataMap[`${lastColIndex}::${it++}`].parentElement);
+                helper.createElement({
+                    tagName: 'td',
+                    selector: rowsClass,
+                    parent: this.dataMap[`${lastColIndex}::${it++}`].parentElement
+                });
             }
         }
 
@@ -415,22 +419,28 @@ export default class Core {
             colsClass = this.config.colsClass;
 
         // create table
-        this.dom.table = helper.createElement('table', 'bomtable');
+        this.dom.table = helper.createElement({tagName: 'table', selector: 'bomtable'});
         this.config.tableClass && this.dom.table.classList.add(this.config.tableClass);
 
         this._prepareData(this.config.data);
         this._prepareHeader(this.config.header);
 
         if (!this.dom.header && this.instanceHeader.length) {
-            this.dom.header = d.createElement('thead');
-            this.dom.header.appendChild(d.createElement('tr'));
+            this.dom.header = helper.createElement({tagName: 'thead'});
+            helper.createElement({tagName: 'tr', parent: this.dom.header});
         }
 
         this.instanceHeader.forEach((cell, colNum) => {
-            let th = d.createElement('th');
-            th.innerHTML = cell;
-            this.dom.header.firstElementChild.appendChild(th);
+            let th = helper.createElement({tagName: 'th', parent: this.dom.header.firstElementChild});
             this.dataMap[`${colNum}::-1`] = th;
+
+            if (this.config.headerMenu) {
+                let wrap = helper.createElement({tagName: 'div', selector: 'bomtable-header-cell-wrap', parent: th});
+                helper.createElement({tagName: 'button', selector: 'bomtable-header-cell-btn', parent: th});
+                wrap.innerHTML = cell;
+            } else {
+                th.innerHTML = cell;
+            }
         });
 
         if (!this.dom.header) {
@@ -441,7 +451,7 @@ export default class Core {
 
         this.dom.header && this.dom.table.appendChild(this.dom.header);
 
-        this.dom.body = helper.createElement('tbody', '', this.dom.table);
+        this.dom.body = helper.createElement({tagName: 'tbody', parent: this.dom.table});
 
         this.instanceData.forEach((col, rowNum) => {
             let tr = d.createElement('tr');
@@ -465,7 +475,11 @@ export default class Core {
                     ? d.querySelector(this.config.container)
                     : this.config.container;
 
-            this.dom.wrapper = helper.createElement('div', 'bomtable-wrapper', this._container);
+            this.dom.wrapper = helper.createElement({
+                tagName: 'div',
+                selector: 'bomtable-wrapper',
+                parent: this._container
+            });
 
             this.isTouch && this.dom.wrapper.classList.add('touched');
 
@@ -493,35 +507,17 @@ export default class Core {
      * @return {Core}
      */
     createContextMenu(e) {
-        let html = '',
-            wrapRect = this._getRectWrapper(),
-            className;
 
-        if (this.config.contextMain) {
-            e.preventDefault();
+        let wrapRect = this._getRectWrapper();
+        instance._createMenu(e, 'contextMenu', this.dom.wrapper);
 
-            Object.keys(this.config.contextMain.items).forEach(key => {
-
-                if (/^hr+[0-9]*$/.test(key)) {
-                    html += `<li class="bomtable-hr"></li>`;
-                } else {
-                    className = key.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
-                    html += `<li data-action="${key}" class="${className}">${this.config.contextMain.items[key]}</li>`;
-                }
-
-            });
-
-            if (!this.dom.menu) {
-                this.dom.menu = helper.createElement('ul', 'bomtable-context-menu', this.dom.wrapper);
-            }
-
-            this.dom.menu.innerHTML = html;
-            this.dom.menu.style.display = 'block';
-            this.dom.menu.style.left = e.pageX - wrapRect.left - w.pageXOffset + 'px';
-            this.dom.menu.style.top = e.pageY - wrapRect.top - w.pageYOffset + 'px';
+        if (instance.config.contextMenu) {
+            instance.dom.contextMenu.style.display = 'block';
+            instance.dom.contextMenu.style.left = e.pageX - wrapRect.left - w.pageXOffset + 'px';
+            instance.dom.contextMenu.style.top = e.pageY - wrapRect.top - w.pageYOffset + 'px';
         }
 
-        return this;
+        return instance;
     }
 
     /**
@@ -529,27 +525,111 @@ export default class Core {
      * @param {MouseEvent} e
      * @return {Core}
      */
-    closeMenu(e) {
+    closeContextMenu(e) {
+        return instance._closeMenu(e, 'contextMenu');
+    }
 
+
+    /**
+     * Create header menu
+     * @param {MouseEvent} e
+     * @returns {Core}
+     */
+    createHeaderMenu(e) {
+        /**
+         * @type {HTMLElement}
+         */
+        let el = e.target;
+        el.parentNode.classList.add('active');
+        instance._createMenu(e, 'headerMenu', el);
+        return instance;
+    }
+
+    /**
+     * Close header menu
+     * @param e {MouseEvent}
+     * @return {Core}
+     */
+    closeHeaderMenu(e) {
+
+        Object.keys(instance.dataMap)
+            .forEach(key => {
+                if (key.indexOf('-1') === -1) return;
+                this.dataMap[key].classList.remove('active');
+            });
+
+        return instance._closeMenu(e, 'headerMenu');
+    }
+
+    /**
+     * Create context or header menu
+     * @param e {MouseEvent}
+     * @param menuName {String}
+     * @param parent {HTMLElement}
+     * @return {Core}
+     * @private
+     */
+    _createMenu(e, menuName, parent) {
+        let html = '',
+            className;
+
+        if (instance.config[menuName]) {
+            e.preventDefault();
+
+            Object.keys(instance.config[menuName].items).forEach(key => {
+
+                if (/^hr+[0-9]*$/.test(key)) {
+                    html += `<li class="bomtable-hr"></li>`;
+                } else {
+                    className = helper.camelCaseToKebabCase(key);
+                    html += `<li data-action="${key}" class="${className}">${instance.config[menuName].items[key]}</li>`;
+                }
+
+            });
+
+            if (!instance.dom[menuName]) {
+                instance.dom[menuName] = helper.createElement({
+                    tagName: 'ul',
+                    selector: `bomtable-${helper.camelCaseToKebabCase(menuName)}`,
+                    parent
+                });
+            }
+
+            instance.dom[menuName].innerHTML = html;
+        }
+
+        return instance;
+    }
+
+    /**
+     * Close context or header menu
+     * @param e {MouseEvent}
+     * @param menuName {String}
+     * @returns {Core}
+     * @private
+     */
+    _closeMenu(e, menuName) {
         let el = e && e.target,
             action;
 
-        if (el && !e.button && this.dom.menu && helper._likeArray(this.dom.menu.children).some(li => li === el)) {
+        if (el && !e.button && instance.dom[menuName] &&
+            helper._likeArray(instance.dom[menuName].children).some(li => li === el)) {
+
             action = el.dataset.action;
 
-            if (this.config.contextMain.callback) {
-                this.config.contextMain.callback(action, this, e);
-            } else if (this[action]) {
-                this[action]();
+            if (instance.config[menuName].callback) {
+                instance.config[menuName].callback(action, instance, e);
+            } else if (instance[action]) {
+                instance[action]();
             } else {
-                throw new Error('Undefined action ' + action);
+                throw new Error(`Undefined action ${action}`);
             }
         }
 
-        this.dom.menu && helper.removeElement(this.dom.menu);
-        this.dom.menu = null;
+        instance.dom[menuName] && helper.removeElement(instance.dom[menuName]);
+        instance.dom[menuName] = null;
 
-        return this;
+        return instance;
     }
 
     /**
@@ -588,7 +668,8 @@ export default class Core {
 
         instance._removeInput(instance.isTouch);
 
-        instance.closeMenu(e);
+        instance.closeContextMenu(e);
+        instance.closeHeaderMenu(e);
 
         if (!helper.parents(el).some(p => p === instance.dom.table)) {
             if (instance.dom.square && instance.dom.square === el) {
@@ -616,17 +697,22 @@ export default class Core {
 
     /**
      * Mouse up listener
+     * @param {MouseEvent}  e
      * @private
      */
-    _onmouseup() {
+    _onmouseup(e) {
         if (instance.destroyed) return;
 
+        let el = e.target;
         if (instance.isTouch) {
             instance.countTouch--;
-            console.log('remove', instance.countTouch);
         }
         instance.mouseBtnPressed = 0;
         instance.squarePressed = 0;
+
+        if (e.which === 1 && el.classList.contains('bomtable-header-cell-btn')) {
+            instance.createHeaderMenu(e);
+        }
         instance._removeCopyArea();
     }
 
@@ -862,7 +948,7 @@ export default class Core {
             instance._createInput(false)
         }
 
-        instance.closeMenu(e)
+        instance.closeContextMenu(e)
     }
 
     /**
@@ -957,7 +1043,11 @@ export default class Core {
         let str = [];
 
         if (!this.dom._buffer) {
-            this.dom._buffer = helper.createElement('textarea', 'bomtable-buffer', this.dom.wrapper);
+            this.dom._buffer = helper.createElement({
+                tagName: 'textarea',
+                selector: 'bomtable-buffer',
+                parent: this.dom.wrapper
+            });
             this.dom._buffer.addEventListener('paste', this._onPaste);
         }
 
@@ -1009,7 +1099,7 @@ export default class Core {
             this.mouseDownElement = {el, colNum, rowNum};
         }
 
-        this._setActiveArea({
+        this.mouseDownElement && this._setActiveArea({
             start: {
                 colNum: this.mouseDownElement.colNum,
                 rowNum: this.mouseDownElement.rowNum,
@@ -1168,7 +1258,11 @@ export default class Core {
         if (downRightTd.tagName !== 'TD') return this;
 
         if (!this.dom.square) {
-            this.dom.square = helper.createElement('div', 'bomtable-square', this.dom.wrapper);
+            this.dom.square = helper.createElement({
+                tagName: 'div',
+                selector: 'bomtable-square',
+                parent: this.dom.wrapper
+            });
         }
 
         this.dom.square.style.top = rect.bottom - wrapRect.top + 'px';
@@ -1290,10 +1384,26 @@ export default class Core {
 
         let wrapRect = this._getRectWrapper();
         if (!this.dom.copyAreaLeft) {
-            this.dom.copyAreaLeft = helper.createElement('div', 'bomtable-copy-area-left', this.dom.wrapper);
-            this.dom.copyAreaRight = helper.createElement('div', 'bomtable-copy-area-right', this.dom.wrapper);
-            this.dom.copyAreaTop = helper.createElement('div', 'bomtable-copy-area-top', this.dom.wrapper);
-            this.dom.copyAreaBottom = helper.createElement('div', 'bomtable-copy-area-bottom', this.dom.wrapper);
+            this.dom.copyAreaLeft = helper.createElement({
+                tagName: 'div',
+                selector: 'bomtable-copy-area-left',
+                parent: this.dom.wrapper
+            });
+            this.dom.copyAreaRight = helper.createElement({
+                tagName: 'div',
+                selector: 'bomtable-copy-area-right',
+                parent: this.dom.wrapper
+            });
+            this.dom.copyAreaTop = helper.createElement({
+                tagName: 'div',
+                selector: 'bomtable-copy-area-top',
+                parent: this.dom.wrapper
+            });
+            this.dom.copyAreaBottom = helper.createElement({
+                tagName: 'div',
+                selector: 'bomtable-copy-area-bottom',
+                parent: this.dom.wrapper
+            });
         }
 
         this.dom.copyAreaLeft.style.top = position.top - wrapRect.top + 'px';
@@ -1444,11 +1554,16 @@ export default class Core {
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
             wrapRect = this._getRectWrapper(),
-            textarea = helper.createElement('textarea', 'bomtable-input', this.dom.wrapper, {
-                left: tdRect.left - wrapRect.left - 1 + 'px',
-                top: tdRect.top - wrapRect.top - 1 + 'px',
-                width: tdRect.width - 1 + 'px',
-                height: tdRect.height - 1 + 'px',
+            textarea = helper.createElement({
+                tagName: 'textarea',
+                selector: 'bomtable-input',
+                parent: this.dom.wrapper,
+                css: {
+                    left: tdRect.left - wrapRect.left - 1 + 'px',
+                    top: tdRect.top - wrapRect.top - 1 + 'px',
+                    width: tdRect.width - 1 + 'px',
+                    height: tdRect.height - 1 + 'px',
+                }
             });
 
         if (setCellValue) {

@@ -59,10 +59,18 @@ let opts = {
     colsClass: '', // css class for table cols (default empty string) | css класс для столбцов
     
     // context menu | контекстное меню
-    contextMain: {
+    contextMenu: {
         items: {}, // items - object with list item | объект со списком элементов меню
         callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
-    } 
+    },
+
+    // if headers sets, use like context menu | если заданы заголовки, готовить так же как контекстное меню
+    // default empty
+    headerMenu: {
+        items: {}, // items - object with list item | объект со списком элементов меню
+        callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
+    },
+
 };
 ```
 

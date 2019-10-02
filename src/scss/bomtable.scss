@@ -1,4 +1,5 @@
 $gray: #ccc;
+$blue: #19a2cc;
 
 * {
     margin: 0;
@@ -56,7 +57,55 @@ $gray: #ccc;
             background: #d3f4fe;
         }
     }
+}
 
+.bomtable-header-cell-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.bomtable-header-cell-btn:before,
+.bomtable-header-cell-btn:after {
+    position: absolute;
+    width: 9px;
+    height: 1px;
+    background-color: #00779e;
+    display: inline-block;
+    transition: all 0.2s ease;
+    content: '';
+}
+
+.bomtable-header-cell-btn {
+    width: 15px;
+    height: 10px;
+    display: inline-block;
+    position: relative;
+    margin: 0 5px 0 15px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+
+    &:focus {
+        outline: none;
+    }
+
+    &:before {
+        left: 0;
+        transform: rotate(45deg);
+    }
+
+    &:after {
+        right: 0;
+        transform: rotate(-45deg);
+    }
+}
+
+.active .bomtable-header-cell-btn:before {
+    transform: rotate(-45deg);
+}
+
+.active .bomtable-header-cell-btn:after {
+    transform: rotate(45deg);
 }
 
 .bomtable-no-header {
@@ -106,8 +155,8 @@ $gray: #ccc;
     font-family: inherit;
     line-height: 28px;
     font-size: inherit;
-    box-shadow: inset 0 0 0 1px #19a2cc;
-    border: 1px solid #19a2cc;
+    box-shadow: inset 0 0 0 1px $blue;
+    border: 1px solid $blue;
     resize: none;
     display: block;
     color: #000;
@@ -125,7 +174,8 @@ $gray: #ccc;
     resize: none;
 }
 
-.bomtable-context-menu {
+.bomtable-context-menu,
+.bomtable-header-menu {
     position: absolute;
     box-shadow: 0.5px 0.5px 1px 0 rgba(0, 0, 0, 0.15);
     border: 1px solid $gray;
@@ -158,6 +208,25 @@ $gray: #ccc;
             width: auto;
         }
     }
+}
+
+.bomtable-header-cell-btn .bomtable-header-menu {
+    left: 1px;
+    top: 8px;
+    border: 1px solid $blue;
+
+    li {
+        border-top: 1px solid $blue;
+
+        &:first-child {
+            border: none;
+        }
+
+        &.bomtable-hr {
+            display: none;
+        }
+    }
+
 }
 
 .touched {

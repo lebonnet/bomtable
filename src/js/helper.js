@@ -6,7 +6,7 @@
  * @param {Object} css - css styles
  * @return {HTMLElement}
  */
-export function createElement(tagName, selector = '', parent = null, css = {}) {
+export function createElement({tagName, selector = '', parent = null, css = {}}) {
     let el = document.createElement(tagName);
     el.className = selector;
     Object.assign(el.style, css);
@@ -75,4 +75,8 @@ export function clearSelected() {
  */
 export function isTableCell(el) {
     return ['TD', 'TH'].includes(el.tagName);
+}
+
+export function camelCaseToKebabCase(string) {
+    return string.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
 }
