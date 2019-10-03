@@ -40,6 +40,8 @@ $blue: #19a2cc;
         vertical-align: middle;
         white-space: nowrap;
         min-width: 35px;
+        font-size: 13px;
+        font-weight: normal;
 
         &:first-child {
             border-left: 1px solid $gray;
@@ -212,7 +214,7 @@ $blue: #19a2cc;
 
 .bomtable-header-cell-btn .bomtable-header-menu {
     left: 1px;
-    top: 8px;
+    top: 12px;
     border: 1px solid $blue;
 
     li {

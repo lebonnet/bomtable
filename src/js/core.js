@@ -526,7 +526,11 @@ export default class Core {
      * @return {Core}
      */
     closeContextMenu(e) {
-        return instance._closeMenu(e, 'contextMenu');
+        let colNum = instance.lastSelected ? instance.lastSelected.colNum : null,
+            rowNum = instance.lastSelected ? instance.lastSelected.rowNum : null,
+            lastSelected = {colNum, rowNum};
+
+        return instance._closeMenu(e, 'contextMenu', lastSelected);
     }
 
 
@@ -536,9 +540,6 @@ export default class Core {
      * @returns {Core}
      */
     createHeaderMenu(e) {
-        /**
-         * @type {HTMLElement}
-         */
         let el = e.target;
         el.parentNode.classList.add('active');
         instance._createMenu(e, 'headerMenu', el);
@@ -552,13 +553,16 @@ export default class Core {
      */
     closeHeaderMenu(e) {
 
+        let lastSelected = {colNum: 0, rowNum: -1};
         Object.keys(instance.dataMap)
             .forEach(key => {
-                if (key.indexOf('-1') === -1) return;
-                this.dataMap[key].classList.remove('active');
+                let el = this.dataMap[key];
+                if (key.indexOf('-1') === -1 || !el.classList.contains('active')) return;
+                el.classList.remove('active');
+                lastSelected.colNum = +key.split('::')[0];
             });
 
-        return instance._closeMenu(e, 'headerMenu');
+        return instance._closeMenu(e, 'headerMenu', lastSelected);
     }
 
     /**
@@ -605,10 +609,11 @@ export default class Core {
      * Close context or header menu
      * @param e {MouseEvent}
      * @param menuName {String}
+     * @param lastSelected {Object}
      * @returns {Core}
      * @private
      */
-    _closeMenu(e, menuName) {
+    _closeMenu(e, menuName, lastSelected) {
         let el = e && e.target,
             action;
 
@@ -618,7 +623,7 @@ export default class Core {
             action = el.dataset.action;
 
             if (instance.config[menuName].callback) {
-                instance.config[menuName].callback(action, instance, e);
+                instance.config[menuName].callback(action, instance, e, lastSelected);
             } else if (instance[action]) {
                 instance[action]();
             } else {
@@ -669,7 +674,6 @@ export default class Core {
         instance._removeInput(instance.isTouch);
 
         instance.closeContextMenu(e);
-        instance.closeHeaderMenu(e);
 
         if (!helper.parents(el).some(p => p === instance.dom.table)) {
             if (instance.dom.square && instance.dom.square === el) {
@@ -710,9 +714,15 @@ export default class Core {
         instance.mouseBtnPressed = 0;
         instance.squarePressed = 0;
 
-        if (e.which === 1 && el.classList.contains('bomtable-header-cell-btn')) {
+        if (e.which === 1 &&
+            el.classList.contains('bomtable-header-cell-btn') &&
+            !el.parentNode.classList.contains('active')) {
+            instance.closeHeaderMenu(e);
             instance.createHeaderMenu(e);
+        } else {
+            instance.closeHeaderMenu(e);
         }
+
         instance._removeCopyArea();
     }
 
