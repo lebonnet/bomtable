@@ -876,7 +876,7 @@ export default class Core {
             map = {start: {colNum, rowNum}, end: {colNum, rowNum}},
             keyMustIgnore = instance._keysIgnore.includes(e.keyCode);
 
-        if (e.ctrlKey) {
+        if (e.ctrlKey && !el && key.toLowerCase() !== 'a') {
             instance._createBuffer();
         }
 
@@ -956,7 +956,7 @@ export default class Core {
         }
 
         // ctrl + a
-        if (e.ctrlKey && key.toLowerCase() === 'a') {
+        if (!el && e.ctrlKey && key.toLowerCase() === 'a') {
             moveSelect = false;
             data = instance.getData();
             map.start.rowNum = 0;
@@ -978,11 +978,11 @@ export default class Core {
 
         instance.closeContextMenu(e);
 
-        if (!instance.input || keyMustIgnore) return;
+        if (!el || keyMustIgnore) return;
 
         // BM - compensation
-        instance.dom.elHelper.innerText = instance.input.el.value + 'BM';
-        instance.input.el.style.minWidth = instance.dom.elHelper.offsetWidth + 'px';
+        instance.dom.elHelper.innerText = el.value + 'BM';
+        el.style.minWidth = instance.dom.elHelper.offsetWidth + 'px';
     }
 
     /**
