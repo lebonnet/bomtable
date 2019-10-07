@@ -35,7 +35,9 @@ let instance = new BomTable({
     tableClass: 'ex-tbl',
     container: '.example',
     data: [[0, 7, 8, 9], [1, 20, 30], [2, 5], [3], [4, 56, 55, 22, 15, 18], [5, 7, 1], [6]],
-    header: ['0', '1', '2', '3', '4', '5', '6']
+    header: ['0', '1', '2', '3', '4', '5', '6'],
+
+
 });
 ```
 
@@ -43,6 +45,22 @@ let instance = new BomTable({
 
 ### Examples
 - [See a live demo | посмотреть пример](http://lebonnet.ru/bomtable/index.html)
+
+renders example
+```javascript
+let instance = new BomTable({
+    tableClass: 'ex-tbl',
+    container: '.example',
+    data: [[0, 7, 8, 9], [1, 20, 30], [2, 5], [3], [4, 56, 55, 22, 15, 18], [5, 7, 1], [6]],
+    header: ['0', '1', '2', '3', '4', '5', '6'],
+
+    renders: (inst, td, colNum, rowNum, val) => {
+        if (colNum === 2) td.style.color = 'tomato'
+        if (val === 1) td.style.color = 'green'
+    },
+
+});
+```
 
 <br/>
 
@@ -58,6 +76,8 @@ let opts = {
     rowsClass: '', // css class for table rows (default empty string) | css класс для строк
     colsClass: '', // css class for table cols (default empty string) | css класс для столбцов
     
+    renders: null, // function for render cells | функция для рендера ячеек
+
     // context menu | контекстное меню
     contextMenu: {
         items: {}, // items - object with list item | объект со списком элементов меню

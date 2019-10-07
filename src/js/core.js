@@ -24,6 +24,8 @@ export default class Core {
             rowsClass: '', // css class for table rows
             colsClass: '', // css class for table cols
 
+            renders: null,
+
             // context menu
             contextMenu: {
                 items: {
@@ -432,6 +434,7 @@ export default class Core {
 
         this.instanceHeader.forEach((cell, colNum) => {
             let th = helper.createElement({tagName: 'th', parent: this.dom.header.firstElementChild});
+
             this.dataMap[`${colNum}::-1`] = th;
 
             if (this.config.headerMenu) {
@@ -460,6 +463,11 @@ export default class Core {
             col.forEach((cell, colNum) => {
                 let td = d.createElement('td');
                 rowsClass && td.classList.add(rowsClass);
+
+                if (this.config.renders) {
+                    this.config.renders(this, td, colNum, rowNum, cell)
+                }
+
                 td.innerHTML = cell;
 
                 tr.appendChild(td);
@@ -680,7 +688,7 @@ export default class Core {
 
         if (instance.input && el === instance.input.el) return;
 
-        instance._removeInput(instance.isTouch);
+        instance._removeInput(!instance.isTouch);
 
         instance.closeContextMenu(e);
 
@@ -1376,7 +1384,8 @@ export default class Core {
             startCol = this.lastSelectArea.start.col;
         }
 
-        if (rectBRSTr.top + w.pageYOffset > Y) { // up
+        // up
+        if (rectBRSTr.top + w.pageYOffset > Y) {
 
             startRow = this.lastSelectArea.start.row;
             endRow = this.lastSelectArea.end.row;
