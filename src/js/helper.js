@@ -77,6 +77,11 @@ export function isTableCell(el) {
     return ['TD', 'TH'].includes(el.tagName);
 }
 
+/**
+ * aaaAaa to aaa-a-aa
+ * @param string
+ * @returns {string}
+ */
 export function camelCaseToKebabCase(string) {
     return string.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
 }

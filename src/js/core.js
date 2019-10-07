@@ -690,12 +690,21 @@ export default class Core {
 
         instance._removeSquare();
 
+        helper
+            .parents(el)
+            .some(p => {
+                if (p.tagName === 'TH') {
+                    el = p;
+                    return true;
+                }
+            });
+
         if (!helper.isTableCell(el)) return;
 
         // left click on select area
         if (e.button && instance.selected.some(key => instance.dataMap[key] === el)) return;
 
-        instance._setActiveCell(e);
+        instance._setActiveCell(e, el);
 
     }
 
