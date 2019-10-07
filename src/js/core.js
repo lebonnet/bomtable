@@ -509,7 +509,7 @@ export default class Core {
     createContextMenu(e) {
 
         let wrapRect = this._getRectWrapper();
-        instance._createMenu(e, 'contextMenu', this.dom.wrapper);
+        instance._createMenu(e, 'contextMenu');
 
         if (instance.config.contextMenu) {
             instance.dom.contextMenu.style.display = 'block';
@@ -540,9 +540,19 @@ export default class Core {
      * @returns {Core}
      */
     createHeaderMenu(e) {
-        let el = e.target;
+        let el = e.target,
+            wrapRect = this._getRectWrapper(),
+            btnRect = el.getBoundingClientRect();
+
+        instance.dom.contextMenu = instance._createMenu(e, 'headerMenu');
+
         el.parentNode.classList.add('active');
-        instance._createMenu(e, 'headerMenu', el);
+
+        if (instance.config.headerMenu) {
+            instance.dom.headerMenu.style.left = btnRect.left - wrapRect.left + 'px';
+            instance.dom.headerMenu.style.top = btnRect.bottom - wrapRect.top + 'px';
+        }
+
         return instance;
     }
 
@@ -569,11 +579,10 @@ export default class Core {
      * Create context or header menu
      * @param e {MouseEvent}
      * @param menuName {String}
-     * @param parent {HTMLElement}
      * @return {Core}
      * @private
      */
-    _createMenu(e, menuName, parent) {
+    _createMenu(e, menuName) {
         let html = '',
             className;
 
@@ -595,7 +604,7 @@ export default class Core {
                 instance.dom[menuName] = helper.createElement({
                     tagName: 'ul',
                     selector: `bomtable-${helper.camelCaseToKebabCase(menuName)}`,
-                    parent
+                    parent: instance.dom.wrapper
                 });
             }
 
@@ -617,7 +626,7 @@ export default class Core {
         let el = e && e.target,
             action;
 
-        if (el && !e.button && instance.dom[menuName] &&
+        if (el && !e.button && instance.dom[menuName] && instance.dom[menuName].children &&
             helper._likeArray(instance.dom[menuName].children).some(li => li === el)) {
 
             action = el.dataset.action;
@@ -864,7 +873,8 @@ export default class Core {
             totalCols = instance.instanceData[0].length - 1,
             totalRows = instance.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
-            map = {start: {colNum, rowNum}, end: {colNum, rowNum}};
+            map = {start: {colNum, rowNum}, end: {colNum, rowNum}},
+            keyMustIgnore = instance._keysIgnore.includes(e.keyCode);
 
         if (e.ctrlKey) {
             instance._createBuffer();
@@ -945,7 +955,6 @@ export default class Core {
                 break;
         }
 
-
         // ctrl + a
         if (e.ctrlKey && key.toLowerCase() === 'a') {
             moveSelect = false;
@@ -963,11 +972,17 @@ export default class Core {
             e.preventDefault();
             instance._removeInput();
             instance._setActiveArea(map);
-        } else if (!el && !e.ctrlKey && !e.shiftKey && !instance._keysIgnore.includes(e.keyCode) && !instance.mouseBtnPressed) {
+        } else if (!el && !e.ctrlKey && !e.shiftKey && !keyMustIgnore && !instance.mouseBtnPressed) {
             instance._createInput(false)
         }
 
-        instance.closeContextMenu(e)
+        instance.closeContextMenu(e);
+
+        if (!instance.input || keyMustIgnore) return;
+
+        // BM - compensation
+        instance.dom.elHelper.innerText = instance.input.el.value + 'BM';
+        instance.input.el.style.minWidth = instance.dom.elHelper.offsetWidth + 'px';
     }
 
     /**
@@ -1154,6 +1169,9 @@ export default class Core {
      * @private
      */
     _setActiveArea(map, keyType = 'none') {
+
+        if (this.destroyed) return this;
+
         let
             startCol = map.start.colNum,
             endCol = map.end.colNum,
@@ -1591,6 +1609,20 @@ export default class Core {
 
         textarea.focus();
 
+        let textareaStyle = w.getComputedStyle(textarea);
+        this.dom.elHelper = helper.createElement({
+            tagName: 'span',
+            parent: this.dom.wrapper,
+            css: {
+                top: 0,
+                zIndex: -1,
+                position: 'absolute',
+                display: 'inlineBlock',
+                fontFamily: textareaStyle.fontFamily,
+                fontSize: textareaStyle.fontSize,
+            }
+        });
+
         this.input = {el: textarea, colNum: this.lastSelected.colNum, rowNum: this.lastSelected.rowNum};
 
         return this._removeSquare();
@@ -1610,6 +1642,8 @@ export default class Core {
             rowNum = this.input.rowNum;
 
         helper.removeElement(this.input.el);
+        helper.removeElement(this.dom.elHelper);
+
         this.input = null;
 
         if (saveValue) {
