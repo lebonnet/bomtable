@@ -516,13 +516,13 @@ export default class Core {
      */
     createContextMenu(e) {
 
-        let wrapRect = this._getRectWrapper();
+        let wrapPos = this._getWrapTopLeftPosition();
         instance._createMenu(e, 'contextMenu');
 
         if (instance.config.contextMenu) {
             instance.dom.contextMenu.style.display = 'block';
-            instance.dom.contextMenu.style.left = e.pageX - wrapRect.left - w.pageXOffset + 'px';
-            instance.dom.contextMenu.style.top = e.pageY - wrapRect.top - w.pageYOffset + 'px';
+            instance.dom.contextMenu.style.left = e.pageX - wrapPos.left - w.pageXOffset + 'px';
+            instance.dom.contextMenu.style.top = e.pageY - wrapPos.top - w.pageYOffset + 'px';
         }
 
         return instance;
@@ -549,7 +549,7 @@ export default class Core {
      */
     createHeaderMenu(e) {
         let el = e.target,
-            wrapRect = this._getRectWrapper(),
+            wrapPos = this._getWrapTopLeftPosition(),
             btnRect = el.getBoundingClientRect();
 
         instance.dom.contextMenu = instance._createMenu(e, 'headerMenu');
@@ -557,8 +557,8 @@ export default class Core {
         el.parentNode.classList.add('active');
 
         if (instance.config.headerMenu) {
-            instance.dom.headerMenu.style.left = btnRect.left - wrapRect.left + 'px';
-            instance.dom.headerMenu.style.top = btnRect.bottom - wrapRect.top + 'px';
+            instance.dom.headerMenu.style.left = btnRect.left - wrapPos.left + 'px';
+            instance.dom.headerMenu.style.top = btnRect.bottom - wrapPos.top + 'px';
         }
 
         return instance;
@@ -1280,12 +1280,18 @@ export default class Core {
     }
 
     /**
-     * Get container position prop
-     * @return {ClientRect | DOMRect}
+     * Get container top and lEft position
+     * @return {{}}
      * @private
      */
-    _getRectWrapper() {
-        return this._container.getBoundingClientRect();
+    _getWrapTopLeftPosition() {
+        let rect = this._container.getBoundingClientRect(),
+            css = w.getComputedStyle(this._container);
+
+        return {
+            top: rect.top + helper.getNumberFromString(css.paddingTop),
+            left: rect.left + helper.getNumberFromString(css.paddingLeft)
+        };
     }
 
     /**
@@ -1297,7 +1303,7 @@ export default class Core {
      */
     _createSquare(endCol, endRow) {
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
-            wrapRect = this._getRectWrapper(),
+            wrapPos = this._getWrapTopLeftPosition(),
             rect = downRightTd.getBoundingClientRect();
 
         if (downRightTd.tagName !== 'TD') return this;
@@ -1310,8 +1316,8 @@ export default class Core {
             });
         }
 
-        this.dom.square.style.top = rect.bottom - wrapRect.top + 'px';
-        this.dom.square.style.left = rect.right - wrapRect.left + 'px';
+        this.dom.square.style.top = rect.bottom - wrapPos.top + 'px';
+        this.dom.square.style.left = rect.right - wrapPos.left + 'px';
 
         return this;
     }
@@ -1428,7 +1434,7 @@ export default class Core {
      */
     _renderSquareDragArea(position) {
 
-        let wrapRect = this._getRectWrapper();
+        let wrapPos = this._getWrapTopLeftPosition();
         if (!this.dom.copyAreaLeft) {
             this.dom.copyAreaLeft = helper.createElement({
                 tagName: 'div',
@@ -1452,20 +1458,20 @@ export default class Core {
             });
         }
 
-        this.dom.copyAreaLeft.style.top = position.top - wrapRect.top + 'px';
-        this.dom.copyAreaLeft.style.left = position.left - wrapRect.left + 'px';
+        this.dom.copyAreaLeft.style.top = position.top - wrapPos.top + 'px';
+        this.dom.copyAreaLeft.style.left = position.left - wrapPos.left + 'px';
         this.dom.copyAreaLeft.style.height = position.bottom - position.top + 'px';
 
-        this.dom.copyAreaRight.style.top = position.top - wrapRect.top + 'px';
-        this.dom.copyAreaRight.style.left = position.right - wrapRect.left + 'px';
+        this.dom.copyAreaRight.style.top = position.top - wrapPos.top + 'px';
+        this.dom.copyAreaRight.style.left = position.right - wrapPos.left + 'px';
         this.dom.copyAreaRight.style.height = position.bottom - position.top + 'px';
 
-        this.dom.copyAreaTop.style.top = position.top - wrapRect.top + 'px';
-        this.dom.copyAreaTop.style.left = position.left - wrapRect.left + 'px';
+        this.dom.copyAreaTop.style.top = position.top - wrapPos.top + 'px';
+        this.dom.copyAreaTop.style.left = position.left - wrapPos.left + 'px';
         this.dom.copyAreaTop.style.width = position.right - position.left + 'px';
 
-        this.dom.copyAreaBottom.style.top = position.bottom - wrapRect.top + 'px';
-        this.dom.copyAreaBottom.style.left = position.left - wrapRect.left + 'px';
+        this.dom.copyAreaBottom.style.top = position.bottom - wrapPos.top + 'px';
+        this.dom.copyAreaBottom.style.left = position.left - wrapPos.left + 'px';
         this.dom.copyAreaBottom.style.width = position.right - position.left + 'px';
 
         return this;
@@ -1599,14 +1605,14 @@ export default class Core {
 
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
-            wrapRect = this._getRectWrapper(),
+            wrapPos = this._getWrapTopLeftPosition(),
             textarea = helper.createElement({
                 tagName: 'textarea',
                 selector: 'bomtable-input',
                 parent: this.dom.wrapper,
                 css: {
-                    left: tdRect.left - wrapRect.left - 1 + 'px',
-                    top: tdRect.top - wrapRect.top - 1 + 'px',
+                    left: tdRect.left - wrapPos.left - 1 + 'px',
+                    top: tdRect.top - wrapPos.top - 1 + 'px',
                     width: tdRect.width - 1 + 'px',
                     height: tdRect.height - 1 + 'px',
                 }

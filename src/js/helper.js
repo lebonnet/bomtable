@@ -85,3 +85,18 @@ export function isTableCell(el) {
 export function camelCaseToKebabCase(string) {
     return string.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
 }
+
+/**
+ * Extract number from string
+ * @param str
+ * @returns {number}
+ */
+export function getNumberFromString(str) {
+    if (!str) return 0;
+    if (typeof str === 'number') return str;
+    str = str.toString().replace(/[^0-9.,]/g, '');
+    str = str.replace(/,/g, '.');
+    str = str.match(/^\d*\.?\d*([^.])/);
+    if (!str) return 0;
+    return +str[0];
+}
