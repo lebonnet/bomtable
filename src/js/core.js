@@ -951,15 +951,22 @@ export default class Core {
                     map.start.colNum = map.end.colNum = colNum + 1;
                 }
                 break;
-            case 'Enter': // enter
+            case 'Enter':
                 el ? instance._removeInput() : instance._createInput();
                 e.preventDefault();
                 break;
-            case 'Escape': // esc
+            case 'Escape':
                 instance.mouseBtnPressed = 0;
                 instance.squarePressed = 0;
                 instance._removeInput(false);
                 instance._removeCopyArea(false);
+                break;
+            case 'Delete':
+                instance.getSelected().forEach(key => {
+                    let [colNum, rowNum] = key.split('::');
+                    instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, '');
+                });
+                keyMustIgnore = true;
                 break;
         }
 
