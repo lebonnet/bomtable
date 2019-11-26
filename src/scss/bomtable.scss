@@ -102,7 +102,7 @@ $blue: #19a2cc;
         color: inherit;
     }
 
-    .bomtable-input {
+    textarea.bomtable-input {
         position: absolute;
         z-index: 10;
         box-sizing: content-box;
@@ -120,11 +120,12 @@ $blue: #19a2cc;
         color: #000;
         border-radius: 0;
         background-color: #fff;
-        white-space: nowrap;
         overflow: hidden;
+        min-height: auto;
+        max-height: unset;
     }
 
-    .bomtable-wrapper .bomtable-buffer {
+    .bomtable-buffer {
         width: 1px;
         height: 1px;
         position: absolute;
@@ -242,6 +243,9 @@ $blue: #19a2cc;
 
     td {
         position: relative;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
 
         &.area {
             background: #d3f4fe !important;

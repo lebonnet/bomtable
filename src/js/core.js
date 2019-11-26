@@ -765,7 +765,7 @@ export default class Core {
 
         let touch = e.targetTouches[0],
             windowYScroll = w.pageYOffset,
-            el, X = touch.pageX, Y = touch.pageY;
+            el = null, X = touch.pageX, Y = touch.pageY;
 
         // find hover element
         Object.keys(instance.dataMap).some(key => {
@@ -998,6 +998,8 @@ export default class Core {
         // BM - compensation
         instance.dom.elHelper.innerText = el.value + 'BM';
         el.style.minWidth = instance.dom.elHelper.offsetWidth + 'px';
+
+        instance._updateInput()
     }
 
     /**
@@ -1613,15 +1615,16 @@ export default class Core {
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
             wrapPos = this._getWrapTopLeftPosition(),
+            left = tdRect.left - wrapPos.left - 1,
             textarea = helper.createElement({
                 tagName: 'textarea',
                 selector: 'bomtable-input',
                 parent: this.dom.wrapper,
                 css: {
-                    left: tdRect.left - wrapPos.left - 1 + 'px',
-                    top: tdRect.top - wrapPos.top - 1 + 'px',
-                    width: tdRect.width - 1 + 'px',
-                    height: tdRect.height - 1 + 'px',
+                    left: `${left}px`,
+                    top: `${tdRect.top - wrapPos.top - 1}px`,
+                    width: `${tdRect.width - 1}px`,
+                    height: `${tdRect.height - 1}px`,
                 }
             });
 
@@ -1633,21 +1636,44 @@ export default class Core {
 
         let textareaStyle = w.getComputedStyle(textarea);
         this.dom.elHelper = helper.createElement({
-            tagName: 'span',
+            tagName: 'div',
             parent: this.dom.wrapper,
             css: {
                 top: 0,
                 zIndex: -1,
                 position: 'absolute',
+                left: `${left}px`,
+                width: `${this.dom.body.offsetWidth - left}px`,
                 display: 'inlineBlock',
                 fontFamily: textareaStyle.fontFamily,
                 fontSize: textareaStyle.fontSize,
+                lineHeight: textareaStyle.lineHeight
             }
         });
 
+        this.dom.elHelper.innerHTML = td.innerHTML;
         this.input = {el: textarea, colNum: this.lastSelected.colNum, rowNum: this.lastSelected.rowNum};
 
-        return this._removeSquare();
+        return this._updateInputSize()._removeSquare();
+    }
+
+    /**
+     * Update input size
+     * @returns {*}
+     * @private
+     */
+    _updateInputSize() {
+        let helper = this.dom.elHelper,
+            textarea = this.input.el;
+
+        if (helper.offsetWidth > textarea.offsetWidth) {
+            textarea.style.width = `${helper.offsetWidth}px`
+        }
+
+        if (helper.offsetHeight > textarea.offsetHeight) {
+            textarea.style.height = `${helper.offsetHeight}px`
+        }
+        return instance
     }
 
     /**

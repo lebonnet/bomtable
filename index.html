@@ -6,14 +6,22 @@
 </head>
 <body>
 <div style="margin: 200px 100px;">
-    <div style="padding: 0px" class="example"></div>
+    <div style="padding: 0" class="example"></div>
 </div>
 </body>
 <script>
     window.bi = new BomTable({
         tableClass: 'ex-tbl',
         container: '.example',
-        data: [[0, 7, 8, 9], [1, 20, 30], [2, 5], [3], [4, 56, 55, 22, 15, 18], [5, 7, 1], [6]],
+        data: [
+            [0, 7, 8, 'R3, R12, R37, R44, R47, R48, R49, R56, R57, R64, R65, R75, R77, R111, R118, R121, R126, R129, R134, R137, R142, R145, R401'],
+            [1, 20, 30],
+            [2, 5],
+            [3],
+            [4, 56, 55, 22, 15, 18],
+            [5, 7, 1],
+            [6]
+        ],
         header: ['0', '1', '2', '3', '4', '5', '6']
     });
 </script>
