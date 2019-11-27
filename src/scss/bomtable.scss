@@ -105,11 +105,9 @@ $blue: #19a2cc;
     textarea.bomtable-input {
         position: absolute;
         z-index: 10;
-        box-sizing: content-box;
         outline-width: 0;
         margin: 0;
-        padding: 0;
-        text-indent: 4px;
+        padding: 0 0 0 4px;
         font-family: inherit;
         line-height: 28px;
         font-size: inherit;
@@ -123,6 +121,7 @@ $blue: #19a2cc;
         overflow: hidden;
         min-height: auto;
         max-height: unset;
+        box-sizing: border-box;
     }
 
     .bomtable-buffer {

@@ -130,6 +130,7 @@ export default class Core {
      * @return {Core}
      */
     setDataCell(col, row, val) {
+        val = val.trim ? val.trim() : val;
         this.dataMap[`${col}::${row}`].innerHTML = val;
         this.instanceData[row][col] = val;
         return this;
@@ -971,7 +972,7 @@ export default class Core {
         }
 
         // ctrl + a
-        if (!el && e.ctrlKey && key.toLowerCase() === 'a') {
+        if (!el && e.ctrlKey && key === 'A') {
             moveSelect = false;
             data = instance.getData();
             map.start.rowNum = 0;
@@ -993,13 +994,7 @@ export default class Core {
 
         instance.closeContextMenu(e);
 
-        if (!el || keyMustIgnore) return;
-
-        // BM - compensation
-        instance.dom.elHelper.innerText = el.value + 'BM';
-        el.style.minWidth = instance.dom.elHelper.offsetWidth + 'px';
-
-        instance._updateInput()
+        // instance._updateInputSize()
     }
 
     /**
@@ -1072,6 +1067,8 @@ export default class Core {
             }
         }
 
+        let map = {start: {}, end: {}};
+
         selectedArea.forEach((row, rowIndex) => {
             row.forEach((key, colIndex) => {
                 let val = pasteData[rowIndex][colIndex],
@@ -1081,9 +1078,17 @@ export default class Core {
                     val = isNaN(+val) ? val : +val;
                 }
 
+                if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = +colNum;
+                if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
+
+                if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = +colNum;
+                if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
+
                 instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, val);
             });
         });
+
+        instance._setActiveArea(map);
     }
 
     /**
@@ -1169,7 +1174,7 @@ export default class Core {
      * @param {HTMLElement} el
      * @param {number} colNum
      * @param {number} rowNum
-     * @return {{el: *, colNum: *, rowNum: *}}
+     * @return {undefined|{el: *, colNum: *, rowNum: *}}
      * @private
      */
     _setLastSelected(el, colNum, rowNum) {
@@ -1180,7 +1185,7 @@ export default class Core {
 
     /**
      * Save and mark active area
-     * @param {object} map
+     * @param {object} map {start: {colNum, rowNum}, end: {colNum, rowNum}}
      * @param {string} keyType - 'shiftKey' | 'ctrlKey' | 'none'
      * @return {Core}
      * @private
@@ -1189,8 +1194,7 @@ export default class Core {
 
         if (this.destroyed) return this;
 
-        let
-            startCol = map.start.colNum,
+        let startCol = map.start.colNum,
             endCol = map.end.colNum,
             startRow = map.start.rowNum,
             endRow = map.end.rowNum,
@@ -1523,7 +1527,7 @@ export default class Core {
 
             let tableData = {},
                 squareAreaData = {},
-                map = {start: {colNum: null, rowNum: null}, end: {colNum: null, rowNum: null}};
+                map = {start: {}, end: {}};
 
             this.getSelected().forEach(key => {
                 let rowNum = key.split('::')[1];
@@ -1577,11 +1581,11 @@ export default class Core {
                         let copyKey = tableData[rowIndex][colIndex],
                             [colNum, rowNum] = key.split('::');
 
-                        if (map.start.colNum === null || map.start.colNum > colNum) map.start.colNum = +colNum;
-                        if (map.start.rowNum === null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
+                        if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = +colNum;
+                        if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
 
-                        if (map.end.colNum === null || colNum > map.end.colNum) map.end.colNum = +colNum;
-                        if (map.end.rowNum === null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
+                        if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = +colNum;
+                        if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
 
                         if (copyKey === key) return;
 
@@ -1623,10 +1627,10 @@ export default class Core {
                 css: {
                     left: `${left}px`,
                     top: `${tdRect.top - wrapPos.top - 1}px`,
-                    width: `${tdRect.width - 1}px`,
-                    height: `${tdRect.height - 1}px`,
                 }
             });
+
+        textarea.addEventListener('input', this._onInput);
 
         if (setCellValue) {
             textarea.value = td.innerHTML;
@@ -1634,25 +1638,8 @@ export default class Core {
 
         textarea.focus();
 
-        let textareaStyle = w.getComputedStyle(textarea);
-        this.dom.elHelper = helper.createElement({
-            tagName: 'div',
-            parent: this.dom.wrapper,
-            css: {
-                top: 0,
-                zIndex: -1,
-                position: 'absolute',
-                left: `${left}px`,
-                width: `${this.dom.body.offsetWidth - left}px`,
-                display: 'inlineBlock',
-                fontFamily: textareaStyle.fontFamily,
-                fontSize: textareaStyle.fontSize,
-                lineHeight: textareaStyle.lineHeight
-            }
-        });
-
-        this.dom.elHelper.innerHTML = td.innerHTML;
         this.input = {el: textarea, colNum: this.lastSelected.colNum, rowNum: this.lastSelected.rowNum};
+        this._createElHelper({td, left, textarea});
 
         return this._updateInputSize()._removeSquare();
     }
@@ -1663,18 +1650,29 @@ export default class Core {
      * @private
      */
     _updateInputSize() {
-        let helper = this.dom.elHelper,
-            textarea = this.input.el;
+        if (!instance.dom.elHelper || !instance.input) return instance;
 
-        if (helper.offsetWidth > textarea.offsetWidth) {
-            textarea.style.width = `${helper.offsetWidth}px`
-        }
+        let elHelper = instance.dom.elHelper,
+            textarea = instance.input.el,
+            tdRect = instance.lastSelected.el.getBoundingClientRect();
 
-        if (helper.offsetHeight > textarea.offsetHeight) {
-            textarea.style.height = `${helper.offsetHeight}px`
-        }
+        elHelper.innerText = `${textarea.value}.`;
+
+        let elHelperStyles = w.getComputedStyle(elHelper),
+            countLines = Math.ceil(elHelper.scrollWidth / elHelper.offsetWidth),
+            minHeight = `${helper.getNumberFromString(elHelperStyles.lineHeight) * countLines}px`,
+            minWidth = `${tdRect.width + 1}px`;
+
+        elHelper.style.minHeight = minHeight;
+        elHelper.style.minWidth = minWidth;
+
+        textarea.style.width = `${elHelper.offsetWidth}px`;
+        textarea.style.minWidth = minWidth;
+        textarea.style.minHeight = minHeight;
+        textarea.style.height = `${elHelper.offsetHeight}px`;
         return instance
     }
+
 
     /**
      * Remove table textarea
@@ -1689,6 +1687,8 @@ export default class Core {
             colNum = this.input.colNum,
             rowNum = this.input.rowNum;
 
+        this.input.el.removeEventListener('input', this._onInput);
+
         helper.removeElement(this.input.el);
         helper.removeElement(this.dom.elHelper);
 
@@ -1702,6 +1702,53 @@ export default class Core {
 
             this.setDataCell(colNum, rowNum, val);
         }
+    }
+
+    /**
+     * Create helper element
+     * @param {HTMLElement} td - current td element
+     * @param {Number} left - left position
+     * @private
+     */
+    _createElHelper({td, left}) {
+        let textareaStyle = w.getComputedStyle(this.input.el);
+
+        this.dom.elHelper = helper.createElement({
+            tagName: 'span',
+            parent: this.dom.wrapper,
+            css: {
+                top: 0,
+                left: `${left}px`,
+                position: 'absolute',
+
+                zIndex: 100,
+                display: 'block',
+
+                maxWidth: `${this.dom.body.offsetWidth - left}px`,
+                minHeight: `${td.offsetHeight}px`,
+
+                padding: textareaStyle.padding,
+
+                lineHeight: textareaStyle.lineHeight,
+                fontFamily: textareaStyle.fontFamily,
+                fontSize: textareaStyle.fontSize,
+                whiteSpace: 'pre-wrap',
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+
+                border: textareaStyle.border,
+                boxSizing: textareaStyle.boxSizing,
+            }
+        });
+
+    }
+
+    /**
+     * Event on change value on input
+     * @private
+     */
+    _onInput() {
+        instance._updateInputSize()
     }
 
     /**
