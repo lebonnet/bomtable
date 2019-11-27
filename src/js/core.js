@@ -130,7 +130,7 @@ export default class Core {
      * @return {Core}
      */
     setDataCell(col, row, val) {
-        val = val.trim ? val.trim() : val;
+        val = helper.prepareValue(val);
         this.dataMap[`${col}::${row}`].innerHTML = val;
         this.instanceData[row][col] = val;
         return this;
@@ -1071,12 +1071,7 @@ export default class Core {
 
         selectedArea.forEach((row, rowIndex) => {
             row.forEach((key, colIndex) => {
-                let val = pasteData[rowIndex][colIndex],
-                    [colNum, rowNum] = key.split('::');
-
-                if (val != 0) {
-                    val = isNaN(+val) ? val : +val;
-                }
+                let [colNum, rowNum] = key.split('::');
 
                 if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = +colNum;
                 if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
@@ -1084,7 +1079,7 @@ export default class Core {
                 if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = +colNum;
                 if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
 
-                instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, val);
+                instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, pasteData[rowIndex][colIndex]);
             });
         });
 
@@ -1694,14 +1689,8 @@ export default class Core {
 
         this.input = null;
 
-        if (saveValue) {
+        saveValue &&             this.setDataCell(colNum, rowNum, val);
 
-            if (val != 0) {
-                val = isNaN(+val) ? val : +val; // number or string
-            }
-
-            this.setDataCell(colNum, rowNum, val);
-        }
     }
 
     /**
@@ -1721,7 +1710,8 @@ export default class Core {
                 left: `${left}px`,
                 position: 'absolute',
 
-                zIndex: 100,
+                zIndex: -1,
+                opacity: 0,
                 display: 'block',
 
                 maxWidth: `${this.dom.body.offsetWidth - left}px`,

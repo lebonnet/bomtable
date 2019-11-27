@@ -100,3 +100,17 @@ export function getNumberFromString(str) {
     if (!str) return 0;
     return +str[0];
 }
+
+/**
+ * Prepare save value
+ * @param val
+ * @returns {string | number}
+ */
+export function prepareValue(val) {
+    if (val != 0 && !isNaN(+val)) {
+        val = +val
+    } else {
+        val = val.replace(/\r?\n/g, '').trim()
+    }
+    return val
+}
