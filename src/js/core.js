@@ -99,6 +99,7 @@ export default class Core {
      */
     setData(data) {
         if (!Array.isArray(data)) throw new Error('Data must be an array');
+        this.config.header = this.getHeader();
         this.config.data = data;
         return this.clear()._render();
     }
@@ -113,11 +114,12 @@ export default class Core {
 
     /**
      * Set new header
-     * @param header
+     * @param {Array} header
      * @return Core
      */
     setHeader(header) {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array');
+        this.config.data = this.getData();
         this.config.header = header;
         return this.clear()._render();
     }
