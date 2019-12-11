@@ -10,6 +10,18 @@
 </div>
 <script type="text/javascript" src="bomtable.min.js"></script></body>
 <script>
+    let menu = {
+        items: {
+            addRow: 'добавить строку',
+            addCol: 'добавить столбец',
+            hr: '',
+            removeRows: 'удалить строки',
+            removeCols: 'удалить столбцы',
+            hr1: '',
+            unionCols: 'объединить столбцы',
+        },
+        callback: (action, bomTable) => bomTable[action](),
+    };
     window.bi = new BomTable({
         tableClass: 'ex-tbl',
         container: '.example',
@@ -22,7 +34,12 @@
             [5, 7, 1],
             [6]
         ],
-        header: ['0', '1', '2', '3', '4', '5', '6']
+        header: ['0', '1', '2', '3', '4', '5', '6'],
+        headerMenu: menu,
+        contextMenu: menu,
+        renders: (instance, td, colNum, rowNum) => {
+            if ((colNum + rowNum) % 2 === 0) td.style.background = '#eaeaea'
+        },
     });
 </script>
 </html>
