@@ -7,7 +7,7 @@ const
 
 let instance = null;
 
-export default class Core {
+export default class BomTable {
 
     constructor(opts = {}) {
 
@@ -51,12 +51,12 @@ export default class Core {
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
         this.version = v.version;
 
-        return instance = this;
+        return instance = this._ini();
     }
 
     /**
      * Initialization
-     * @return {Core}
+     * @return {BomTable}
      */
     _ini() {
 
@@ -67,7 +67,7 @@ export default class Core {
 
     /**
      * Add event listeners
-     * @return {Core}
+     * @return {BomTable}
      */
     _callListeners() {
 
@@ -95,7 +95,7 @@ export default class Core {
     /**
      * Set new data
      * @param {Array} data
-     * @return Core
+     * @return BomTable
      */
     setData(data) {
         if (!Array.isArray(data)) throw new Error('Data must be an array');
@@ -115,7 +115,7 @@ export default class Core {
     /**
      * Set new header
      * @param {Array} header
-     * @return Core
+     * @return BomTable
      */
     setHeader(header) {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array');
@@ -129,7 +129,7 @@ export default class Core {
      * @param {number} col - col number of cell
      * @param {number} row - row number of cell
      * @param {*} val - new value
-     * @return {Core}
+     * @return {BomTable}
      */
     setDataCell(col, row, val) {
         val = helper.prepareValue(val);
@@ -212,7 +212,7 @@ export default class Core {
 
     /**
      * AddNew row in table
-     * @return {Core}
+     * @return {BomTable}
      */
     addRow() {
         let nextTr = this.lastSelected && this.lastSelected.el.parentNode.nextSibling,
@@ -223,9 +223,12 @@ export default class Core {
 
         let tr = helper.createElement({tagName: 'tr', selector: colsClass});
 
-        while (length--) {
-            let td = helper.createElement({tagName: 'td', selector: rowsClass});
-
+        for (let colNum = 0; colNum < length; colNum++) {
+            let td = helper.createElement({tagName: 'td', selector: rowsClass}),
+                rowNum = this.lastSelected ? this.lastSelected.rowNum : this.instanceData.length + 1;
+            if (this.config.renders) {
+                this.config.renders(this, td, colNum, rowNum, '')
+            }
             tr.appendChild(td);
         }
 
@@ -240,7 +243,7 @@ export default class Core {
 
     /**
      * Add new col
-     * @return {Core}
+     * @return {BomTable}
      */
     addCol() {
         let num = this.lastSelected && this.lastSelected.colNum,
@@ -253,15 +256,17 @@ export default class Core {
                 if (!key.indexOf(`${num}::`)) {
                     let el = this.dataMap[key],
                         parent = el.parentElement,
-                        tagName = key.indexOf('-1') > -1 ? 'th' : 'td',
-                        child = helper.createElement({tagName});
+                        isHeader = key.indexOf('-1') > -1,
+                        child = isHeader ? this._createHeaderCell() : helper.createElement({tagName: 'td'});
 
-                    rowsClass && tagName !== 'th' && child.classList.add(rowsClass);
+                    rowsClass && !isHeader && child.classList.add(rowsClass);
                     parent.insertBefore(child, el.nextSibling);
                 }
             });
         } else {
-            this.dom.header && helper.createElement({tagName: 'th', parent: this.dom.header.firstChild});
+            if (this.dom.header) {
+                this.dom.header.firstChild.appendChild(this._createHeaderCell());
+            }
             lastColIndex = this.instanceData[0].length - 1;
             while (it !== this.instanceData.length) {
                 helper.createElement({
@@ -278,7 +283,7 @@ export default class Core {
     /**
      * Remove get rows or selected rows
      * @param {Array} [nums] - index removes rows, if array is empty - selected rows be removed
-     * @return {Core}
+     * @return {BomTable}
      */
     removeRows(nums = []) {
         let rows = nums.length ? nums : this.getSelectedRows();
@@ -297,7 +302,7 @@ export default class Core {
     /**
      * Remove get cols or selected cols
      * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
-     * @return {Core}
+     * @return {BomTable}
      */
     removeCols(nums = []) {
         let cols = nums.length ? nums : this.getSelectedCols();
@@ -319,7 +324,7 @@ export default class Core {
     /**
      * Union cols
      * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
-     * @return {Core}
+     * @return {BomTable}
      */
     unionCols(nums = []) {
         let cols = nums.length ? nums : this.getSelectedCols();
@@ -382,7 +387,7 @@ export default class Core {
 
     /**
      * Create new index DOM
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _reindex() {
@@ -405,9 +410,10 @@ export default class Core {
         }
 
         if (this.dom.header && this.dom.header.firstElementChild) {
-
             helper._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
-                this.instanceHeader.push(th.innerHTML);
+                let childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
+                    val = childWrap ? childWrap.innerHTML : th.innerHTML;
+                this.instanceHeader.push(val);
                 this.dataMap[`${colNum}::-1`] = th;
             });
         }
@@ -416,7 +422,7 @@ export default class Core {
 
     /**
      * Render table
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _render() {
@@ -436,17 +442,7 @@ export default class Core {
         }
 
         this.instanceHeader.forEach((cell, colNum) => {
-            let th = helper.createElement({tagName: 'th', parent: this.dom.header.firstElementChild});
-
-            this.dataMap[`${colNum}::-1`] = th;
-
-            if (this.config.headerMenu) {
-                let wrap = helper.createElement({tagName: 'div', selector: 'bomtable-header-cell-wrap', parent: th});
-                helper.createElement({tagName: 'button', selector: 'bomtable-header-cell-btn', parent: th});
-                wrap.innerHTML = cell;
-            } else {
-                th.innerHTML = cell;
-            }
+            this.dataMap[`${colNum}::-1`] = this._createHeaderCell(cell);
         });
 
         if (!this.dom.header) {
@@ -503,8 +499,28 @@ export default class Core {
     }
 
     /**
+     * create header cell
+     * @param value
+     * @returns {HTMLElement}
+     * @private
+     */
+    _createHeaderCell(value = '') {
+        let th = helper.createElement({tagName: 'th', parent: this.dom.header.firstElementChild});
+
+        if (this.config.headerMenu) {
+            let wrap = helper.createElement({tagName: 'div', selector: 'bomtable-header-cell-wrap', parent: th});
+            helper.createElement({tagName: 'button', selector: 'bomtable-header-cell-btn', parent: th});
+            wrap.innerHTML = value ;
+        } else {
+            th.innerHTML = value ;
+        }
+
+        return th
+    }
+
+    /**
      * Remove table header
-     * @return {Core}
+     * @return {BomTable}
      */
     removeHeader() {
         this.dom.header && helper.removeElement(this.dom.header);
@@ -515,7 +531,7 @@ export default class Core {
     /**
      * Create context menu
      * @param {MouseEvent} e
-     * @return {Core}
+     * @return {BomTable}
      */
     createContextMenu(e) {
 
@@ -534,7 +550,7 @@ export default class Core {
     /**
      * Close menu
      * @param {MouseEvent} e
-     * @return {Core}
+     * @return {BomTable}
      */
     closeContextMenu(e) {
         let colNum = instance.lastSelected ? instance.lastSelected.colNum : null,
@@ -548,7 +564,7 @@ export default class Core {
     /**
      * Create header menu
      * @param {MouseEvent} e
-     * @returns {Core}
+     * @returns {BomTable}
      */
     createHeaderMenu(e) {
         let el = e.target,
@@ -570,7 +586,7 @@ export default class Core {
     /**
      * Close header menu
      * @param e {MouseEvent}
-     * @return {Core}
+     * @return {BomTable}
      */
     closeHeaderMenu(e) {
 
@@ -590,7 +606,7 @@ export default class Core {
      * Create context or header menu
      * @param e {MouseEvent}
      * @param menuName {String}
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _createMenu(e, menuName) {
@@ -630,7 +646,7 @@ export default class Core {
      * @param e {MouseEvent}
      * @param menuName {String}
      * @param lastSelected {Object}
-     * @returns {Core}
+     * @returns {BomTable}
      * @private
      */
     _closeMenu(e, menuName, lastSelected) {
@@ -1184,7 +1200,7 @@ export default class Core {
      * Save and mark active area
      * @param {object} map {start: {colNum, rowNum}, end: {colNum, rowNum}}
      * @param {string} keyType - 'shiftKey' | 'ctrlKey' | 'none'
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _setActiveArea(map, keyType = 'none') {
@@ -1274,7 +1290,7 @@ export default class Core {
 
     /**
      * Clear active area
-     * @return {Core}
+     * @return {BomTable}
      */
     clearActiveArea() {
         this.instanceData.length && this.getSelected().forEach(key => {
@@ -1308,7 +1324,7 @@ export default class Core {
      * Create square
      * @param {number} endCol - end col
      * @param {number} endRow - end row
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _createSquare(endCol, endRow) {
@@ -1334,7 +1350,7 @@ export default class Core {
 
     /**
      * Remove square
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _removeSquare() {
@@ -1439,7 +1455,7 @@ export default class Core {
     /**
      * Draw drag area
      * @param position
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _renderSquareDragArea(position) {
@@ -1490,7 +1506,7 @@ export default class Core {
     /**
      * Draw square
      * @param {Object} map coords {startCol, endCol, startRow, endRow}
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _setSquareDragCell(map) {
@@ -1508,7 +1524,7 @@ export default class Core {
     /**
      * Remove drag area
      * @param {boolean} saveValue - save value after remove area
-     * @return {Core}
+     * @return {BomTable}
      * @private
      */
     _removeCopyArea(saveValue = true) {
@@ -1691,7 +1707,7 @@ export default class Core {
 
         this.input = null;
 
-        saveValue &&             this.setDataCell(colNum, rowNum, val);
+        saveValue && this.setDataCell(colNum, rowNum, val);
 
     }
 
@@ -1745,7 +1761,7 @@ export default class Core {
 
     /**
      * Clear data of instance
-     * @return {Core}
+     * @return {BomTable}
      */
     clear() {
 
