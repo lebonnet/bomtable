@@ -510,9 +510,9 @@ export default class BomTable {
         if (this.config.headerMenu) {
             let wrap = helper.createElement({tagName: 'div', selector: 'bomtable-header-cell-wrap', parent: th});
             helper.createElement({tagName: 'button', selector: 'bomtable-header-cell-btn', parent: th});
-            wrap.innerHTML = value ;
+            wrap.innerHTML = value;
         } else {
-            th.innerHTML = value ;
+            th.innerHTML = value;
         }
 
         return th
@@ -1311,12 +1311,13 @@ export default class BomTable {
      * @private
      */
     _getWrapTopLeftPosition() {
-        let rect = this._container.getBoundingClientRect(),
-            css = w.getComputedStyle(this._container);
+        let cont = this._container,
+            rect = cont.getBoundingClientRect(),
+            css = w.getComputedStyle(cont);
 
         return {
-            top: rect.top + helper.getNumberFromString(css.paddingTop),
-            left: rect.left + helper.getNumberFromString(css.paddingLeft)
+            top: rect.top + - cont.scrollTop + helper.getNumberFromString(css.paddingTop),
+            left: rect.left - cont.scrollLeft + helper.getNumberFromString(css.paddingLeft)
         };
     }
 
