@@ -57,12 +57,10 @@ export default class BomTable {
      */
     static _keysIgnore(key) {
         let keys = {
-            'Tab': 1, 'CapsLock': 1, 'Shift': 1, 'Control': 1, 'Meta': 1, 'Alt': 1,
-            'ArrowUp': 1, 'ArrowDown': 1, 'ArrowLeft': 1, 'ArrowRight': 1,
-            'F1': 1, 'F2': 1, 'F3': 1, 'F4': 1, 'F5': 1, 'F6': 1, 'F7': 1, 'F8': 1, 'F9': 1, 'F10': 1, 'F11': 1,
-            'F12': 1,
-            'Pause': 1, 'ScrollLock': 1, 'Insert': 1, 'Home': 1, 'PageUp': 1, 'End': 1, 'PageDown': 1,
-            'NumLock': 1, 'Enter': 1,
+            'Alt': 1, 'ArrowDown': 1, 'ArrowLeft': 1, 'ArrowRight': 1, 'ArrowUp': 1, 'CapsLock': 1, 'Control': 1,
+            'End': 1, 'Enter': 1, 'F1': 1, 'F10': 1, 'F11': 1, 'F12': 1, 'F2': 1, 'F3': 1, 'F4': 1, 'F5': 1, 'F6': 1,
+            'F7': 1, 'F8': 1, 'F9': 1, 'Home': 1, 'Insert': 1, 'Meta': 1, 'NumLock': 1, 'PageDown': 1, 'PageUp': 1,
+            'Pause': 1, 'ScrollLock': 1, 'Shift': 1, 'Tab': 1
         };
         return !!keys[key]
     }
@@ -72,7 +70,6 @@ export default class BomTable {
      * @return {BomTable}
      */
     _ini() {
-
         this.clear()._render();
 
         return this._callListeners();
