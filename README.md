@@ -97,29 +97,29 @@ let opts = {
 ### Methods
 ### методы
 ```
-getData() - get table data | получить данные из таблицы ({Array})
+data - (getter) get table data | получить данные из таблицы ({Array})
 
-getHeader() - get table header | получить заголовки таблицы ({Array})
+header - (getter) get table header | получить заголовки таблицы ({Array})
 
-getSelected() - get selected map | получить карту выделенных элементов ({Array})
+selectedMap - (getter) get selected map | получить карту выделенных элементов ({Array})
 
-getSelectedData() - get data of selected area | получить данные с выделенной области ({Array})
+selectedData - (getter) get data of selected area | получить данные с выделенной области ({Array})
 
-getDataCell({col - number}, {row - number}) - get cell value | получить значение ячейки
+dataCell(col {number}, row {number}) - (getter) get cell value | получить значение ячейки
 
-getSelectedRows() - get index of selected rows | получить индексы выделенных строк ({Array})
+selectedRows - (getter) get index of selected rows | получить индексы выделенных строк ({Array})
 
-getSelectedCols() - get index of selected cols | получить индексы выделенных столбцов ({Array})
+selectedCols - (getter) get index of selected cols | получить индексы выделенных столбцов ({Array})
 
 ```
 <br/>
 
 ```
-setData({Array}) - set new data | установить новые данные
+data = {Array} - (setter) set new data | установить новые данные
 
-setHeader({Array}) - set new data header | установить новые заголовки
+header = {Array} - (setter) set new data header | установить новые заголовки
 
-setDataCell({col - number}, {row - number}, {*}) - set new value in cell | установить новое значение ячейки
+dataCell = {col: {number}, {row: {number}, val: {*}) - (setter) set new value in cell | установить новое значение ячейки
 
 ```
 <br/>

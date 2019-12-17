@@ -107,10 +107,6 @@ export function getNumberFromString(str) {
  * @returns {string | number}
  */
 export function prepareValue(val) {
-    if (val != 0 && !isNaN(+val)) {
-        val = +val
-    } else {
-        val = val.replace(/\r?\n/g, '').trim()
-    }
-    return val
+    if (!val) return val;
+    return !isNaN(+val) ? +val : val.replace(/\r?\n/g, '').trim()
 }

@@ -43,15 +43,28 @@ export default class BomTable {
             headerMenu: null
         }, opts);
 
-        this._keysIgnore = [
-            0, 9, 10, 13, 16, 17, 18, 19, 20, 27, 33, 34, 35, 36, 37, 38, 39, 40, 45,
-            91, 92, 93, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123
-        ];
-
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
         this.version = v.version;
 
         return instance = this._ini();
+    }
+
+    /**
+     * Is key code ignore
+     * @param key
+     * @returns {Boolean}
+     * @private
+     */
+    static _keysIgnore(key) {
+        let keys = {
+            'Tab': 1, 'CapsLock': 1, 'Shift': 1, 'Control': 1, 'Meta': 1, 'Alt': 1,
+            'ArrowUp': 1, 'ArrowDown': 1, 'ArrowLeft': 1, 'ArrowRight': 1,
+            'F1': 1, 'F2': 1, 'F3': 1, 'F4': 1, 'F5': 1, 'F6': 1, 'F7': 1, 'F8': 1, 'F9': 1, 'F10': 1, 'F11': 1,
+            'F12': 1,
+            'Pause': 1, 'ScrollLock': 1, 'Insert': 1, 'Home': 1, 'PageUp': 1, 'End': 1, 'PageDown': 1,
+            'NumLock': 1, 'Enter': 1,
+        };
+        return !!keys[key]
     }
 
     /**
@@ -95,33 +108,39 @@ export default class BomTable {
     /**
      * Set new data
      * @param {Array} data
-     * @return BomTable
      */
-    setData(data) {
+    set data(data) {
         if (!Array.isArray(data)) throw new Error('Data must be an array');
-        this.config.header = this.getHeader();
+        this.config.header = this.header;
         this.config.data = data;
-        return this.clear()._render();
+        this.clear()._render();
     }
 
     /**
-     * Get instance data
+     * Get table data
      * @return {Array}
      */
-    getData() {
+    get data() {
         return this.instanceData;
     }
 
     /**
      * Set new header
      * @param {Array} header
-     * @return BomTable
      */
-    setHeader(header) {
+    set header(header) {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array');
-        this.config.data = this.getData();
+        this.config.data = this.data;
         this.config.header = header;
-        return this.clear()._render();
+        this.clear()._render();
+    }
+
+    /**
+     * Get table header
+     * @return {Array}
+     */
+    get header() {
+        return this.instanceHeader;
     }
 
     /**
@@ -129,45 +148,12 @@ export default class BomTable {
      * @param {number} col - col number of cell
      * @param {number} row - row number of cell
      * @param {*} val - new value
-     * @return {BomTable}
      */
-    setDataCell(col, row, val) {
+    set dataCell({col, row, val}) {
         val = helper.prepareValue(val);
         this.dataMap[`${col}::${row}`].innerHTML = val;
         this.instanceData[row][col] = val;
         return this;
-    }
-
-    /**
-     * Get instance header
-     * @return {Array}
-     */
-    getHeader() {
-        return this.instanceHeader;
-    }
-
-    /**
-     * Get selected map
-     * @return {*|Array}
-     */
-    getSelected() {
-        return this.selected.sort();
-    }
-
-    /**
-     * Get data from selected items
-     * @return {Array}
-     */
-    getSelectedData() {
-        let data = {};
-
-        this.getSelected().forEach(key => {
-            let [colNum, rowNum] = key.split('::');
-            if (!data[rowNum]) data[rowNum] = [];
-            data[rowNum].push(this.instanceData[rowNum][colNum])
-        });
-
-        return Object.values(data);
     }
 
     /**
@@ -176,8 +162,34 @@ export default class BomTable {
      * @param {number} row - row number of cell
      * @return {*}
      */
-    getDataCell(col, row) {
-        return this.instanceData[row][col];
+    get dataCell() {
+        return (col, row) => {
+            return this.instanceData[row][col];
+        }
+    }
+
+    /**
+     * Get selected map
+     * @return {*|Array}
+     */
+    get selectedMap() {
+        return this.selected.sort();
+    }
+
+    /**
+     * Get data from selected items
+     * @return {Array}
+     */
+    get selectedData() {
+        let data = {};
+
+        this.selectedMap.forEach(key => {
+            let [colNum, rowNum] = key.split('::');
+            if (!data[rowNum]) data[rowNum] = [];
+            data[rowNum].push(this.instanceData[rowNum][colNum])
+        });
+
+        return Object.values(data);
     }
 
     /**
@@ -286,7 +298,7 @@ export default class BomTable {
      * @return {BomTable}
      */
     removeRows(nums = []) {
-        let rows = nums.length ? nums : this.getSelectedRows();
+        let rows = nums.length ? nums : this.selectedRows;
 
         rows.forEach(rowNum => {
             let firstTd = this.dataMap[`0::${rowNum}`],
@@ -305,7 +317,7 @@ export default class BomTable {
      * @return {BomTable}
      */
     removeCols(nums = []) {
-        let cols = nums.length ? nums : this.getSelectedCols();
+        let cols = nums.length ? nums : this.selectedCols;
 
         cols.forEach(colNum => {
             Object.keys(this.dataMap).forEach(key => {
@@ -327,13 +339,13 @@ export default class BomTable {
      * @return {BomTable}
      */
     unionCols(nums = []) {
-        let cols = nums.length ? nums : this.getSelectedCols();
+        let cols = nums.length ? nums : this.selectedCols;
 
         if (cols.length === 1) return this;
 
         let firstColNum = cols.shift(),
-            header = this.getHeader().filter((h, num) => !cols.includes(num)),
-            data = this.getData();
+            header = this.header.filter((h, num) => !cols.includes(num)),
+            data = this.data;
 
         data.forEach((row, rowNum) => {
             let firstVal = '',
@@ -365,9 +377,9 @@ export default class BomTable {
      * Get index of selected rows
      * @return {[]}
      */
-    getSelectedRows() {
+    get selectedRows() {
         let rows = {};
-        this.getSelected().forEach(key => {
+        this.selectedMap.forEach(key => {
             rows[key.split('::')[1]] = 1;
         });
         return Object.keys(rows).map(r => +r);
@@ -377,9 +389,9 @@ export default class BomTable {
      * Get index of selected cols
      * @return {[]}
      */
-    getSelectedCols() {
+    get selectedCols() {
         let cols = {};
-        this.getSelected().forEach(key => {
+        this.selectedMap.forEach(key => {
             cols[key.split('::')[0]] = 1;
         });
         return Object.keys(cols).map(c => +c);
@@ -901,7 +913,7 @@ export default class BomTable {
             totalRows = instance.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
             map = {start: {colNum, rowNum}, end: {colNum, rowNum}},
-            keyMustIgnore = instance._keysIgnore.includes(e.keyCode);
+            keyMustIgnore = BomTable._keysIgnore(key);
 
         if (e.ctrlKey && !el && key.toLowerCase() !== 'a') {
             instance._createBuffer();
@@ -981,9 +993,9 @@ export default class BomTable {
                 instance._removeCopyArea(false);
                 break;
             case 'Delete':
-                instance.getSelected().forEach(key => {
-                    let [colNum, rowNum] = key.split('::');
-                    instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, '');
+                instance.selectedMap.forEach(key => {
+                    let [col, row] = key.split('::');
+                    instance.dataMap[`${col}::${row}`] && (instance.dataCell = {col, row, val: ''});
                 });
                 keyMustIgnore = true;
                 break;
@@ -992,7 +1004,7 @@ export default class BomTable {
         // ctrl + a
         if (!el && e.ctrlKey && key === 'A') {
             moveSelect = false;
-            data = instance.getData();
+            data = instance.data;
             map.start.rowNum = 0;
             map.start.colNum = 0;
 
@@ -1030,8 +1042,8 @@ export default class BomTable {
             tmp = [],
             selectedArea = [],
             pasteData = (e.clipboardData || window.clipboardData).getData('Text'),
-            selectedCols = instance.getSelectedCols(),
-            selectedRows = instance.getSelectedRows(),
+            selectedCols = instance.selectedCols,
+            selectedRows = instance.selectedRows,
             oneSelected = selectedCols.length === selectedRows.length && selectedRows.length === 1;
 
         selectedRows.forEach(r => {
@@ -1097,7 +1109,11 @@ export default class BomTable {
                 if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = +colNum;
                 if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
 
-                instance.dataMap[`${colNum}::${rowNum}`] && instance.setDataCell(colNum, rowNum, pasteData[rowIndex][colIndex]);
+                instance.dataMap[`${colNum}::${rowNum}`] && (instance.dataCell = {
+                    col: colNum,
+                    row: rowNum,
+                    val: pasteData[rowIndex][colIndex]
+                });
             });
         });
 
@@ -1120,7 +1136,7 @@ export default class BomTable {
             this.dom._buffer.addEventListener('paste', this._onPaste);
         }
 
-        this.getSelectedData().forEach(row => {
+        this.selectedData.forEach(row => {
             str.push(row.join('\t'));
         });
 
@@ -1293,7 +1309,7 @@ export default class BomTable {
      * @return {BomTable}
      */
     clearActiveArea() {
-        this.instanceData.length && this.getSelected().forEach(key => {
+        this.instanceData.length && this.selectedMap.forEach(key => {
             let el = this.dataMap[key];
             el && el.classList.remove('area');
         });
@@ -1316,7 +1332,7 @@ export default class BomTable {
             css = w.getComputedStyle(cont);
 
         return {
-            top: rect.top + - cont.scrollTop + helper.getNumberFromString(css.paddingTop),
+            top: rect.top + -cont.scrollTop + helper.getNumberFromString(css.paddingTop),
             left: rect.left - cont.scrollLeft + helper.getNumberFromString(css.paddingLeft)
         };
     }
@@ -1543,7 +1559,7 @@ export default class BomTable {
                 squareAreaData = {},
                 map = {start: {}, end: {}};
 
-            this.getSelected().forEach(key => {
+            this.selectedMap.forEach(key => {
                 let rowNum = key.split('::')[1];
                 if (!tableData[rowNum]) tableData[rowNum] = [];
                 tableData[rowNum].push(key)
@@ -1604,9 +1620,9 @@ export default class BomTable {
                         if (copyKey === key) return;
 
                         let [colCopyNum, rowCopyNum] = copyKey.split('::'),
-                            val = this.getDataCell(+colCopyNum, +rowCopyNum);
+                            val = this.dataCell(+colCopyNum, +rowCopyNum);
 
-                        this.setDataCell(+colNum, +rowNum, val);
+                        instance.dataCell = {col: +colNum, row: +rowNum, val};
                     })
                 });
 
@@ -1698,8 +1714,8 @@ export default class BomTable {
         if (!this.input) return;
 
         let val = this.input.el.value,
-            colNum = this.input.colNum,
-            rowNum = this.input.rowNum;
+            col = this.input.colNum,
+            row = this.input.rowNum;
 
         this.input.el.removeEventListener('input', this._onInput);
 
@@ -1708,8 +1724,8 @@ export default class BomTable {
 
         this.input = null;
 
-        saveValue && this.setDataCell(colNum, rowNum, val);
-
+        if (!saveValue) return;
+        this.dataCell = {col, row, val};
     }
 
     /**
