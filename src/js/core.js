@@ -58,9 +58,9 @@ export default class BomTable {
     static _keysIgnore(key) {
         let keys = {
             'Alt': 1, 'ArrowDown': 1, 'ArrowLeft': 1, 'ArrowRight': 1, 'ArrowUp': 1, 'CapsLock': 1, 'Control': 1,
-            'End': 1, 'Enter': 1, 'F1': 1, 'F10': 1, 'F11': 1, 'F12': 1, 'F2': 1, 'F3': 1, 'F4': 1, 'F5': 1, 'F6': 1,
-            'F7': 1, 'F8': 1, 'F9': 1, 'Home': 1, 'Insert': 1, 'Meta': 1, 'NumLock': 1, 'PageDown': 1, 'PageUp': 1,
-            'Pause': 1, 'ScrollLock': 1, 'Shift': 1, 'Tab': 1
+            'End': 1, 'Enter': 1, 'Escape': 1, 'F1': 1, 'F10': 1, 'F11': 1, 'F12': 1, 'F2': 1, 'F3': 1, 'F4': 1,
+            'F5': 1, 'F6': 1, 'F7': 1, 'F8': 1, 'F9': 1, 'Home': 1, 'Insert': 1, 'Meta': 1, 'NumLock': 1,
+            'PageDown': 1, 'PageUp': 1, 'Pause': 1, 'ScrollLock': 1, 'Shift': 1, 'Tab': 1
         };
         return !!keys[key]
     }
@@ -929,7 +929,7 @@ export default class BomTable {
      * @private
      */
     _keyDownWatcher(e) {
-        if (instance.destroyed) return;
+        if (instance.destroyed || instance.mouseBtnPressed) return;
 
         let el = instance.input && instance.input.el,
             data,
@@ -1018,7 +1018,10 @@ export default class BomTable {
                 instance.mouseBtnPressed = 0;
                 instance.squarePressed = 0;
                 instance._removeInput(false);
-                instance._removeCopyArea(false);
+                if (instance.dom.copyAreaLeft) {
+                    instance._removeCopyArea(false);
+                    moveSelect = true;
+                }
                 break;
             case 'Delete':
                 instance.selectedMap.forEach(key => {
@@ -1051,8 +1054,6 @@ export default class BomTable {
         }
 
         instance.closeContextMenu(e);
-
-        // instance._updateInputSize()
     }
 
     /**
@@ -1183,8 +1184,7 @@ export default class BomTable {
     _setActiveCell(e, el = null) {
 
         let type = e.type,
-            keyType = 'none',
-            keyMap;
+            keyType = 'none';
 
         if (!el) el = e.target;
 
@@ -1196,17 +1196,9 @@ export default class BomTable {
 
         helper.clearSelected();
 
-        Object.keys(this.dataMap).some(key => {
-            if (this.dataMap[key] === el) {
-                keyMap = key.split('::');
-                return true;
-            }
-        });
-
-        let [colNum, rowNum] = keyMap;
-
-        colNum = +colNum;
-        rowNum = +rowNum;
+        let [colNum, rowNum] = Object.keys(this.dataMap)
+            .find(key => this.dataMap[key] === el)
+            .split('::').map(a => +a);
 
         if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = {el, colNum, rowNum};
@@ -1329,7 +1321,34 @@ export default class BomTable {
 
         this.lastSelectArea = {start: {col: startCol, row: startRow}, end: {col: endCol, row: endRow}};
         this._createSquare(endCol, endRow);
+
+        this._addSquare(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea');
+
         return this;
+    }
+
+    /**
+     * Position of area
+     * @param {Number} startCol
+     * @param {Number} startRow
+     * @param {Number} endCol
+     * @param {Number} endRow
+     * @param {Number} borderWidth - border width
+     * @returns {{top: number, left: number, bottom: number, right: number}}
+     * @private
+     */
+    _ariaPosition({startCol, startRow, endCol, endRow}, borderWidth = 1) {
+        let firstTd = this.dataMap[`${startCol}::${startRow}`],
+            firstRect = firstTd.getBoundingClientRect(),
+            lastTd = this.dataMap[`${endCol}::${endRow}`],
+            lastRect = lastTd.getBoundingClientRect();
+
+        return {
+            left: firstRect.left - borderWidth,
+            top: firstRect.top - borderWidth,
+            bottom: lastRect.bottom - Math.ceil(borderWidth / 2),
+            right: lastRect.right - Math.ceil(borderWidth / 2)
+        }
     }
 
     /**
@@ -1417,7 +1436,6 @@ export default class BomTable {
         let bottomRightSelectTr = this.dataMap[`${this.lastSelectArea.end.col}::${this.lastSelectArea.end.row}`],
             rectBRSTr = bottomRightSelectTr.getBoundingClientRect(),
             elMap = {},
-            firstTd, firstRect, lastTd, lastRect,
             startCol, endCol, startRow, endRow,
             touch = this.isTouch && e.targetTouches[0],
             X = this.isTouch ? touch.pageX : e.pageX,
@@ -1452,7 +1470,6 @@ export default class BomTable {
                 startCol = elMap.col;
             }
         } else { // right
-
             this.direction.x = 'right';
             startCol = this.lastSelectArea.start.col;
         }
@@ -1474,78 +1491,62 @@ export default class BomTable {
             }
 
         } else { // down
-
             this.direction.y = 'down';
             startRow = this.lastSelectArea.start.row;
         }
 
-        firstTd = this.dataMap[`${startCol}::${startRow}`];
-        firstRect = firstTd.getBoundingClientRect();
-
-        lastTd = this.dataMap[`${endCol}::${endRow}`];
-        lastRect = lastTd.getBoundingClientRect();
-
         helper.clearSelected();
 
         this
-            ._renderSquareDragArea({
-                left: firstRect.left - 1,
-                top: firstRect.top - 1,
-                bottom: lastRect.bottom - 1,
-                right: lastRect.right - 1
-            })
+            ._addSquare(this._ariaPosition({startCol, startRow, endCol, endRow}, 3), 'copyArea')
             ._setSquareDragCell({startCol, endCol, startRow, endRow})
     }
 
     /**
-     * Draw drag area
-     * @param position
-     * @return {BomTable}
+     * Create square contains lines, and append it to this.dom.wrapper
+     * @param {Object} position - {left, top, bottom, right}
+     * @param {String} name - class list and name of dom elements
+     * @returns {BomTable}
      * @private
      */
-    _renderSquareDragArea(position) {
+    _addSquare(position, name) {
+        let wrapPos = this._getWrapTopLeftPosition(),
+            startClassName = `bomtable-${helper.camelCaseToKebabCase(name)}`;
 
-        let wrapPos = this._getWrapTopLeftPosition();
-        if (!this.dom.copyAreaLeft) {
-            this.dom.copyAreaLeft = helper.createElement({
-                tagName: 'div',
-                selector: 'bomtable-copy-area-left',
-                parent: this.dom.wrapper
-            });
-            this.dom.copyAreaRight = helper.createElement({
-                tagName: 'div',
-                selector: 'bomtable-copy-area-right',
-                parent: this.dom.wrapper
-            });
-            this.dom.copyAreaTop = helper.createElement({
-                tagName: 'div',
-                selector: 'bomtable-copy-area-top',
-                parent: this.dom.wrapper
-            });
-            this.dom.copyAreaBottom = helper.createElement({
-                tagName: 'div',
-                selector: 'bomtable-copy-area-bottom',
-                parent: this.dom.wrapper
+        if (!this.dom[`${name}Left`]) {
+            ['Left', 'Top', 'Right', 'Bottom'].forEach(key => {
+                this.dom[`${name}${key}`] = helper.createElement({
+                    tagName: 'div',
+                    selector: `${startClassName}-${key.toLowerCase()}`,
+                    parent: this.dom.wrapper
+                });
             });
         }
 
-        this.dom.copyAreaLeft.style.top = position.top - wrapPos.top + 'px';
-        this.dom.copyAreaLeft.style.left = position.left - wrapPos.left + 'px';
-        this.dom.copyAreaLeft.style.height = position.bottom - position.top + 'px';
+        let top = position.top - wrapPos.top,
+            left = position.left - wrapPos.left,
+            right = position.right - wrapPos.left,
+            bottom = position.bottom - wrapPos.top,
+            height = position.bottom - position.top,
+            width = position.right - position.left;
 
-        this.dom.copyAreaRight.style.top = position.top - wrapPos.top + 'px';
-        this.dom.copyAreaRight.style.left = position.right - wrapPos.left + 'px';
-        this.dom.copyAreaRight.style.height = position.bottom - position.top + 'px';
+        this.dom[`${name}Left`].style.top = `${top}px`;
+        this.dom[`${name}Left`].style.left = `${left}px`;
+        this.dom[`${name}Left`].style.height = `${height}px`;
 
-        this.dom.copyAreaTop.style.top = position.top - wrapPos.top + 'px';
-        this.dom.copyAreaTop.style.left = position.left - wrapPos.left + 'px';
-        this.dom.copyAreaTop.style.width = position.right - position.left + 'px';
+        this.dom[`${name}Right`].style.top = `${top}px`;
+        this.dom[`${name}Right`].style.left = `${right}px`;
+        this.dom[`${name}Right`].style.height = `${height}px`;
 
-        this.dom.copyAreaBottom.style.top = position.bottom - wrapPos.top + 'px';
-        this.dom.copyAreaBottom.style.left = position.left - wrapPos.left + 'px';
-        this.dom.copyAreaBottom.style.width = position.right - position.left + 'px';
+        this.dom[`${name}Top`].style.top = `${top}px`;
+        this.dom[`${name}Top`].style.left = `${left}px`;
+        this.dom[`${name}Top`].style.width = `${width}px`;
 
-        return this;
+        this.dom[`${name}Bottom`].style.top = `${bottom}px`;
+        this.dom[`${name}Bottom`].style.left = `${left}px`;
+        this.dom[`${name}Bottom`].style.width = `${width}px`;
+
+        return this
     }
 
     /**
@@ -1574,10 +1575,11 @@ export default class BomTable {
      */
     _removeCopyArea(saveValue = true) {
 
-        this.dom.copyAreaLeft && helper.removeElement(this.dom.copyAreaLeft);
-        this.dom.copyAreaRight && helper.removeElement(this.dom.copyAreaRight);
-        this.dom.copyAreaTop && helper.removeElement(this.dom.copyAreaTop);
-        this.dom.copyAreaBottom && helper.removeElement(this.dom.copyAreaBottom);
+        if (!this.dom.copyAreaLeft) return this;
+        helper.removeElement(this.dom.copyAreaLeft);
+        helper.removeElement(this.dom.copyAreaRight);
+        helper.removeElement(this.dom.copyAreaTop);
+        helper.removeElement(this.dom.copyAreaBottom);
 
         this.dom.copyAreaLeft = this.dom.copyAreaRight = this.dom.copyAreaTop = this.dom.copyAreaBottom = null;
 

@@ -1,5 +1,7 @@
 $gray: #ccc;
-$blue: #19a2cc;
+$blue: #00a3cf;
+$lightBlue: scale-color($blue, $lightness: +85%);
+$darkBlue: scale-color($blue, $lightness: -15%);
 
 * {
     margin: 0;
@@ -22,7 +24,7 @@ $blue: #19a2cc;
         position: absolute;
         width: 9px;
         height: 1px;
-        background-color: #00779e;
+        background-color: $darkBlue;
         display: inline-block;
         transition: all 0.2s ease;
         content: '';
@@ -76,7 +78,7 @@ $blue: #19a2cc;
     .bomtable-square {
         position: absolute;
         z-index: 10;
-        background-color: rgba(0, 193, 251, 0.3);
+        background-color: $blue;
         height: 7px;
         width: 7px;
         border: 1px solid rgba(0, 0, 0, 0.4);
@@ -91,9 +93,25 @@ $blue: #19a2cc;
     .bomtable-copy-area-bottom {
         position: absolute;
         z-index: 8;
-        background-color: rgb(0, 119, 158);
+        background-color: $darkBlue;
+        width: 3px;
+        height: 3px;
+    }
+
+    .bomtable-copy-area-bottom {
+        padding-right: 3px;
+    }
+
+    .bomtable-active-area-left,
+    .bomtable-active-area-right,
+    .bomtable-active-area-top,
+    .bomtable-active-area-bottom {
+        position: absolute;
+        z-index: 8;
+        background-color: $darkBlue;
         width: 1px;
         height: 1px;
+        box-sizing: border-box;
     }
 
     .bomtable td::selection,
@@ -247,7 +265,7 @@ $blue: #19a2cc;
         max-width: 250px;
 
         &.area {
-            background: #d3f4fe !important;
+            background: $lightBlue !important;
         }
     }
 }
