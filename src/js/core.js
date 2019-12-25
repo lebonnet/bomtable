@@ -67,7 +67,8 @@ export default class BomTable {
 
     /**
      * Initialization
-     * @return {BomTable}
+     * @returns {BomTable}
+     * @private
      */
     _ini() {
         this.clear()._render();
@@ -78,6 +79,7 @@ export default class BomTable {
     /**
      * Add event listeners
      * @return {BomTable}
+     * @private
      */
     _callListeners() {
 
@@ -220,11 +222,18 @@ export default class BomTable {
     }
 
     /**
-     * AddNew row in table
-     * @return {BomTable}
+     * Create table row
+     * @param index
+     * @param rowData
+     * @param render
+     * @returns {HTMLElement}
+     * @private
      */
-    addRow() {
-        let nextTr = this.lastSelected && this.lastSelected.el.parentNode.nextSibling,
+    _createRow({index = -1, rowData = [], render = false}) {
+        if (!this.dom.rows) {
+            this.dom.rows = {}
+        }
+        let nextTr = this.dom.rows[index],
             tableBody = this.dom.body,
             length = this.instanceData.length ? this.instanceData[0].length : this.instanceHeader.length,
             rowsClass = this.config.rowsClass,
@@ -233,20 +242,53 @@ export default class BomTable {
         let tr = helper.createElement({tagName: 'tr', selector: colsClass});
 
         for (let colNum = 0; colNum < length; colNum++) {
-            let td = helper.createElement({tagName: 'td', selector: rowsClass}),
-                rowNum = this.lastSelected ? this.lastSelected.rowNum : this.instanceData.length + 1;
-            if (this.config.renders) {
-                this.config.renders(this, td, colNum, rowNum, '')
-            }
-            tr.appendChild(td);
+            let cell = rowData[colNum] != null ? helper.prepareValue(rowData[colNum]) : '';
+            helper.createElement({tagName: 'td', selector: rowsClass, parent: tr, html: cell});
         }
+
+        if (nextTr) {
+            let rowsIndexes = Object.keys(this.dom.rows),
+                tmp = {};
+            rowsIndexes.forEach(rowIndex => {
+                rowIndex = parseFloat(rowIndex);
+                if (rowIndex < index) {
+                    tmp[rowIndex] = this.dom.rows[rowIndex]
+                } else if (rowIndex === +index) {
+                    tmp[index] = tr;
+                    tmp[rowIndex + 1] = this.dom.rows[rowIndex]
+                } else {
+                    tmp[rowIndex + 1] = this.dom.rows[rowIndex]
+                }
+            });
+            this.dom.rows = tmp
+        } else {
+            this.dom.rows[index] = tr
+        }
+
+        if (!render) return tr;
 
         if (nextTr) {
             tableBody.insertBefore(tr, nextTr)
         } else {
-            this.dom.body.appendChild(tr);
+            tableBody.appendChild(tr);
         }
 
+        return tr
+    }
+
+    /**
+     * AddNew row in table
+     * @return {BomTable}
+     */
+    addRow() {
+        let index = this.lastSelected ? this.lastSelected.rowNum : this.instanceData.length;
+        this._createRow({index, render: true});
+
+        Object.keys(this.dataMap).forEach(key => {
+            this.dataMap[key].classList.remove('area');
+        });
+
+        this._removeSquare();
         return this._reindex();
     }
 
@@ -400,6 +442,8 @@ export default class BomTable {
      * @private
      */
     _reindex() {
+        let renders = this.config.renders;
+
         this.dataMap = {};
         this.instanceData = [];
 
@@ -414,6 +458,7 @@ export default class BomTable {
                     let val = td.innerHTML;
                     this.dataMap[`${colNum}::${rowNum}`] = td;
                     this.instanceData[rowNum].push(val);
+                    renders && renders(this, td, colNum, rowNum, val);
                 });
             });
         }
@@ -435,8 +480,7 @@ export default class BomTable {
      * @private
      */
     _render() {
-        let rowsClass = this.config.rowsClass,
-            colsClass = this.config.colsClass;
+        let renders = this.config.renders;
 
         // create table
         this.dom.table = helper.createElement({tagName: 'table', selector: 'bomtable'});
@@ -464,25 +508,12 @@ export default class BomTable {
 
         this.dom.body = helper.createElement({tagName: 'tbody', parent: this.dom.table});
 
-        this.instanceData.forEach((col, rowNum) => {
-            let tr = d.createElement('tr');
-            colsClass && tr.classList.add(colsClass);
-
-            col.forEach((cell, colNum) => {
-                let td = d.createElement('td');
-                rowsClass && td.classList.add(rowsClass);
-
-                if (this.config.renders) {
-                    this.config.renders(this, td, colNum, rowNum, cell)
-                }
-
-                td.innerHTML = cell;
-
-                tr.appendChild(td);
+        this.instanceData.forEach((row, rowNum) => {
+            let tr = this._createRow({index: rowNum, rowData: row, render: true});
+            tr.childNodes.forEach((td, colNum) => {
+                renders && renders(this, td, colNum, rowNum, row[colNum]);
                 this.dataMap[`${colNum}::${rowNum}`] = td;
-            });
-
-            this.dom.body.appendChild(tr);
+            })
         });
 
         if (!this.dom.wrapper) {
@@ -1778,7 +1809,6 @@ export default class BomTable {
      * @return {BomTable}
      */
     clear() {
-
         if (!this.dom) {
             this.dom = {};
         }
@@ -1795,7 +1825,14 @@ export default class BomTable {
 
         this.lastSelectArea = {};
         Object.keys(this.dom).forEach(nodeName => {
-            this.dom[nodeName] && helper.removeElement(this.dom[nodeName]);
+            if (!this.dom[nodeName]) return;
+            if (typeof this.dom[nodeName] === 'object') {
+                Object.keys(this.dom[nodeName]).forEach(key => {
+                    helper.removeElement(this.dom[nodeName][key]);
+                    this.dom[nodeName][key] = null
+                })
+            }
+            helper.removeElement(this.dom[nodeName]);
             delete this.dom[nodeName];
         });
 

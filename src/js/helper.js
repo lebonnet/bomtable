@@ -2,16 +2,18 @@
  * Create new HTML element
  * @param {string} tagName - name created tag
  * @param {string} selector - css selectors ('class1 class2...')
+ * @param {String} html - html code
  * @param {HTMLElement} parent - parent of new tag
  * @param {Object} css - css styles
  * @return {HTMLElement}
  */
-export function createElement({tagName, selector = '', parent = null, css = {}}) {
+export function createElement({tagName, selector = '', html = null, parent = null, css = {}}) {
     let el = document.createElement(tagName);
     el.className = selector;
     Object.assign(el.style, css);
 
     parent && parent.appendChild(el);
+    html != null && (el.innerHTML = html);
     return el;
 }
 
@@ -108,5 +110,5 @@ export function getNumberFromString(str) {
  */
 export function prepareValue(val) {
     if (!val) return val;
-    return !isNaN(+val) ? +val : val.replace(/\r?\n/g, '').trim()
+    return !isNaN(+val) ? +val : val.replace(/&nbsp;/g, ' ').replace(/\r?\n/g, '').trim()
 }
