@@ -66,14 +66,22 @@ export default class BomTable {
     }
 
     /**
+     * Split key by ::
+     * @param {String} key
+     * @returns {[Number, Number]}
+     * @private
+     */
+    static _splitKey(key) {
+        return key.split('::').map(i => +i)
+    }
+
+    /**
      * Initialization
      * @returns {BomTable}
      * @private
      */
     _ini() {
-        this.clear()._render();
-
-        return this._callListeners();
+        return this.clear()._render()._callListeners();
     }
 
     /**
@@ -152,6 +160,7 @@ export default class BomTable {
         val = helper.prepareValue(val);
         this.dataMap[`${col}::${row}`].innerHTML = val;
         this.instanceData[row][col] = val;
+        this._rerenderActiveArea();
         return this;
     }
 
@@ -183,7 +192,7 @@ export default class BomTable {
         let data = {};
 
         this.selectedMap.forEach(key => {
-            let [colNum, rowNum] = key.split('::');
+            let [colNum, rowNum] = BomTable._splitKey(key);
             if (!data[rowNum]) data[rowNum] = [];
             data[rowNum].push(this.instanceData[rowNum][colNum])
         });
@@ -636,7 +645,7 @@ export default class BomTable {
                 let el = this.dataMap[key];
                 if (key.indexOf('-1') === -1 || !el.classList.contains('active')) return;
                 el.classList.remove('active');
-                lastSelected.colNum = +key.split('::')[0];
+                lastSelected.colNum = BomTable._splitKey(key)[0];
             });
 
         return instance._closeMenu(e, 'headerMenu', lastSelected);
@@ -929,7 +938,12 @@ export default class BomTable {
      * @private
      */
     _keyDownWatcher(e) {
-        if (instance.destroyed || instance.mouseBtnPressed) return;
+        if (instance.destroyed) return;
+
+        if (instance.mouseBtnPressed && e.key === 'Escape' && instance.dom.copyAreaLeft) {
+            instance._removeCopyArea(false);
+            return;
+        }
 
         let el = instance.input && instance.input.el,
             data,
@@ -951,6 +965,11 @@ export default class BomTable {
 
         if (key === 'Tab') {
             key = 'ArrowRight'
+        }
+
+        if (instance.selected.length > 1 && instance.mouseDownElement && key.substr(0, 5) === 'Arrow') {
+            rowNum = map.start.rowNum = map.end.rowNum = instance.mouseDownElement.rowNum;
+            colNum = map.start.colNum = map.end.colNum = instance.mouseDownElement.colNum;
         }
 
         switch (key) {
@@ -1018,17 +1037,14 @@ export default class BomTable {
                 instance.mouseBtnPressed = 0;
                 instance.squarePressed = 0;
                 instance._removeInput(false);
-                if (instance.dom.copyAreaLeft) {
-                    instance._removeCopyArea(false);
-                    moveSelect = true;
-                }
                 break;
             case 'Delete':
                 instance.selectedMap.forEach(key => {
-                    let [col, row] = key.split('::');
+                    let [col, row] = BomTable._splitKey(key);
                     instance.dataMap[`${col}::${row}`] && (instance.dataCell = {col, row, val: ''});
                 });
                 keyMustIgnore = true;
+                instance._rerenderActiveArea();
                 break;
         }
 
@@ -1130,13 +1146,13 @@ export default class BomTable {
 
         selectedArea.forEach((row, rowIndex) => {
             row.forEach((key, colIndex) => {
-                let [colNum, rowNum] = key.split('::');
+                let [colNum, rowNum] = BomTable._splitKey(key);
 
-                if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = +colNum;
-                if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
+                if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = colNum;
+                if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = rowNum;
 
-                if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = +colNum;
-                if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
+                if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = colNum;
+                if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = rowNum;
 
                 instance.dataMap[`${colNum}::${rowNum}`] && (instance.dataCell = {
                     col: colNum,
@@ -1196,9 +1212,8 @@ export default class BomTable {
 
         helper.clearSelected();
 
-        let [colNum, rowNum] = Object.keys(this.dataMap)
-            .find(key => this.dataMap[key] === el)
-            .split('::').map(a => +a);
+        let [colNum, rowNum] = BomTable._splitKey(Object.keys(this.dataMap)
+            .find(key => this.dataMap[key] === el));
 
         if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = {el, colNum, rowNum};
@@ -1247,6 +1262,7 @@ export default class BomTable {
             endCol = map.end.colNum,
             startRow = map.start.rowNum,
             endRow = map.end.rowNum,
+            mouseDownEl = this.mouseDownElement.el,
 
             rows = [],
             cols = [];
@@ -1304,25 +1320,31 @@ export default class BomTable {
         cols.forEach(col => {
             rows.forEach(row => {
                 if (row === -1) return;
-                let key = `${col}::${row}`;
+                let key = `${col}::${row}`,
+                    el = this.dataMap[key];
                 if (this.selected.includes(key)) {
                     this.selected = this.selected.filter(s => s !== key);
                 } else {
                     this.selected.push(key);
                 }
-                this.dataMap[key].classList.toggle('area');
+
+                if (mouseDownEl === el && (cols.length > 1 || rows.length > 1)) {
+                    el.classList.remove('area');
+                } else {
+                    el.classList.toggle('area');
+                }
             })
         });
 
         if (this.selected.length === 1) {
-            let chunks = this.selected[0].split('::');
-            this._setLastSelected(this.dataMap[this.selected[0]], +chunks[0], +chunks[1]);
+            let chunks = BomTable._splitKey(this.selected[0]);
+            this._setLastSelected(this.dataMap[this.selected[0]], chunks[0], chunks[1]);
         }
 
         this.lastSelectArea = {start: {col: startCol, row: startRow}, end: {col: endCol, row: endRow}};
         this._createSquare(endCol, endRow);
 
-        this._addSquare(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea');
+        this._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea');
 
         return this;
     }
@@ -1338,17 +1360,34 @@ export default class BomTable {
      * @private
      */
     _ariaPosition({startCol, startRow, endCol, endRow}, borderWidth = 1) {
-        let firstTd = this.dataMap[`${startCol}::${startRow}`],
+        let borderHalf = Math.ceil(borderWidth / 2),
+            firstTd = this.dataMap[`${startCol}::${startRow}`],
             firstRect = firstTd.getBoundingClientRect(),
             lastTd = this.dataMap[`${endCol}::${endRow}`],
             lastRect = lastTd.getBoundingClientRect();
 
         return {
-            left: firstRect.left - borderWidth,
-            top: firstRect.top - borderWidth,
-            bottom: lastRect.bottom - Math.ceil(borderWidth / 2),
-            right: lastRect.right - Math.ceil(borderWidth / 2)
+            left: firstRect.left - (!startCol ? 0 : borderHalf),
+            top: firstRect.top - (startRow === -1 ? 0 : borderHalf),
+            bottom: lastRect.bottom - borderHalf,
+            right: lastRect.right - borderHalf
         }
+    }
+
+    /**
+     * Rerender active area square and draggable square
+     * @returns {BomTable}
+     * @private
+     */
+    _rerenderActiveArea() {
+        let area = this.lastSelectArea,
+            startCol = area.start.col,
+            startRow = area.start.row,
+            endCol = area.end.col,
+            endRow = area.end.row;
+        return this
+            ._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea')
+            ._createSquare(endCol, endRow);
     }
 
     /**
@@ -1356,6 +1395,13 @@ export default class BomTable {
      * @return {BomTable}
      */
     clearActiveArea() {
+
+        if (!this.dom.activeAreaLeft) return this;
+
+        this._removeSquareArea('activeArea');
+
+        this.dom.activeAreaLeft = this.dom.activeAreaRight = this.dom.activeAreaTop = this.dom.activeAreaBottom = null;
+
         this.instanceData.length && this.selectedMap.forEach(key => {
             let el = this.dataMap[key];
             el && el.classList.remove('area');
@@ -1385,7 +1431,7 @@ export default class BomTable {
     }
 
     /**
-     * Create square
+     * Create draggable square
      * @param {number} endCol - end col
      * @param {number} endRow - end row
      * @return {BomTable}
@@ -1449,9 +1495,9 @@ export default class BomTable {
 
             if (td !== el) return false;
 
-            splitKey = key.split('::');
-            elMap.col = +splitKey[0];
-            elMap.row = +splitKey[1];
+            splitKey = BomTable._splitKey(key);
+            elMap.col = splitKey[0];
+            elMap.row = splitKey[1];
 
             return true;
         });
@@ -1498,18 +1544,18 @@ export default class BomTable {
         helper.clearSelected();
 
         this
-            ._addSquare(this._ariaPosition({startCol, startRow, endCol, endRow}, 3), 'copyArea')
+            ._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}, 3), 'copyArea')
             ._setSquareDragCell({startCol, endCol, startRow, endRow})
     }
 
     /**
-     * Create square contains lines, and append it to this.dom.wrapper
+     * Create square area contains lines, and append it to this.dom.wrapper
      * @param {Object} position - {left, top, bottom, right}
      * @param {String} name - class list and name of dom elements
      * @returns {BomTable}
      * @private
      */
-    _addSquare(position, name) {
+    _addSquareArea(position, name) {
         let wrapPos = this._getWrapTopLeftPosition(),
             startClassName = `bomtable-${helper.camelCaseToKebabCase(name)}`;
 
@@ -1550,6 +1596,19 @@ export default class BomTable {
     }
 
     /**
+     * Remove square area
+     * @param {String} name - name of dom elements
+     * @private
+     */
+    _removeSquareArea(name) {
+        if (!this.dom[`${name}Left`]) return;
+        ['Left', 'Top', 'Right', 'Bottom'].forEach(key => {
+            helper.removeElement(this.dom[`${name}${key}`]);
+            this.dom[`${name}${key}`] = null
+        });
+    }
+
+    /**
      * Draw square
      * @param {Object} map coords {startCol, endCol, startRow, endRow}
      * @return {BomTable}
@@ -1576,12 +1635,7 @@ export default class BomTable {
     _removeCopyArea(saveValue = true) {
 
         if (!this.dom.copyAreaLeft) return this;
-        helper.removeElement(this.dom.copyAreaLeft);
-        helper.removeElement(this.dom.copyAreaRight);
-        helper.removeElement(this.dom.copyAreaTop);
-        helper.removeElement(this.dom.copyAreaBottom);
-
-        this.dom.copyAreaLeft = this.dom.copyAreaRight = this.dom.copyAreaTop = this.dom.copyAreaBottom = null;
+        this._removeSquareArea('copyArea');
 
         if (saveValue && this.squareDragArea.length) {
 
@@ -1639,20 +1693,20 @@ export default class BomTable {
                 squareAreaData.forEach((row, rowIndex) => {
                     row.forEach((key, colIndex) => {
                         let copyKey = tableData[rowIndex][colIndex],
-                            [colNum, rowNum] = key.split('::');
+                            [colNum, rowNum] = BomTable._splitKey(key);
 
-                        if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = +colNum;
-                        if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = +rowNum;
+                        if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = colNum;
+                        if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = rowNum;
 
-                        if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = +colNum;
-                        if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = +rowNum;
+                        if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = colNum;
+                        if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = rowNum;
 
                         if (copyKey === key) return;
 
-                        let [colCopyNum, rowCopyNum] = copyKey.split('::'),
-                            val = this.dataCell(+colCopyNum, +rowCopyNum);
+                        let [colCopyNum, rowCopyNum] = BomTable._splitKey(copyKey),
+                            val = this.dataCell(colCopyNum, rowCopyNum);
 
-                        instance.dataCell = {col: +colNum, row: +rowNum, val};
+                        instance.dataCell = {col: colNum, row: rowNum, val};
                     })
                 });
 
