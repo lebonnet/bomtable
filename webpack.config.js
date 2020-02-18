@@ -29,7 +29,6 @@ const config = {
             exclude: /node_modules/,
             use: [{
                 loader: 'babel-loader',
-
                 options: {
                     presets: [
                         "@babel/preset-env"
@@ -43,13 +42,13 @@ const config = {
                 isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
                 {
                     loader: 'css-loader',
-                    // options: {
-                    //     minimize: !isDevelopment
-                    // }
                 },
                 'sass-loader',
                 'resolve-url-loader'
             ]
+        }, {
+            test: /\.svg$/,
+            loader: 'svg-url-loader'
         }]
     },
     plugins: [

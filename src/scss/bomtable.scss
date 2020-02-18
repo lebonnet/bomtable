@@ -166,16 +166,18 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             text-align: left;
             list-style: none;
             cursor: pointer;
-            padding: 6px 10px;
             border-bottom: none;
             background-color: #fff;
             background-repeat: no-repeat;
             margin-bottom: 0;
             min-width: 130px;
             line-height: normal;
+            background-position: 5px center;
+            background-size: 16px 16px;
+            padding: 6px 10px 6px 30px;
 
             &:hover {
-                background: #f1f1f1;
+                background-color: #f1f1f1;
             }
 
             &.bomtable-hr {
@@ -185,6 +187,22 @@ $darkBlue: scale-color($blue, $lightness: -15%);
                 border-bottom: 1px solid $gray;
                 margin: 0;
                 width: auto;
+            }
+
+            &.add-row {
+                background-image: url('../img/add-row.svg');
+            }
+            &.add-col {
+                background-image: url('../img/add-col.svg');
+            }
+            &.remove-rows {
+                background-image: url('../img/remove-row.svg');
+            }
+            &.remove-cols {
+                background-image: url('../img/remove-col.svg');
+            }
+            &.union-cols {
+                background-image: url('../img/union-cols.svg');
             }
         }
     }
