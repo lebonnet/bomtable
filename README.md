@@ -111,6 +111,9 @@ selectedRows - (getter) get index of selected rows | получить индек
 
 selectedCols - (getter) get index of selected cols | получить индексы выделенных столбцов ({Array})
 
+dataRow - (getter) get row data by index | получить данные строки по индексу ({Array})
+ 
+dataCol - (getter) get col data by index | получить данные столбца по индексу ({Array}) 
 ```
 <br/>
 
@@ -121,6 +124,9 @@ header = {Array} - (setter) set new data header | установить новы�
 
 dataCell = {col: {number}, {row: {number}, val: {*}) - (setter) set new value in cell | установить новое значение ячейки
 
+dataRow - {row: {number(rowIndex)}, data: {Array}} (setter) - set new row values | установить новые значени для строки 
+ 
+dataCol - {col: {number(colIndex)}, data: {Array}} (setter) - set new col values | установить новые значени для столбца 
 ```
 <br/>
 

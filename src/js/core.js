@@ -177,6 +177,60 @@ export default class BomTable {
     }
 
     /**
+     * Set new row data
+     * @param {Number} row
+     * @param {Array} data
+     */
+    set dataRow({row, data}) {
+        if (!this.instanceData[row]) return;
+        this.instanceData[row].forEach((cell, cellIndex) => {
+            let newVal = data[cellIndex] !== undefined ? helper.prepareValue(data[cellIndex]) : '';
+            if (newVal === cell) return;
+            this.dataMap[`${cellIndex}::${row}`].innerHTML = newVal;
+            this.instanceData[row][cellIndex] = newVal;
+        });
+
+        this._rerenderActiveArea();
+        return this;
+    }
+
+    /**
+     * Get row by index
+     * @param {number} row - row index
+     * @return {Array}
+     */
+    get dataRow() {
+        return row => this.instanceData[row]
+    }
+
+    /**
+     * Set new col data
+     * @param {Number} col
+     * @param {Array} data
+     * @return {BomTable}
+     */
+    set dataCol({col, data}) {
+        this.instanceData.forEach((row, rowIndex) => {
+            let newVal = data[rowIndex] !== undefined ? helper.prepareValue(data[rowIndex]) : '',
+                cell = row[col];
+            if (newVal === cell) return;
+            this.dataMap[`${col}::${rowIndex}`].innerHTML = newVal;
+            this.instanceData[rowIndex][col] = newVal;
+        });
+
+        this._rerenderActiveArea();
+        return this;
+    }
+
+    /**
+     * Get col by index
+     * @return {Array}
+     */
+    get dataCol() {
+        return col => this.instanceData.map(row => row[col])
+    }
+
+    /**
      * Get selected map
      * @return {*|Array}
      */
@@ -201,14 +255,14 @@ export default class BomTable {
     }
 
     /**
-     * Prepare data (add empty value in short columns) and set copy data in instance
+     * Prepare data (add empty value in short columns) and set copy data in the instance
      * @param {Array} data
      * @private
      */
     _prepareData(data) {
         let countCols = data.reduce((max, arr) => max > arr.length ? max : arr.length, 0);
         data.forEach(col => {
-            col = col.slice(0); // copy array
+            col = col.map(cell => helper.prepareValue(cell)); // copy and clear array
             while (countCols > col.length) col.push('');
             this.instanceData.push(col);
         });
@@ -1380,6 +1434,7 @@ export default class BomTable {
      * @private
      */
     _rerenderActiveArea() {
+        if (!Object.keys(this.lastSelectArea).length) return this
         let area = this.lastSelectArea,
             startCol = area.start.col,
             startRow = area.start.row,
