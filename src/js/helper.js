@@ -112,3 +112,11 @@ export function prepareValue(val) {
     if (!val) return val;
     return !isNaN(+val) ? +val : val.replace(/&nbsp;/g, ' ').replace(/\r?\n/g, '').trim()
 }
+
+export function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+export function randKey() {
+    return Date.now().toString().split('').reverse().map(i => rand(0, 9)).join('')
+}

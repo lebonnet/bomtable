@@ -177,6 +177,42 @@ export default class BomTable {
     }
 
     /**
+     * Set any data for cell by prop name
+     * @param {Number} col
+     * @param {Number} row
+     * @param {String} propName
+     * @param {*} val
+     * @return {BomTable}
+     */
+    set metaDataCell({col, row, propName, val}) {
+        let el = this.dataMap[`${col}::${row}`],
+            key = el.dataset.metaKey;
+        if (!this.cellMeta[key]) {
+            this.cellMeta[key] = {}
+        }
+        this.cellMeta[key][propName] = val;
+        return this;
+    }
+
+    /**
+     * Get cell meta data by prop name
+     * @param {Number} col
+     * @param {Number} row
+     * @param {String} propName
+     * @return {*}
+     */
+    get metaDataCell() {
+        return ({col, row, propName}) => {
+            let el = this.dataMap[`${col}::${row}`],
+                key = el.dataset.metaKey;
+            if (!this.cellMeta[key]) {
+                this.cellMeta[key] = {}
+            }
+            return this.cellMeta[key][propName];
+        }
+    }
+
+    /**
      * Set new row data
      * @param {Number} row
      * @param {Array} data
@@ -305,8 +341,9 @@ export default class BomTable {
         let tr = helper.createElement({tagName: 'tr', selector: colsClass});
 
         for (let colNum = 0; colNum < length; colNum++) {
-            let cell = rowData[colNum] != null ? helper.prepareValue(rowData[colNum]) : '';
-            helper.createElement({tagName: 'td', selector: rowsClass, parent: tr, html: cell});
+            let cell = rowData[colNum] != null ? helper.prepareValue(rowData[colNum]) : '',
+                td = helper.createElement({tagName: 'td', selector: rowsClass, parent: tr, html: cell});
+            td.dataset.metaKey = `btk${helper.randKey()}`
         }
 
         if (nextTr) {
@@ -373,6 +410,7 @@ export default class BomTable {
                         isHeader = key.indexOf('-1') > -1,
                         child = isHeader ? this._createHeaderCell() : helper.createElement({tagName: 'td'});
 
+                    !isHeader && (child.dataset.metaKey = `btk${helper.randKey()}`);
                     rowsClass && !isHeader && child.classList.add(rowsClass);
                     parent.insertBefore(child, el.nextSibling);
                 }
@@ -383,11 +421,12 @@ export default class BomTable {
             }
             lastColIndex = this.instanceData[0].length - 1;
             while (it !== this.instanceData.length) {
-                helper.createElement({
+                let td = helper.createElement({
                     tagName: 'td',
                     selector: rowsClass,
                     parent: this.dataMap[`${lastColIndex}::${it++}`].parentElement
                 });
+                td.dataset.metaKey = `btk${helper.randKey()}`
             }
         }
 
@@ -406,6 +445,9 @@ export default class BomTable {
             let firstTd = this.dataMap[`0::${rowNum}`],
                 parentTr = firstTd && firstTd.parentNode;
             if (!parentTr) return;
+            helper._likeArray(parentTr.children).forEach(td => {
+                delete this.cellMeta[td.dataset.metaKey]
+            });
             helper.removeElement(parentTr);
         });
 
@@ -426,6 +468,7 @@ export default class BomTable {
                 if (!key.indexOf(`${colNum}::`)) {
                     let el = this.dataMap[key],
                         header = this.dataMap[`${colNum}::-1`];
+                    el && (delete this.cellMeta[el.dataset.metaKey]);
                     el && helper.removeElement(el);
                     header && helper.removeElement(header);
                 }
@@ -518,10 +561,11 @@ export default class BomTable {
                 this.instanceData[rowNum] = [];
 
                 helper._likeArray(tr.children).forEach((td, colNum) => {
-                    let val = td.innerHTML;
+                    let val = td.innerHTML,
+                        meta = (td.dataset.metaKey && this.cellMeta[td.dataset.metaKey]) || {};
                     this.dataMap[`${colNum}::${rowNum}`] = td;
                     this.instanceData[rowNum].push(val);
-                    renders && renders(this, td, colNum, rowNum, val);
+                    renders && renders(this, td, colNum, rowNum, val, meta);
                 });
             });
         }
@@ -574,7 +618,7 @@ export default class BomTable {
         this.instanceData.forEach((row, rowNum) => {
             let tr = this._createRow({index: rowNum, rowData: row, render: true});
             tr.childNodes.forEach((td, colNum) => {
-                renders && renders(this, td, colNum, rowNum, row[colNum]);
+                renders && renders(this, td, colNum, rowNum, row[colNum], {});
                 this.dataMap[`${colNum}::${rowNum}`] = td;
             })
         });
@@ -1930,6 +1974,7 @@ export default class BomTable {
         this.instanceData = [];
         this.instanceHeader = [];
         this.dataMap = {};
+        this.cellMeta = {};
 
         this.countTouch = 0;
         this.tapped = false;

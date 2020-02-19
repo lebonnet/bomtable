@@ -52,7 +52,7 @@ let instance = new BomTable({
     data: [[0, 7, 8, 9], [1, 20, 30], [2, 5], [3], [4, 56, 55, 22, 15, 18], [5, 7, 1], [6]],
     header: ['0', '1', '2', '3', '4', '5', '6'],
 
-    renders: (inst, td, colNum, rowNum, val) => {
+    renders: (inst, td, colNum, rowNum, val, cellMeta) => {
         if (colNum === 2) td.style.color = 'tomato'
         if (val === 1) td.style.color = 'green'
     },
@@ -113,7 +113,9 @@ selectedCols - (getter) get index of selected cols | получить индек
 
 dataRow - (getter) get row data by index | получить данные строки по индексу ({Array})
  
-dataCol - (getter) get col data by index | получить данные столбца по индексу ({Array}) 
+dataCol - (getter) get col data by index | получить данные столбца по индексу ({Array})
+
+metaDataCell - (getter) get cell meta data by property name | получить мета данные ячейки по имени свойства ({Any})
 ```
 <br/>
 
@@ -126,7 +128,9 @@ dataCell = {col: {number}, {row: {number}, val: {*}) - (setter) set new value in
 
 dataRow - {row: {number(rowIndex)}, data: {Array}} (setter) - set new row values | установить новые значени для строки 
  
-dataCol - {col: {number(colIndex)}, data: {Array}} (setter) - set new col values | установить новые значени для столбца 
+dataCol - {col: {number(colIndex)}, data: {Array}} (setter) - set new col values | установить новые значени для столбца
+
+metaDataCell - {col: {number}, row: {number}, propName: {String} val: {Any}} - set any data for cell by property name | установить любые мета данные для ячейки по имени свойства
 ```
 <br/>
 
