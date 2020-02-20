@@ -559,7 +559,29 @@ export default class BomTable {
      * @return {BomTable}
      */
     render() {
-        return this._reindex()
+        let renders = this.config.renders;
+
+        this.instanceData.forEach((row, rowNum) => {
+            row.forEach((cell, colNum) => {
+                let td = this.dataMap[`${colNum}::${rowNum}`],
+                    meta = (td.dataset.metaKey && this.cellMeta[td.dataset.metaKey]) || {};
+                if (td.innerHTML !== cell) {
+                    td.innerHTML = cell
+                }
+                renders && renders(this, td, colNum, rowNum, row[colNum], meta);
+            });
+        });
+
+        this.instanceHeader.forEach((cell, colNum) => {
+            let th = this.dataMap[`${colNum}::-1`],
+                childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
+                val = childWrap ? childWrap.innerHTML : th.innerHTML;
+            if (cell !== val) {
+                childWrap ? childWrap.innerHTML = val : th.innerHTML = val;
+            }
+        });
+
+        return this
     }
 
     /**
@@ -575,8 +597,16 @@ export default class BomTable {
 
         this.instanceHeader = [];
 
-        if (this.dom.body && this.dom.body.children) {
+        if (this.dom.header && this.dom.header.firstElementChild) {
+            helper._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
+                let childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
+                    val = childWrap ? childWrap.innerHTML : th.innerHTML;
+                this.instanceHeader.push(val);
+                this.dataMap[`${colNum}::-1`] = th;
+            });
+        }
 
+        if (this.dom.body && this.dom.body.children) {
             helper._likeArray(this.dom.body.children).forEach((tr, rowNum) => {
                 this.instanceData[rowNum] = [];
 
@@ -590,14 +620,6 @@ export default class BomTable {
             });
         }
 
-        if (this.dom.header && this.dom.header.firstElementChild) {
-            helper._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
-                let childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
-                    val = childWrap ? childWrap.innerHTML : th.innerHTML;
-                this.instanceHeader.push(val);
-                this.dataMap[`${colNum}::-1`] = th;
-            });
-        }
         return this;
     }
 
