@@ -138,7 +138,7 @@ export default class BomTable {
     set header(header) {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array');
         this.config.header = header;
-        this.removeHeader()._renderHeader();
+        this.removeHeader()._renderHeader().render();
     }
 
     /**
@@ -581,7 +581,7 @@ export default class BomTable {
             }
         });
 
-        return this
+        return this._rerenderActiveArea()
     }
 
     /**
@@ -1077,7 +1077,7 @@ export default class BomTable {
 
         let el = e.target;
 
-        if (!helper.parents(el).some(p => p === instance.dom.table)) {
+        if (!helper.parents(el).some(p => p === instance._container)) {
             return;
         }
 
