@@ -1191,12 +1191,14 @@ export default class BomTable {
                 instance._removeInput(false);
                 break;
             case 'Delete':
-                instance.selectedMap.forEach(key => {
-                    let [col, row] = BomTable._splitKey(key);
-                    instance.dataMap[`${col}::${row}`] && (instance.dataCell = {col, row, val: ''});
-                });
-                keyMustIgnore = true;
-                instance._rerenderActiveArea();
+                if (!el) {
+                    instance.selectedMap.forEach(key => {
+                        let [col, row] = BomTable._splitKey(key);
+                        instance.dataMap[`${col}::${row}`] && (instance.dataCell = {col, row, val: ''});
+                    });
+                    keyMustIgnore = true;
+                    instance._rerenderActiveArea();
+                }
                 break;
         }
 
