@@ -39,6 +39,8 @@ export default class BomTable {
                 },
                 callback: null // function can be call after click context menu item
             },
+
+            hooks: {},
             // header menu, cooking like context menu
             headerMenu: null
         }, opts);
@@ -816,7 +818,13 @@ export default class BomTable {
         if (instance.config[menuName]) {
             e.preventDefault();
 
-            Object.keys(instance.config[menuName].items).forEach(key => {
+            let data = {list: Object.assign({}, instance.config[menuName].items)},
+                hookName = `before${helper.firstCharToUp(menuName)}Render`;
+
+            if (instance.config.hooks[hookName]) {
+                instance.config.hooks[hookName](instance, data.list)
+            }
+            Object.keys(data.list).forEach(key => {
 
                 if (/^hr+[0-9]*$/.test(key)) {
                     html += `<li class="bomtable-hr"></li>`;

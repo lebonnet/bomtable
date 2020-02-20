@@ -89,6 +89,15 @@ export function camelCaseToKebabCase(string) {
 }
 
 /**
+ * aaaaa to Aaaaa
+ * @param str
+ * @return {string}
+ */
+export function firstCharToUp(str) {
+    return `${str[0].toUpperCase()}${str.slice(1)}`
+}
+
+/**
  * Extract number from string
  * @param str
  * @returns {number}

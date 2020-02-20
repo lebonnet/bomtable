@@ -5,9 +5,9 @@
     <title>Bomtable example</title>
 </head>
 <body>
-<div style="margin: 200px 100px;">
-    <div style="padding: 0" class="example"></div>
-</div>
+    <div style="margin: 200px 100px;">
+        <div style="padding: 0" class="example"></div>
+    </div>
 </body>
 <script>
     let menu = {
@@ -40,6 +40,15 @@
         renders: (instance, td, colNum, rowNum) => {
             td.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
         },
+        hooks: {
+            beforeHeaderMenuRender: (instance, list) => {
+                delete list.hr;
+                delete list.removeRows;
+                delete list.removeCols;
+                delete list.hr1;
+                delete list.unionCols;
+            }
+        }
     });
 </script>
 </html>

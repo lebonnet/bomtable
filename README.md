@@ -82,13 +82,24 @@ let opts = {
         callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
     },
 
-    // if headers sets, use like context menu | если заданы заголовки, готовить так же как контекстное меню
+    // if headers sets, use this menu like context menu | если заданы заголовки, готовить так же как контекстное меню
     // default empty
     headerMenu: {
         items: {}, // items - object with list item | объект со списком элементов меню
         callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
     },
 
+    // event hooks 
+    hooks: {
+        beforeContextMenuRender: (instance, list) => {
+            // here you can change the menu list
+            list.removeRows = 'remove row'; 
+        },
+        beforeHeaderMenuRender: (instance, list) => {
+            // here you can change the menu list
+            list.removeRows = 'remove row'; 
+        }
+    }
 };
 ```
 
@@ -150,11 +161,21 @@ removeHeader() - remove table header | удалить заголовок таб�
 <br/>
 
 ```
+render() - rerender instance data | перерендерить данные
+
 clear() - clear data of instance | очистить instance
 
 destroy() - destroy instance | разрушить instance
 ```
+<br/>
 
+### Hooks
+### Хуки
+```
+beforeContextMenuRender (instance: {BomTable}, menuList: {Object})
+
+beforeHeaderMenuRender (instance: {BomTable}, menuList: {Object})
+```
 <br/>
 
 ### Browser support
