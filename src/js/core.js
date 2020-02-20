@@ -137,9 +137,8 @@ export default class BomTable {
      */
     set header(header) {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array');
-        this.config.data = this.data;
         this.config.header = header;
-        this.clear()._render();
+        this.removeHeader()._renderHeader();
     }
 
     /**
@@ -206,7 +205,7 @@ export default class BomTable {
             let el = this.dataMap[`${col}::${row}`],
                 key = el.dataset.metaKey;
             if (!this.cellMeta[key]) {
-                this.cellMeta[key] = {}
+                return undefined
             }
             return this.cellMeta[key][propName];
         }
@@ -221,6 +220,7 @@ export default class BomTable {
     removeMetaDataCell({col, row, propName}) {
         let el = this.dataMap[`${col}::${row}`],
             key = el.dataset.metaKey;
+        if (!this.cellMeta[key]) return;
         delete this.cellMeta[key][propName]
     }
 
@@ -609,29 +609,10 @@ export default class BomTable {
     _render() {
         let renders = this.config.renders;
 
-        // create table
         this.dom.table = helper.createElement({tagName: 'table', selector: 'bomtable'});
         this.config.tableClass && this.dom.table.classList.add(this.config.tableClass);
 
-        this._prepareData(this.config.data);
-        this._prepareHeader(this.config.header);
-
-        if (!this.dom.header && this.instanceHeader.length) {
-            this.dom.header = helper.createElement({tagName: 'thead'});
-            helper.createElement({tagName: 'tr', parent: this.dom.header});
-        }
-
-        this.instanceHeader.forEach((cell, colNum) => {
-            this.dataMap[`${colNum}::-1`] = this._createHeaderCell(cell);
-        });
-
-        if (!this.dom.header) {
-            this.removeHeader();
-        }
-
-        !this.dom.header && this.dom.table.classList.add('bomtable-no-header');
-
-        this.dom.header && this.dom.table.appendChild(this.dom.header);
+        this._prepareData(this.config.data)._renderHeader();
 
         this.dom.body = helper.createElement({tagName: 'tbody', parent: this.dom.table});
 
@@ -663,6 +644,37 @@ export default class BomTable {
         }
 
         return this;
+    }
+
+    /**
+     * Render table header
+     * @return {BomTable}
+     * @private
+     */
+    _renderHeader() {
+        this._prepareHeader(this.config.header);
+
+        if (!this.dom.header && this.instanceHeader.length) {
+            this.dom.header = helper.createElement({tagName: 'thead'});
+            helper.createElement({tagName: 'tr', parent: this.dom.header});
+        }
+
+        this.instanceHeader.forEach((cell, colNum) => {
+            this.dataMap[`${colNum}::-1`] = this._createHeaderCell(cell);
+        });
+
+        if (!this.dom.header) {
+            this.removeHeader();
+        }
+
+        if (this.dom.header) {
+            this.dom.table.appendChild(this.dom.header);
+            this.dom.table.classList.remove('bomtable-no-header');
+        } else {
+            this.dom.table.classList.add('bomtable-no-header');
+        }
+
+        return this
     }
 
     /**
