@@ -213,6 +213,18 @@ export default class BomTable {
     }
 
     /**
+     * Delete cell meta data
+     * @param col
+     * @param row
+     * @param propName
+     */
+    removeMetaDataCell({col, row, propName}) {
+        let el = this.dataMap[`${col}::${row}`],
+            key = el.dataset.metaKey;
+        delete this.cellMeta[key][propName]
+    }
+
+    /**
      * Set new row data
      * @param {Number} row
      * @param {Array} data
@@ -540,6 +552,14 @@ export default class BomTable {
             cols[key.split('::')[0]] = 1;
         });
         return Object.keys(cols).map(c => +c);
+    }
+
+    /**
+     * Public render
+     * @return {BomTable}
+     */
+    render() {
+        return this._reindex()
     }
 
     /**
