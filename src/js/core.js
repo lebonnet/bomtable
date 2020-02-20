@@ -202,11 +202,10 @@ export default class BomTable {
      */
     get metaDataCell() {
         return ({col, row, propName}) => {
-            let el = this.dataMap[`${col}::${row}`],
-                key = el.dataset.metaKey;
-            if (!this.cellMeta[key]) {
-                return undefined
-            }
+            let el = this.dataMap[`${col}::${row}`];
+            if (!el) return undefined;
+            let key = el.dataset.metaKey;
+            if (!this.cellMeta[key]) return undefined;
             return this.cellMeta[key][propName];
         }
     }
@@ -1534,7 +1533,7 @@ export default class BomTable {
      * @private
      */
     _rerenderActiveArea() {
-        if (!Object.keys(this.lastSelectArea).length) return this
+        if (!Object.keys(this.lastSelectArea).length) return this;
         let area = this.lastSelectArea,
             startCol = area.start.col,
             startRow = area.start.row,
