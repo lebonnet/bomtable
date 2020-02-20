@@ -1936,7 +1936,8 @@ export default class BomTable {
 
         let elHelperStyles = w.getComputedStyle(elHelper),
             countLines = Math.ceil(elHelper.scrollWidth / elHelper.offsetWidth),
-            minHeight = `${helper.getNumberFromString(elHelperStyles.lineHeight) * countLines}px`,
+            height = Math.max(helper.getNumberFromString(elHelperStyles.lineHeight) * countLines, tdRect.height + 1),
+            minHeight = `${height}px`,
             minWidth = `${tdRect.width + 1}px`;
 
         elHelper.style.minHeight = minHeight;

@@ -1,3 +1,9 @@
+// ie babel fix
+// @see https://stackoverflow.com/questions/53331180/babel-polyfill-being-included-but-foreach-still-doesnt-work-in-ie11-on-nodelis
+if (window.NodeList && !NodeList.prototype.forEach) {
+    NodeList.prototype.forEach = Array.prototype.forEach;
+}
+
 /**
  * Create new HTML element
  * @param {string} tagName - name created tag
