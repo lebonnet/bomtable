@@ -1,15 +1,14 @@
 $gray: #ccc;
 $blue: #00a3cf;
 $lightBlue: scale-color($blue, $lightness: +85%);
+$lightestBlue: scale-color($blue, $lightness: +95%);
 $darkBlue: scale-color($blue, $lightness: -15%);
 
-* {
-    margin: 0;
-    padding: 0;
-}
-
 .bomtable-wrapper {
-
+    * {
+        margin: 0;
+        padding: 0;
+    }
     font-family: 'Roboto', Verdana, sans-serif;
     font-size: 13px;
     position: relative;
@@ -118,6 +117,10 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     .bomtable th::selection {
         background: transparent;
         color: inherit;
+    }
+
+    .bomtable th.highlight {
+        background-color: $lightestBlue;
     }
 
     textarea.bomtable-input {

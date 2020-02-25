@@ -1424,7 +1424,7 @@ export default class BomTable {
             startRow = map.start.rowNum,
             endRow = map.end.rowNum,
             mouseDownEl = this.mouseDownElement.el,
-
+            header = this.header || [],
             rows = [],
             cols = [];
 
@@ -1510,6 +1510,10 @@ export default class BomTable {
 
         this._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea');
 
+        header.length && this.selectedCols.forEach(colIndex => {
+            let th = this.dataMap[`${colIndex}::-1`];
+            th && th.classList.add('highlight');
+        });
         return this;
     }
 
@@ -1575,6 +1579,11 @@ export default class BomTable {
         this.lastSelectArea = {};
         this.selected = [];
         this.lastSelected = null;
+
+        (this.header || []).forEach((v, index) => {
+            let th = this.dataMap[`${index}::-1`];
+            th && th.classList.remove('highlight');
+        });
 
         return this;
     }
