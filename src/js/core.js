@@ -1371,6 +1371,9 @@ export default class BomTable {
             keyType = 'ctrlKey'
         }
 
+        if (this.mouseDownElement && this.mouseDownElement.el) {
+            this.mouseDownElement.el.classList.remove('pressed');
+        }
         helper.clearSelected();
 
         let [colNum, rowNum] = BomTable._splitKey(Object.keys(this.dataMap)
@@ -1427,6 +1430,8 @@ export default class BomTable {
             header = this.header || [],
             rows = [],
             cols = [];
+
+        mouseDownEl.classList.add('pressed');
 
         // if press shift key
         if (keyType === 'shiftKey' && this.lastSelected) {
@@ -1491,12 +1496,7 @@ export default class BomTable {
                 } else {
                     this.selected.push(key);
                 }
-
-                if (mouseDownEl === el && (cols.length > 1 || rows.length > 1)) {
-                    el.classList.remove('area');
-                } else {
-                    el.classList.toggle('area');
-                }
+                el.classList.toggle('area');
             })
         });
 
@@ -1506,6 +1506,7 @@ export default class BomTable {
         }
 
         this.lastSelectArea = {start: {col: startCol, row: startRow}, end: {col: endCol, row: endRow}};
+
         this._createSquare(endCol, endRow);
 
         this._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea');
@@ -1813,49 +1814,49 @@ export default class BomTable {
 
         if (saveValue && this.squareDragArea.length) {
 
-            let tableData = {},
-                squareAreaData = {},
+            let squareAreaMap = {},
+                copyDataKeys = [],
+                lsas = this.lastSelectArea.start,
+                lsae = this.lastSelectArea.end,
                 map = {start: {}, end: {}};
 
-            this.selectedMap.forEach(key => {
-                let rowNum = key.split('::')[1];
-                if (!tableData[rowNum]) tableData[rowNum] = [];
-                tableData[rowNum].push(key)
-            });
-            tableData = Object.values(tableData);
+            for (let rowNum = lsas.row; rowNum <= lsae.row; rowNum++) {
+                let rowData = [];
+                for (let colNum = lsas.col; colNum <= lsae.col; colNum++) {
+                    rowData.push(`${colNum}::${rowNum}`)
+                }
+                copyDataKeys.push(rowData);
+            }
 
             this.squareDragArea.forEach(key => {
                 let rowNum = +key.split('::')[1];
                 if (rowNum < 0) return;
-                if (!squareAreaData[rowNum]) squareAreaData[rowNum] = [];
-                squareAreaData[rowNum].push(key)
+                if (!squareAreaMap[rowNum]) squareAreaMap[rowNum] = [];
+                squareAreaMap[rowNum].push(key)
             });
 
-            squareAreaData = Object.values(squareAreaData);
+            squareAreaMap = Object.values(squareAreaMap);
 
-            // if dif count set and selected cols or rows
-            if (tableData.length !== squareAreaData.length || squareAreaData[0].length !== tableData[0].length) {
+            if (copyDataKeys.length !== squareAreaMap.length || squareAreaMap[0].length !== copyDataKeys[0].length) {
 
-                if (squareAreaData.length > tableData.length) {
-
+                if (squareAreaMap.length > copyDataKeys.length) {
                     let index = 0,
-                        lengthData = tableData.length;
-                    while (squareAreaData.length > tableData.length) {
+                        lengthData = copyDataKeys.length;
+                    while (squareAreaMap.length > copyDataKeys.length) {
                         if (this.direction.y === 'down') {
-                            tableData.push(tableData[index++]);
+                            copyDataKeys.push(copyDataKeys[index++]);
                             if (index === lengthData) index = 0;
                         } else {
-                            tableData.unshift(tableData[tableData.length - (++index)]);
+                            copyDataKeys.unshift(copyDataKeys[copyDataKeys.length - (++index)]);
                         }
                     }
-
                 }
 
-                if (squareAreaData[0].length > tableData[0].length) {
-                    tableData.forEach(row => {
+                if (squareAreaMap[0].length > copyDataKeys[0].length) {
+                    copyDataKeys.forEach(row => {
                         let index = 0,
-                            lengthData = tableData[0].length;
-                        while (squareAreaData[0].length > row.length) {
+                            lengthData = copyDataKeys[0].length;
+                        while (squareAreaMap[0].length > row.length) {
                             if (this.direction.x === 'right') {
                                 row.push(row[index++]);
                                 if (index === lengthData) index = 0;
@@ -1866,9 +1867,9 @@ export default class BomTable {
                     });
                 }
 
-                squareAreaData.forEach((row, rowIndex) => {
+                squareAreaMap.forEach((row, rowIndex) => {
                     row.forEach((key, colIndex) => {
-                        let copyKey = tableData[rowIndex][colIndex],
+                        let copyKey = copyDataKeys[rowIndex][colIndex],
                             [colNum, rowNum] = BomTable._splitKey(key);
 
                         if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = colNum;

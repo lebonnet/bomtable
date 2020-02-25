@@ -288,5 +288,9 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         &.area {
             background: $lightBlue !important;
         }
+
+        &.pressed {
+            background: $lightestBlue !important;
+        }
     }
 }
