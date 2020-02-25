@@ -1457,6 +1457,9 @@ export default class BomTable {
             endRow = map.start.rowNum;
         }
 
+        if (map.start.rowNum !== -1 && startRow === -1) {
+            startRow = 0
+        }
         // array rows
         for (let i = startRow; endRow >= i; i++) {
             rows.push(i);
@@ -1813,10 +1816,12 @@ export default class BomTable {
             tableData = Object.values(tableData);
 
             this.squareDragArea.forEach(key => {
-                let rowNum = key.split('::')[1];
+                let rowNum = +key.split('::')[1];
+                if (rowNum < 0) return;
                 if (!squareAreaData[rowNum]) squareAreaData[rowNum] = [];
                 squareAreaData[rowNum].push(key)
             });
+
             squareAreaData = Object.values(squareAreaData);
 
             // if dif count set and selected cols or rows
