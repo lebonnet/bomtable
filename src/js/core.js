@@ -18,6 +18,7 @@ export default class BomTable {
         this.config = Object.assign({
             data: [], // data for table body
             header: '', // table header
+            stickyHeader: true, // sticky table header
             tableClass: '', // css class table
             touchSupport: true, // support touch in browsers
             container: null, // node or selector for mount table
@@ -413,24 +414,35 @@ export default class BomTable {
         let num = this.lastSelected && this.lastSelected.colNum,
             lastColIndex,
             it = 0,
-            rowsClass = this.config.rowsClass || '';
-
-        if (num) {
+            rowsClass = this.config.rowsClass || '',
+            col = helper.createElement({tagName: 'col'}),
+            copyCol = col.cloneNode(false);
+        if (num != null) {
             Object.keys(this.dataMap).forEach(key => {
-                if (!key.indexOf(`${num}::`)) {
-                    let el = this.dataMap[key],
-                        parent = el.parentElement,
-                        isHeader = key.indexOf('-1') > -1,
-                        child = isHeader ? this._createHeaderCell() : helper.createElement({tagName: 'td'});
+                if (key.indexOf(`${num}::`) !== 0) return;
 
-                    !isHeader && (child.dataset.metaKey = `btk${helper.randKey()}`);
-                    rowsClass && !isHeader && child.classList.add(rowsClass);
-                    parent.insertBefore(child, el.nextSibling);
+                let el = this.dataMap[key],
+                    parent = el.parentElement,
+                    rowNum = +key.split('::')[1],
+                    isHeader = rowNum < 0,
+                    isCopyHeader = rowNum === -2,
+                    child = isHeader ? this._createHeaderCell('', isCopyHeader) : helper.createElement({tagName: 'td'});
+
+                if (!isHeader) {
+                    child.dataset.metaKey = `btk${helper.randKey()}`;
+                    rowsClass && child.classList.add(rowsClass);
                 }
+                parent.insertBefore(child, el.nextSibling);
             });
+            if (this.dom.header) {
+                this.dom.colgroup.insertBefore(col, this.dom.colgroup.children[num].nextSibling);
+                this.dom.copyColgroup.insertBefore(copyCol, this.dom.copyColgroup.children[num].nextSibling);
+            }
+            this._manualColSize = {};
         } else {
             if (this.dom.header) {
-                this.dom.header.firstChild.appendChild(this._createHeaderCell());
+                this.dom.colgroup.appendChild(col) && this.dom.copyColgroup.appendChild(copyCol);
+                this._createHeaderCell() && this._createHeaderCell('', true);
             }
             lastColIndex = this.instanceData[0].length - 1;
             while (it !== this.instanceData.length) {
@@ -443,7 +455,7 @@ export default class BomTable {
             }
         }
 
-        return this._reindex();
+        return this._reindex()._calcColsWidth();
     }
 
     /**
@@ -480,15 +492,25 @@ export default class BomTable {
             Object.keys(this.dataMap).forEach(key => {
                 if (!key.indexOf(`${colNum}::`)) {
                     let el = this.dataMap[key],
-                        header = this.dataMap[`${colNum}::-1`];
-                    el && (delete this.cellMeta[el.dataset.metaKey]);
-                    el && helper.removeElement(el);
+                        header = this.dataMap[`${colNum}::-1`],
+                        copyHeader = this.dataMap[`${colNum}::-2`];
+
+                    if (el) {
+                        delete this.cellMeta[el.dataset.metaKey];
+                        helper.removeElement(el);
+                    }
                     header && helper.removeElement(header);
+                    copyHeader && helper.removeElement(copyHeader);
                 }
             });
+            if (this.dom.header) {
+                helper.removeElement(this.dom.colgroup.children[colNum]);
+                helper.removeElement(this.dom.copyColgroup.children[colNum]);
+            }
         });
+        this._manualColSize = {};
 
-        return this._reindex();
+        return this._reindex()._calcColsWidth();
     }
 
     /**
@@ -575,14 +597,31 @@ export default class BomTable {
 
         this.instanceHeader.forEach((cell, colNum) => {
             let th = this.dataMap[`${colNum}::-1`],
+                thc = this.dataMap[`${colNum}::-2`],
                 childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
                 val = childWrap ? childWrap.innerHTML : th.innerHTML;
             if (cell !== val) {
                 childWrap ? childWrap.innerHTML = val : th.innerHTML = val;
+                thc.innerHTML = th.innerHTML
             }
         });
 
-        return this._rerenderActiveArea()
+        return this._calcColsWidth()._rerenderActiveArea()
+    }
+
+    /**
+     * @return {BomTable}
+     * @private
+     */
+    _calcColsWidth() {
+        if (!this.dom.colgroup) return this;
+        let colGroupChildren = helper._likeArray(this.dom.colgroup.children),
+            copyColGroupChildren = helper._likeArray(this.dom.copyColgroup.children);
+        this.instanceHeader.forEach((cell, colNum) => {
+            let width = this._manualColSize[colNum] || Math.max.apply(Math, [this.dataMap[`${colNum}::-2`].offsetWidth, this.dataMap[`${colNum}::0`].offsetWidth, 55]);
+            copyColGroupChildren[colNum].style.width = colGroupChildren[colNum].style.width = `${width}px`;
+        });
+        return this
     }
 
     /**
@@ -599,12 +638,15 @@ export default class BomTable {
         this.instanceHeader = [];
 
         if (this.dom.header && this.dom.header.firstElementChild) {
-            helper._likeArray(this.dom.header.firstElementChild.children).forEach((th, colNum) => {
-                let childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
-                    val = childWrap ? childWrap.innerHTML : th.innerHTML;
-                this.instanceHeader.push(val);
-                this.dataMap[`${colNum}::-1`] = th;
-            });
+            ['header', 'copyHeader'].forEach(h => {
+                helper._likeArray(this.dom[h].firstElementChild.children).forEach((th, colNum) => {
+                    let childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
+                        val = childWrap ? childWrap.innerHTML : th.innerHTML,
+                        rowIndex = h === 'copyHeader' ? -2 : -1;
+                    rowIndex === -1 && this.instanceHeader.push(val);
+                    this.dataMap[`${colNum}::${rowIndex}`] = th;
+                });
+            })
         }
 
         if (this.dom.body && this.dom.body.children) {
@@ -633,7 +675,15 @@ export default class BomTable {
         let renders = this.config.renders;
 
         this.dom.table = helper.createElement({tagName: 'table', selector: 'bomtable'});
-        this.config.tableClass && this.dom.table.classList.add(this.config.tableClass);
+        this.dom.copyTable = helper.createElement({tagName: 'table', selector: 'bomtable'});
+
+        this.dom.copyTable.classList.add('bomtable-copy-table');
+        this.config.stickyHeader && this.dom.copyTable.classList.add('sticky');
+
+        if (this.config.tableClass) {
+            this.dom.table.classList.add(this.config.tableClass);
+            this.dom.copyTable.classList.add(this.config.tableClass);
+        }
 
         this._prepareData(this.config.data)._renderHeader();
 
@@ -661,12 +711,13 @@ export default class BomTable {
 
             this.isTouch && this.dom.wrapper.classList.add('touched');
 
+            this.dom.wrapper.appendChild(this.dom.copyTable);
             this.dom.wrapper.appendChild(this.dom.table);
 
             this._container.style.position = 'relative';
         }
 
-        return this;
+        return this._calcColsWidth();
     }
 
     /**
@@ -679,21 +730,28 @@ export default class BomTable {
 
         if (!this.dom.header && this.instanceHeader.length) {
             this.dom.header = helper.createElement({tagName: 'thead'});
+            this.dom.colgroup = helper.createElement({tagName: 'colgroup', parent: this.dom.table});
             helper.createElement({tagName: 'tr', parent: this.dom.header});
+
+            this.dom.copyHeader = helper.createElement({tagName: 'thead'});
+            this.dom.copyColgroup = helper.createElement({tagName: 'colgroup', parent: this.dom.copyTable});
+            helper.createElement({tagName: 'tr', parent: this.dom.copyHeader});
         }
 
         this.instanceHeader.forEach((cell, colNum) => {
             this.dataMap[`${colNum}::-1`] = this._createHeaderCell(cell);
-        });
+            helper.createElement({tagName: 'col', parent: this.dom.colgroup});
 
-        if (!this.dom.header) {
-            this.removeHeader();
-        }
+            this.dataMap[`${colNum}::-2`] = this._createHeaderCell(cell, true);
+            helper.createElement({tagName: 'col', parent: this.dom.copyColgroup});
+        });
 
         if (this.dom.header) {
             this.dom.table.appendChild(this.dom.header);
+            this.dom.copyTable.appendChild(this.dom.copyHeader);
             this.dom.table.classList.remove('bomtable-no-header');
         } else {
+            this.removeHeader();
             this.dom.table.classList.add('bomtable-no-header');
         }
 
@@ -703,11 +761,13 @@ export default class BomTable {
     /**
      * create header cell
      * @param value
+     * @param {Boolean} copy
      * @returns {HTMLElement}
      * @private
      */
-    _createHeaderCell(value = '') {
-        let th = helper.createElement({tagName: 'th', parent: this.dom.header.firstElementChild});
+    _createHeaderCell(value = '', copy = false) {
+        let parent = !copy ? this.dom.header.firstElementChild : this.dom.copyHeader.firstElementChild,
+            th = helper.createElement({tagName: 'th', parent});
 
         if (this.config.headerMenu) {
             let wrap = helper.createElement({tagName: 'div', selector: 'bomtable-header-cell-wrap', parent: th});
@@ -727,6 +787,13 @@ export default class BomTable {
     removeHeader() {
         this.dom.header && helper.removeElement(this.dom.header);
         this.dom.header = null;
+        this.dom.colgroup && helper.removeElement(this.dom.colgroup);
+        this.dom.colgroup = null;
+
+        this.dom.copyHeader && helper.removeElement(this.dom.copyHeader);
+        this.dom.copyHeader = null;
+        this.dom.copyColgroup && helper.removeElement(this.dom.copyColgroup);
+        this.dom.copyColgroup = null;
         return this;
     }
 
@@ -792,13 +859,14 @@ export default class BomTable {
      */
     closeHeaderMenu(e) {
 
-        let lastSelected = {colNum: 0, rowNum: -1};
+        let lastSelected;
         Object.keys(instance.dataMap)
             .forEach(key => {
-                let el = this.dataMap[key];
-                if (key.indexOf('-1') === -1 || !el.classList.contains('active')) return;
+                let el = this.dataMap[key],
+                    [colNum, rowNum] = BomTable._splitKey(key);
+                if (rowNum >= 0 || !el.classList.contains('active')) return;
                 el.classList.remove('active');
-                lastSelected.colNum = BomTable._splitKey(key)[0];
+                lastSelected = {colNum, rowNum};
             });
 
         return instance._closeMenu(e, 'headerMenu', lastSelected);
@@ -919,13 +987,14 @@ export default class BomTable {
 
         instance.closeContextMenu(e);
 
-        if (!helper.parents(el).some(p => p === instance.dom.table)) {
+        if (!helper.parents(el).some(p => p === instance.dom.table || p === instance.dom.copyTable)) {
             if (instance.dom.square && instance.dom.square === el) {
                 instance.squarePressed = 1;
                 instance.mouseBtnPressed = 1;
             } else {
                 instance.clearActiveArea();
                 instance._removeSquare();
+                instance._removePressed();
             }
             return;
         }
@@ -949,7 +1018,6 @@ export default class BomTable {
         if (e.button && instance.selected.some(key => instance.dataMap[key] === el)) return;
 
         instance._setActiveCell(e, el);
-
     }
 
     /**
@@ -1225,6 +1293,9 @@ export default class BomTable {
         if (moveSelect) {
             e.preventDefault();
             instance._removeInput();
+            if (map.start.rowNum < 1) map.start.rowNum = 0;
+            if (map.end.rowNum < 1) map.end.rowNum = 0;
+            instance._removePressed();
             instance._setActiveArea(map);
         } else if (!el && !e.ctrlKey && !e.shiftKey && !keyMustIgnore && !instance.mouseBtnPressed) {
             instance._createInput(false)
@@ -1371,9 +1442,7 @@ export default class BomTable {
             keyType = 'ctrlKey'
         }
 
-        if (this.mouseDownElement && this.mouseDownElement.el) {
-            this.mouseDownElement.el.classList.remove('pressed');
-        }
+        this._removePressed();
         helper.clearSelected();
 
         let [colNum, rowNum] = BomTable._splitKey(Object.keys(this.dataMap)
@@ -1382,15 +1451,16 @@ export default class BomTable {
         if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = {el, colNum, rowNum};
         }
+        this.mouseDownElement.el.classList.add('pressed');
 
         this.mouseDownElement && this._setActiveArea({
             start: {
                 colNum: this.mouseDownElement.colNum,
-                rowNum: this.mouseDownElement.rowNum,
+                rowNum: this.mouseDownElement.rowNum > -1 ? this.mouseDownElement.rowNum : 0,
             },
             end: {
                 colNum,
-                rowNum,
+                rowNum: this.mouseDownElement.rowNum > -1 ? rowNum : this.instanceData.length - 1,
             }
         }, keyType);
 
@@ -1426,12 +1496,9 @@ export default class BomTable {
             endCol = map.end.colNum,
             startRow = map.start.rowNum,
             endRow = map.end.rowNum,
-            mouseDownEl = this.mouseDownElement.el,
             header = this.header || [],
             rows = [],
             cols = [];
-
-        mouseDownEl.classList.add('pressed');
 
         // if press shift key
         if (keyType === 'shiftKey' && this.lastSelected) {
@@ -1512,9 +1579,10 @@ export default class BomTable {
         this._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea');
 
         header.length && this.selectedCols.forEach(colIndex => {
-            let th = this.dataMap[`${colIndex}::-1`];
+            let th = this.dataMap[`${colIndex}::-2`];
             th && th.classList.add('highlight');
         });
+
         return this;
     }
 
@@ -1537,7 +1605,7 @@ export default class BomTable {
 
         return {
             left: firstRect.left - (!startCol ? 0 : borderHalf),
-            top: firstRect.top - (startRow === -1 ? 0 : borderHalf),
+            top: firstRect.top - (!startRow ? 0 : borderHalf),
             bottom: lastRect.bottom - borderHalf,
             right: lastRect.right - borderHalf
         }
@@ -1582,7 +1650,7 @@ export default class BomTable {
         this.lastSelected = null;
 
         (this.header || []).forEach((v, index) => {
-            let th = this.dataMap[`${index}::-1`];
+            let th = this.dataMap[`${index}::-2`];
             th && th.classList.remove('highlight');
         });
 
@@ -1642,6 +1710,14 @@ export default class BomTable {
         this.dom.square && helper.removeElement(this.dom.square);
         this.dom.square = null;
         return this;
+    }
+
+    /**
+     * Remove pressed class from last active element
+     * @private
+     */
+    _removePressed() {
+        this.mouseDownElement && this.mouseDownElement.el.classList.remove('pressed');
     }
 
     /**
@@ -1895,7 +1971,7 @@ export default class BomTable {
         this.squareDragArea = [];
         this.direction = {};
 
-        return this;
+        return this._calcColsWidth();
     }
 
     /**
@@ -1969,11 +2045,12 @@ export default class BomTable {
     /**
      * Remove table textarea
      * @param {boolean} saveValue - save value before remove textarea
+     * @return {BomTable}
      * @private
      */
     _removeInput(saveValue = true) {
 
-        if (!this.input) return;
+        if (!this.input) return this;
 
         let val = this.input.el.value,
             col = this.input.colNum,
@@ -1986,8 +2063,10 @@ export default class BomTable {
 
         this.input = null;
 
-        if (!saveValue) return;
+        if (!saveValue) return this;
         this.dataCell = {col, row, val};
+
+        return this._calcColsWidth()
     }
 
     /**
@@ -2055,6 +2134,7 @@ export default class BomTable {
         this.dataMap = {};
         this.cellMeta = {};
 
+        this._manualColSize = {};
         this.countTouch = 0;
         this.tapped = false;
 

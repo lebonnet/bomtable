@@ -68,6 +68,7 @@ let instance = new BomTable({
 let opts = {
     data: [], // data for table body (default empty array) | массив с данными
     header: '', // table header (default empty string) | массив с заголовками для таблицы
+    stickyHeader: true, // sticky table header | прилипающий заголовок таблицы 
     touchSupport: true, // support touch in browsers | поддержка касаний в браузерах
     tableClass: '', // css class for table (default empty) | css класс для таблицы
     container: null, // node or selector for mount table (default null) | HTML элемент или селектор для монтирования таблицы

@@ -9,6 +9,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         margin: 0;
         padding: 0;
     }
+
     font-family: 'Roboto', Verdana, sans-serif;
     font-size: 13px;
     position: relative;
@@ -130,7 +131,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         margin: 0;
         padding: 0 0 0 4px;
         font-family: inherit;
-        line-height: 28px;
+        line-height: 23px;
         font-size: inherit;
         box-shadow: inset 0 0 0 1px $blue;
         border: 1px solid $blue;
@@ -195,15 +196,19 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             &.add-row {
                 background-image: url('../img/add-row.svg');
             }
+
             &.add-col {
                 background-image: url('../img/add-col.svg');
             }
+
             &.remove-rows {
                 background-image: url('../img/remove-row.svg');
             }
+
             &.remove-cols {
                 background-image: url('../img/remove-col.svg');
             }
+
             &.union-cols {
                 background-image: url('../img/union-cols.svg');
             }
@@ -263,20 +268,26 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         border-bottom: 1px solid $gray;
         padding: 0 4px;
         height: 28px;
-        line-height: 28px;
-        vertical-align: middle;
-        white-space: nowrap;
+        line-height: 23px;
+        empty-cells: show;
+        vertical-align: top;
+        overflow: hidden;
+        white-space: pre-line;
         min-width: 35px;
         font-size: 13px;
         font-weight: normal;
+        box-sizing: border-box;
 
         &:first-child {
             border-left: 1px solid $gray;
         }
     }
 
-    th {
-        border-top: 1px solid $gray;
+    thead {
+        opacity: 0;
+        th {
+            display: none;
+        }
     }
 
     td {
@@ -291,6 +302,24 @@ $darkBlue: scale-color($blue, $lightness: -15%);
 
         &.pressed {
             background: $lightestBlue !important;
+        }
+    }
+}
+
+.bomtable-copy-table {
+    &.sticky {
+        position: sticky;
+        top: 0;
+    }
+
+    z-index: 20;
+
+    thead {
+        opacity: 1;
+
+        th {
+            border-top: 1px solid #cccccc;
+            display: table-cell;
         }
     }
 }

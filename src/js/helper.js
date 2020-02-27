@@ -15,7 +15,7 @@ if (window.NodeList && !NodeList.prototype.forEach) {
  */
 export function createElement({tagName, selector = '', html = null, parent = null, css = {}}) {
     let el = document.createElement(tagName);
-    el.className = selector;
+    selector && (el.className = selector);
     Object.assign(el.style, css);
 
     parent && parent.appendChild(el);
@@ -128,10 +128,20 @@ export function prepareValue(val) {
     return !isNaN(+val) ? +val : val.replace(/&nbsp;/g, ' ').replace(/\r?\n/g, '').trim()
 }
 
+/**
+ * Random
+ * @param min
+ * @param max
+ * @return {*}
+ */
 export function rand(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+/**
+ * Random uniq key
+ * @return {string}
+ */
 export function randKey() {
     return Date.now().toString().split('').reverse().map(i => rand(0, 9)).join('')
 }
