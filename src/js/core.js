@@ -25,6 +25,7 @@ export default class BomTable {
             rowsClass: '', // css class for table rows
             colsClass: '', // css class for table cols
 
+            colsResize: false, // resizable columns
             renders: null,
 
             // context menu
@@ -46,6 +47,7 @@ export default class BomTable {
             headerMenu: null
         }, opts);
 
+        this.minColWidth = 60;
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
         this.version = v.version;
 
@@ -112,7 +114,7 @@ export default class BomTable {
 
         d.addEventListener('keydown', this._keyDownWatcher);
 
-        return this;
+        return this._renderHelpers();
     }
 
     /**
@@ -123,7 +125,7 @@ export default class BomTable {
         if (!Array.isArray(data)) throw new Error('Data must be an array');
         this.config.header = this.header;
         this.config.data = data;
-        this.clear()._render();
+        this.clear()._render()._renderHelpers();
     }
 
     /**
@@ -455,7 +457,7 @@ export default class BomTable {
             }
         }
 
-        return this._reindex()._calcColsWidth();
+        return this._reindex()._setContainerWidth()._calcColsWidth();
     }
 
     /**
@@ -510,7 +512,7 @@ export default class BomTable {
         });
         this._manualColSize = {};
 
-        return this._reindex()._calcColsWidth();
+        return this._reindex()._setContainerWidth()._calcColsWidth();
     }
 
     /**
@@ -550,7 +552,7 @@ export default class BomTable {
 
         this.config.data = data;
         this.config.header = header;
-        this.clear()._render();
+        this.clear()._render()._renderHelpers();
     }
 
     /**
@@ -606,7 +608,7 @@ export default class BomTable {
             }
         });
 
-        return this._calcColsWidth()._rerenderActiveArea()
+        return this._setContainerWidth()._calcColsWidth()._rerenderActiveArea()
     }
 
     /**
@@ -618,7 +620,7 @@ export default class BomTable {
         let colGroupChildren = helper._likeArray(this.dom.colgroup.children),
             copyColGroupChildren = helper._likeArray(this.dom.copyColgroup.children);
         this.instanceHeader.forEach((cell, colNum) => {
-            let width = this._manualColSize[colNum] || Math.max.apply(Math, [this.dataMap[`${colNum}::-2`].offsetWidth, this.dataMap[`${colNum}::0`].offsetWidth, 55]);
+            let width = this._getColWidth(colNum);
             copyColGroupChildren[colNum].style.width = colGroupChildren[colNum].style.width = `${width}px`;
         });
         return this
@@ -715,9 +717,10 @@ export default class BomTable {
             this.dom.wrapper.appendChild(this.dom.table);
 
             this._container.style.position = 'relative';
+            this._container.style.overflow = 'auto';
         }
 
-        return this._calcColsWidth();
+        return this._setContainerWidth()._calcColsWidth();
     }
 
     /**
@@ -759,7 +762,36 @@ export default class BomTable {
     }
 
     /**
-     * create header cell
+     * Render helpers html elements
+     * @return {BomTable}
+     * @private
+     */
+    _renderHelpers() {
+        if (!this.dom._buffer) {
+            this.dom._buffer = helper.createElement({
+                tagName: 'textarea',
+                selector: 'bomtable-buffer',
+                parent: this.dom.wrapper
+            });
+            this.dom._buffer.addEventListener('paste', this._onPaste);
+        }
+        if (this.config.colsResize) {
+            this.dom._colResizer = helper.createElement({
+                tagName: 'span',
+                selector: 'bomtable-col-resizer',
+                parent: this.dom.wrapper
+            });
+            this.dom._colResizerLine = helper.createElement({
+                tagName: 'span',
+                selector: 'bomtable-col-resizer-line',
+                parent: this.dom.wrapper
+            });
+        }
+        return this
+    }
+
+    /**
+     * Create header cell
      * @param value
      * @param {Boolean} copy
      * @returns {HTMLElement}
@@ -991,11 +1023,17 @@ export default class BomTable {
             if (instance.dom.square && instance.dom.square === el) {
                 instance.squarePressed = 1;
                 instance.mouseBtnPressed = 1;
-            } else {
-                instance.clearActiveArea();
-                instance._removeSquare();
-                instance._removePressed();
+                return;
             }
+
+            if (instance.dom._colResizer === el) {
+                instance.colResizerPressedIndex = +el.dataset.colNum;
+            }
+
+            instance.clearActiveArea();
+            instance._removeSquare();
+            instance._removePressed();
+
             return;
         }
 
@@ -1035,7 +1073,8 @@ export default class BomTable {
         instance.mouseBtnPressed = 0;
         instance.squarePressed = 0;
 
-        if (e.which === 1 &&
+        if (instance.colResizerPressedIndex == null &&
+            e.which === 1 &&
             el.classList.contains('bomtable-header-cell-btn') &&
             !el.parentNode.classList.contains('active')) {
             instance.closeHeaderMenu(e);
@@ -1044,7 +1083,7 @@ export default class BomTable {
             instance.closeHeaderMenu(e);
         }
 
-        instance._removeCopyArea();
+        instance._setColSize(e)._removeCopyArea();
     }
 
     /**
@@ -1114,13 +1153,26 @@ export default class BomTable {
         if (instance.destroyed) return;
 
         let el = e.target;
-        if (!instance.mouseBtnPressed || instance.lastHover === el) return;
+
+        if (instance.colResizerPressedIndex != null) {
+            instance._setColResizerPosition(instance.colResizerPressedIndex, e.clientX);
+            helper.clearSelected();
+        }
+
+        if (instance.lastHover === el) return;
+
+        if (instance.colResizerPressedIndex == null && instance.config.colsResize && el.tagName === 'TH') {
+            instance._setColResizerPosition(el.cellIndex)
+        }
 
         instance.lastHover = el;
+
+        if (!instance.mouseBtnPressed) return;
 
         if (instance.squarePressed && el.tagName === 'TD') {
             instance._squareAreaListener(e);
         }
+
     }
 
     /**
@@ -1185,7 +1237,7 @@ export default class BomTable {
             keyMustIgnore = BomTable._keysIgnore(key);
 
         if (e.ctrlKey && !el && key.toLowerCase() !== 'a') {
-            instance._createBuffer();
+            instance._focusBuffer();
         }
 
         el && e.stopPropagation();
@@ -1401,17 +1453,8 @@ export default class BomTable {
      * Create copy/paste buffer and set focus
      * @private
      */
-    _createBuffer() {
+    _focusBuffer() {
         let str = [];
-
-        if (!this.dom._buffer) {
-            this.dom._buffer = helper.createElement({
-                tagName: 'textarea',
-                selector: 'bomtable-buffer',
-                parent: this.dom.wrapper
-            });
-            this.dom._buffer.addEventListener('paste', this._onPaste);
-        }
 
         this.selectedData.forEach(row => {
             str.push(row.join('\t'));
@@ -1445,8 +1488,7 @@ export default class BomTable {
         this._removePressed();
         helper.clearSelected();
 
-        let [colNum, rowNum] = BomTable._splitKey(Object.keys(this.dataMap)
-            .find(key => this.dataMap[key] === el));
+        let [colNum, rowNum] = this._colNumRowNumByEl(el);
 
         if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = {el, colNum, rowNum};
@@ -1867,14 +1909,82 @@ export default class BomTable {
      */
     _setSquareDragCell(map) {
         this.squareDragArea = [];
-
         for (let col = map.startCol; map.endCol >= col; col++) {
             for (let row = map.startRow; map.endRow >= row; row++) {
                 this.squareDragArea.push(`${col}::${row}`)
             }
         }
-
         return this;
+    }
+
+    /**
+     * Max col width
+     * @param colNum
+     * @return {number}
+     * @private
+     */
+    _getColWidth(colNum) {
+        let isHeader = this.dom.header,
+            headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
+            fistTdW = this.dataMap[`${colNum}::0`].offsetWidth;
+        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, this.minColWidth]);
+    }
+
+    /**
+     * @param {MouseEvent} event
+     * @return {BomTable}
+     * @private
+     */
+    _setColSize(event) {
+        if (this.colResizerPressedIndex == null) return this;
+        let colNum = this.colResizerPressedIndex,
+            thLeft = this.dataMap[`${colNum}::-2`].getBoundingClientRect().left,
+            wrapPosLeft = this._getWrapTopLeftPosition().left,
+            width = (event.clientX - wrapPosLeft) - (thLeft - wrapPosLeft),
+            colEl = helper._likeArray(this.dom.colgroup.children)[colNum];
+        if (width < this.minColWidth) width = this.minColWidth;
+        colEl.style.width = `${width}px`;
+        width = Math.max.apply(Math, [width, this.dataMap[`${colNum}::0`].offsetWidth]);
+        this._manualColSize[colNum] = width;
+        this.colResizerPressedIndex = null;
+        return this._setContainerWidth()._calcColsWidth();
+    }
+
+    /**
+     * Move ColResizer
+     * @private
+     * @param colNum
+     * @param position
+     */
+    _setColResizerPosition(colNum, position) {
+        let th = this.dataMap[`${colNum}::-2`],
+            wrapPos = this._getWrapTopLeftPosition(),
+            thRect = th.getBoundingClientRect(),
+            thRight = position || thRect.right,
+            tableRightPosition = this.dom.table.getBoundingClientRect().right;
+
+        if (thRight < wrapPos.left) thRight = wrapPos.left;
+        if (thRight > tableRightPosition) thRight = tableRightPosition;
+        let calcPosition = thRight - wrapPos.left;
+
+        this.dom._colResizer.style.left = `${calcPosition - 5}px`;
+        this.dom._colResizer.style.top = `${thRect.top - wrapPos.top}px`;
+        this.dom._colResizerLine.style.left = `${calcPosition}px`;
+
+        !position && (this.dom._colResizer.dataset.colNum = colNum);
+    }
+
+    /**
+     * Set width for bomtabie container
+     * @return {BomTable}
+     * @private
+     */
+    _setContainerWidth() {
+        this.dom.wrapper.style.width = '10000000px';
+        let width = 0;
+        this.instanceData[0].forEach((c, colNum) => width += this._getColWidth(colNum));
+        this.dom.wrapper.style.width = `${width}px`;
+        return this
     }
 
     /**
@@ -1971,7 +2081,7 @@ export default class BomTable {
         this.squareDragArea = [];
         this.direction = {};
 
-        return this._calcColsWidth();
+        return this._setContainerWidth()._calcColsWidth();
     }
 
     /**
@@ -2006,7 +2116,7 @@ export default class BomTable {
         textarea.focus();
 
         this.input = {el: textarea, colNum: this.lastSelected.colNum, rowNum: this.lastSelected.rowNum};
-        this._createElHelper({td, left, textarea});
+        this._createElHelper({td, left});
 
         return this._updateInputSize()._removeSquare();
     }
@@ -2066,7 +2176,7 @@ export default class BomTable {
         if (!saveValue) return this;
         this.dataCell = {col, row, val};
 
-        return this._calcColsWidth()
+        return this._setContainerWidth()._calcColsWidth()
     }
 
     /**
@@ -2107,6 +2217,16 @@ export default class BomTable {
             }
         });
 
+    }
+
+    /**
+     * Get node colNum and rowNum
+     * @param {HTMLElement} el
+     * @return {[ colNum{Number}, rowNum{Number} ]}
+     * @private
+     */
+    _colNumRowNumByEl(el) {
+        return BomTable._splitKey(Object.keys(this.dataMap).find(key => this.dataMap[key] === el));
     }
 
     /**

@@ -74,7 +74,8 @@ let opts = {
     container: null, // node or selector for mount table (default null) | HTML элемент или селектор для монтирования таблицы
     rowsClass: '', // css class for table rows (default empty string) | css класс для строк
     colsClass: '', // css class for table cols (default empty string) | css класс для столбцов
-    
+    colsResize: false, // resizable columns
+
     renders: null, // function for render cells | функция для рендера ячеек
 
     // context menu | контекстное меню
