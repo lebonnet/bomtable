@@ -711,7 +711,14 @@ export default class BomTable {
             this._container.style.overflow = 'auto';
         }
 
-        return this._setContainerWidth()._calcColsWidth();
+        this._container.style.opacity = '0';
+
+        setTimeout(() => {
+            this._setContainerWidth()._calcColsWidth();
+            this._container.style.opacity = ''
+        }, 5);
+
+        return this;
     }
 
     /**
