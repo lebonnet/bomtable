@@ -592,12 +592,16 @@ export default class BomTable {
      */
     _calcColsWidth() {
         if (!this.dom.colgroup) return this;
-        let colGroupChildren = helper._likeArray(this.dom.colgroup.children),
+        let isHeader = this.dom.header,
+            colGroupChildren = helper._likeArray(this.dom.colgroup.children),
             copyColGroupChildren = helper._likeArray(this.dom.copyColgroup.children);
+        isHeader && this.dom.header.classList.remove('bomtable-hidden');
         this.instanceData[0].forEach((cell, colNum) => {
             let width = this._getColWidth(colNum);
             copyColGroupChildren[colNum].style.width = colGroupChildren[colNum].style.width = `${width}px`;
         });
+        isHeader && this.dom.header.classList.add('bomtable-hidden');
+
         return this
     }
 
@@ -1904,9 +1908,8 @@ export default class BomTable {
     _getColWidth(colNum) {
         let isHeader = this.dom.header,
             headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
-            copyHeaderColW = isHeader ? this.dataMap[`${colNum}::-2`].offsetWidth : 0,
             fistTdW = this.dataMap[`${colNum}::0`].offsetWidth;
-        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, copyHeaderColW, fistTdW, this.minColWidth]);
+        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, this.minColWidth]);
     }
 
     /**
@@ -1932,9 +1935,12 @@ export default class BomTable {
      */
     _setContainerWidth() {
         this.dom.wrapper.style.width = '10000000px';
-        let width = 0;
+        let width = 0,
+            isHeader = this.dom.header;
+        isHeader && this.dom.header.classList.remove('bomtable-hidden');
         this.instanceData[0].forEach((c, colNum) => width += this._getColWidth(colNum));
         this.dom.wrapper.style.width = `${width}px`;
+        isHeader && this.dom.header.classList.add('bomtable-hidden');
         return this
     }
 
@@ -1945,6 +1951,13 @@ export default class BomTable {
      */
     _setColSize(event) {
         if (this.colResizerPressedIndex == null) return this;
+
+        let isHeader = this.dom.header;
+
+        if (isHeader) {
+            this.dom.header.classList.remove('bomtable-hidden')
+        }
+
         let colNum = this.colResizerPressedIndex,
             thLeft = this.dataMap[`${colNum}::-2`].getBoundingClientRect().left,
             wrapPosLeft = this._getWrapTopLeftPosition().left,
@@ -1953,10 +1966,15 @@ export default class BomTable {
         if (width < this.minColWidth) width = this.minColWidth;
         colEl.style.width = `${width}px`;
 
-        width = Math.max.apply(Math, [width, this._getColWidth(colNum)]);
+        width = Math.max.apply(Math, [width, this.dataMap[`${colNum}::0`].offsetWidth]);
         this._manualColSize[colNum] = width;
         this.colResizerPressedIndex = null;
-        return this._setContainerWidth()._calcColsWidth();
+
+        if (isHeader) {
+            this.dom.header.classList.add('bomtable-hidden')
+        }
+
+        return this._setColResizerPosition(0, -1)._setContainerWidth()._calcColsWidth();
     }
 
     /**
@@ -1964,6 +1982,8 @@ export default class BomTable {
      * @private
      * @param colNum
      * @param position
+     * @return {BomTable}
+     * @private
      */
     _setColResizerPosition(colNum, position) {
         let th = this.dataMap[`${colNum}::-2`],
@@ -1982,6 +2002,8 @@ export default class BomTable {
         this.dom._colResizerLine.style.left = `${calcPosition}px`;
 
         !position && (this.dom._colResizer.dataset.colNum = colNum);
+
+        return this
     }
 
     /**
