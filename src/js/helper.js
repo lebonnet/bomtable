@@ -145,3 +145,30 @@ export function rand(min, max) {
 export function randKey() {
     return Date.now().toString().split('').reverse().map(i => rand(0, 9)).join('')
 }
+
+
+/**
+ * Is key code ignore
+ * @param key
+ * @returns {Boolean}
+ * @private
+ */
+export function _keysIgnore(key) {
+    let keys = {
+        'Alt': 1, 'ArrowDown': 1, 'ArrowLeft': 1, 'ArrowRight': 1, 'ArrowUp': 1, 'CapsLock': 1, 'Control': 1,
+        'End': 1, 'Enter': 1, 'Escape': 1, 'F1': 1, 'F10': 1, 'F11': 1, 'F12': 1, 'F2': 1, 'F3': 1, 'F4': 1,
+        'F5': 1, 'F6': 1, 'F7': 1, 'F8': 1, 'F9': 1, 'Home': 1, 'Insert': 1, 'Meta': 1, 'NumLock': 1,
+        'PageDown': 1, 'PageUp': 1, 'Pause': 1, 'ScrollLock': 1, 'Shift': 1, 'Tab': 1
+    };
+    return !!keys[key]
+}
+
+/**
+ * Split key by ::
+ * @param {String} key
+ * @returns {[Number, Number]}
+ * @private
+ */
+export function _splitKey(key) {
+    return key.split('::').map(i => +i)
+}

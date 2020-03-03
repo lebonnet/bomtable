@@ -249,6 +249,10 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         }
     }
 
+    .bomtable-nw {
+        white-space: nowrap;
+    }
+
     .bomtable-header-cell-btn .bomtable-header-menu {
         left: 1px;
         top: 12px;
@@ -317,7 +321,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         }
     }
 
-    thead {
+    thead.bomtable-hidden {
         opacity: 0;
         th {
             display: none;
@@ -349,11 +353,8 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     z-index: 20;
 
     thead {
-        opacity: 1;
-
         th {
             border-top: 1px solid #cccccc;
-            display: table-cell;
         }
     }
 }
