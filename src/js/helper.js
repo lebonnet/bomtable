@@ -6,8 +6,8 @@ if (window.NodeList && !NodeList.prototype.forEach) {
 
 /**
  * Create new HTML element
- * @param {string} tagName - name created tag
- * @param {string} selector - css selectors ('class1 class2...')
+ * @param {String} tagName - name created tag
+ * @param {String} selector - css selectors ('class1 class2...')
  * @param {String} html - html code
  * @param {HTMLElement} parent - parent of new tag
  * @param {Object} css - css styles
@@ -88,7 +88,7 @@ export function isTableCell(el) {
 /**
  * aaaAaa to aaa-a-aa
  * @param string
- * @returns {string}
+ * @returns {String}
  */
 export function camelCaseToKebabCase(string) {
     return string.replace(/[A-Z]/g, m => `-${m[0].toLowerCase()}`);
@@ -97,7 +97,7 @@ export function camelCaseToKebabCase(string) {
 /**
  * aaaaa to Aaaaa
  * @param str
- * @return {string}
+ * @return {String}
  */
 export function firstCharToUp(str) {
     return `${str[0].toUpperCase()}${str.slice(1)}`
@@ -119,13 +119,25 @@ export function getNumberFromString(str) {
 }
 
 /**
+ * Merge values if both values is number return number or string
+ * @param {String|Number} v1
+ * @param {String|Number} v2
+ * @return {String|Number}
+ */
+export function mergeValues(v1, v2) {
+    if (v1 === '' || v2 === '') return v1 || v2;
+    let type1 = typeof v1, type2 = typeof v2;
+    return type1 === 'number' && type1 === type2 ? v1 + v2 : prepareValue(`${v1} ${v2}`)
+}
+
+/**
  * Prepare save value
  * @param val
  * @returns {string | number}
  */
 export function prepareValue(val) {
     if (!val) return val;
-    return !isNaN(+val) ? +val : val.replace(/&nbsp;/g, ' ').replace(/\r?\n/g, '').trim()
+    return typeof val === 'number' ? val : val.replace(/&nbsp;/g, ' ').replace(/\r?\n/g, '').trim()
 }
 
 /**
@@ -140,7 +152,7 @@ export function rand(min, max) {
 
 /**
  * Random uniq key
- * @return {string}
+ * @return {String}
  */
 export function randKey() {
     return Date.now().toString().split('').reverse().map(i => rand(0, 9)).join('')

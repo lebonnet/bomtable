@@ -51,6 +51,7 @@
                     removeRows: 'удалить строки',
                     removeCols: 'удалить столбцы',
                     hr1: '',
+                    unionRows: 'объединить строки',
                     unionCols: 'объединить столбцы',
                 },
                 callback: (action, bomTable) => bomTable[action](),
@@ -71,6 +72,8 @@
             headerMenu: menu,
             contextMenu: menu,
             colsResize: true,
+            rowsClass: 'row-class',
+            colsClass: 'col-class',
             renders: (instance, td, colNum, rowNum) => {
                 td.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
             },

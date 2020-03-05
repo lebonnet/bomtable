@@ -1,4 +1,5 @@
 $gray: #ccc;
+$lightGray: scale-color($gray, $lightness: +55%);
 $darkGray: scale-color($gray, $lightness: -35%);
 $blue: #00a3cf;
 $lightBlue: scale-color($blue, $lightness: +85%);
@@ -227,6 +228,12 @@ $darkBlue: scale-color($blue, $lightness: -15%);
                 width: auto;
             }
 
+            &.disabled {
+                background-color: $lightGray;
+                cursor: not-allowed;
+                opacity: .7;
+            }
+
             &.add-row {
                 background-image: url('../img/add-row.svg');
             }
@@ -241,6 +248,10 @@ $darkBlue: scale-color($blue, $lightness: -15%);
 
             &.remove-cols {
                 background-image: url('../img/remove-col.svg');
+            }
+
+            &.union-rows {
+                background-image: url('../img/union-rows.svg');
             }
 
             &.union-cols {
@@ -323,6 +334,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
 
     thead.bomtable-hidden {
         opacity: 0;
+
         th {
             display: none;
         }

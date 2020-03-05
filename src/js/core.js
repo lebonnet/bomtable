@@ -37,6 +37,7 @@ export default class BomTable {
                     removeRows: 'remove rows',
                     removeCols: 'remove cols',
                     hr1: '',
+                    unionRows: 'union rows',
                     unionCols: 'union cols'
                 },
                 callback: null // function can be call after click context menu item
@@ -130,13 +131,15 @@ export default class BomTable {
 
     /**
      * Set new cell value
-     * @param {number} col - col number of cell
-     * @param {number} row - row number of cell
+     * @param {Number} col - col number of cell
+     * @param {Number} row - row number of cell
      * @param {*} val - new value
      */
     set dataCell({col, row, val}) {
+        let td = this.dataMap[`${col}::${row}`];
+        td.bomtableValType = typeof val;
         val = helper.prepareValue(val);
-        this.dataMap[`${col}::${row}`].innerHTML = val;
+        td.innerHTML = val;
         this.instanceData[row][col] = val;
         this._rerenderActiveArea();
         return this;
@@ -144,8 +147,8 @@ export default class BomTable {
 
     /**
      * Get cell value
-     * @param {number} col - col number of cell
-     * @param {number} row - row number of cell
+     * @param {Number} col - col number of cell
+     * @param {Number} row - row number of cell
      * @return {*}
      */
     get dataCell() {
@@ -164,7 +167,7 @@ export default class BomTable {
      */
     set metaDataCell({col, row, propName, val}) {
         let el = this.dataMap[`${col}::${row}`],
-            key = el.dataset.metaKey;
+            key = el.bomtableKey;
         if (!this.cellMeta[key]) {
             this.cellMeta[key] = {}
         }
@@ -183,7 +186,7 @@ export default class BomTable {
         return ({col, row, propName}) => {
             let el = this.dataMap[`${col}::${row}`];
             if (!el) return undefined;
-            let key = el.dataset.metaKey;
+            let key = el.bomtableKey;
             if (!this.cellMeta[key]) return undefined;
             return this.cellMeta[key][propName];
         }
@@ -197,7 +200,7 @@ export default class BomTable {
      */
     removeMetaDataCell({col, row, propName}) {
         let el = this.dataMap[`${col}::${row}`],
-            key = el.dataset.metaKey;
+            key = el.bomtableKey;
         if (!this.cellMeta[key]) return;
         delete this.cellMeta[key][propName]
     }
@@ -222,7 +225,7 @@ export default class BomTable {
 
     /**
      * Get row by index
-     * @param {number} row - row index
+     * @param {Number} row - row index
      * @return {Array}
      */
     get dataRow() {
@@ -328,12 +331,13 @@ export default class BomTable {
             rowsClass = this.config.rowsClass,
             colsClass = this.config.colsClass;
 
-        let tr = helper.createElement({tagName: 'tr', selector: colsClass});
+        let tr = helper.createElement({tagName: 'tr', selector: rowsClass});
 
         for (let colNum = 0; colNum < length; colNum++) {
             let cell = rowData[colNum] != null ? helper.prepareValue(rowData[colNum]) : '',
-                td = helper.createElement({tagName: 'td', selector: rowsClass, parent: tr, html: cell});
-            td.dataset.metaKey = `btk${helper.randKey()}`
+                td = helper.createElement({tagName: 'td', selector: colsClass, parent: tr, html: cell});
+            td.bomtableValType = typeof cell;
+            td.bomtableKey = helper.randKey();
         }
 
         if (nextTr) {
@@ -390,7 +394,7 @@ export default class BomTable {
         let num = this.lastSelected && this.lastSelected.colNum,
             lastColIndex,
             it = 0,
-            rowsClass = this.config.rowsClass || '',
+            colsClass = this.config.colsClass || '',
             col = helper.createElement({tagName: 'col'}),
             copyCol = col.cloneNode(false);
         if (num != null) {
@@ -405,8 +409,9 @@ export default class BomTable {
                     child = isHeader ? this._createHeaderCell('', isCopyHeader) : helper.createElement({tagName: 'td'});
 
                 if (!isHeader) {
-                    child.dataset.metaKey = `btk${helper.randKey()}`;
-                    rowsClass && child.classList.add(rowsClass);
+                    child.bomtableKey = helper.randKey();
+                    child.bomtableValType = 'string';
+                    colsClass && child.classList.add(colsClass);
                 }
                 parent.insertBefore(child, el.nextSibling);
             });
@@ -424,10 +429,11 @@ export default class BomTable {
             while (it !== this.instanceData.length) {
                 let td = helper.createElement({
                     tagName: 'td',
-                    selector: rowsClass,
+                    selector: colsClass,
                     parent: this.dataMap[`${lastColIndex}::${it++}`].parentElement
                 });
-                td.dataset.metaKey = `btk${helper.randKey()}`
+                td.bomtableKey = helper.randKey();
+                td.bomtableValType = 'string';
             }
         }
 
@@ -436,7 +442,7 @@ export default class BomTable {
 
     /**
      * Remove get or selected rows
-     * @param {Array} [nums] - index removes rows, if array is empty - selected rows be removed
+     * @param {Array} [nums] - index removes rows, if array is empty - selected rows will be removed
      * @return {BomTable}
      */
     removeRows(nums = []) {
@@ -447,7 +453,7 @@ export default class BomTable {
                 parentTr = firstTd && firstTd.parentNode;
             if (!parentTr) return;
             helper._likeArray(parentTr.children).forEach(td => {
-                delete this.cellMeta[td.dataset.metaKey]
+                delete this.cellMeta[td.bomtableKey]
             });
             helper.removeElement(parentTr);
         });
@@ -458,7 +464,7 @@ export default class BomTable {
 
     /**
      * Remove get cols or selected cols
-     * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
+     * @param {Array} [nums] - index removes cols, if array is empty - selected cols will be removed
      * @return {BomTable}
      */
     removeCols(nums = []) {
@@ -472,7 +478,7 @@ export default class BomTable {
                         copyHeader = this.dataMap[`${colNum}::-2`];
 
                     if (el) {
-                        delete this.cellMeta[el.dataset.metaKey];
+                        delete this.cellMeta[el.bomtableKey];
                         helper.removeElement(el);
                     }
                     header && helper.removeElement(header);
@@ -490,8 +496,33 @@ export default class BomTable {
     }
 
     /**
+     * Union rows
+     * @param {Array} [nums] - index unions rows, if array is empty - selected rows will be unions
+     * @return {BomTable}
+     */
+    unionRows(nums = []) {
+        let rows = nums.length ? nums : this.selectedRows;
+
+        if (rows.length === 1) return this;
+        let firstRowIndex = rows.shift(),
+            data = this.data,
+            fistRow = data[firstRowIndex];
+
+        rows.forEach(rowIndex => {
+            data[rowIndex].forEach((cell, colIndex) => {
+                let newValue = helper.mergeValues(fistRow[colIndex], cell);
+                fistRow[colIndex] = newValue;
+                this.dataMap[`${colIndex}::${firstRowIndex}`].innerHTML = newValue
+            });
+            helper.removeElement(this.dom.rows[rowIndex])
+        });
+
+        return this._reindex()
+    }
+
+    /**
      * Union cols
-     * @param {Array} [nums] - index removes cols, if array is empty - selected cols be removed
+     * @param {Array} [nums] - index unions cols, if array is empty - selected cols will be unions
      * @return {BomTable}
      */
     unionCols(nums = []) {
@@ -563,7 +594,7 @@ export default class BomTable {
         this.instanceData.forEach((row, rowNum) => {
             row.forEach((cell, colNum) => {
                 let td = this.dataMap[`${colNum}::${rowNum}`],
-                    meta = (td.dataset.metaKey && this.cellMeta[td.dataset.metaKey]) || {};
+                    meta = this.cellMeta[td.bomtableKey] || {};
                 if (td.innerHTML !== cell) {
                     td.innerHTML = cell
                 }
@@ -613,6 +644,7 @@ export default class BomTable {
     _reindex() {
         let renders = this.config.renders;
 
+        this.dom.rows = {};
         this.dataMap = {};
         this.instanceData = [];
 
@@ -632,11 +664,14 @@ export default class BomTable {
 
         if (this.dom.body && this.dom.body.children) {
             helper._likeArray(this.dom.body.children).forEach((tr, rowNum) => {
+                this.dom.rows[rowNum] = tr;
                 this.instanceData[rowNum] = [];
-
                 helper._likeArray(tr.children).forEach((td, colNum) => {
                     let val = td.innerHTML,
-                        meta = (td.dataset.metaKey && this.cellMeta[td.dataset.metaKey]) || {};
+                        meta = this.cellMeta[td.bomtableKey] || {};
+                    if (td.bomtableValType === 'number') {
+                        val = +val
+                    }
                     this.dataMap[`${colNum}::${rowNum}`] = td;
                     this.instanceData[rowNum].push(val);
                     renders && renders(this, td, colNum, rowNum, val, meta);
@@ -884,7 +919,7 @@ export default class BomTable {
 
     /**
      * Close header menu
-     * @param e {MouseEvent}
+     * @param {MouseEvent} e
      * @return {BomTable}
      */
     closeHeaderMenu(e) {
@@ -904,33 +939,37 @@ export default class BomTable {
 
     /**
      * Create context or header menu
-     * @param e {MouseEvent}
-     * @param menuName {String}
+     * @param {MouseEvent} e
+     * @param {String} menuName
      * @return {BomTable}
      * @private
      */
     _createMenu(e, menuName) {
         let html = '',
+            isContext = menuName === 'contextMenu',
             className;
 
         if (instance.config[menuName]) {
             e.preventDefault();
 
             let data = {list: Object.assign({}, instance.config[menuName].items)},
+                selectedColsCount = instance.selectedCols.length,
+                selectedRowsCount = instance.selectedRows.length,
                 hookName = `before${helper.firstCharToUp(menuName)}Render`;
 
             if (instance.config.hooks[hookName]) {
                 instance.config.hooks[hookName](instance, data.list)
             }
             Object.keys(data.list).forEach(key => {
-
                 if (/^hr+[0-9]*$/.test(key)) {
                     html += `<li class="bomtable-hr"></li>`;
                 } else {
                     className = helper.camelCaseToKebabCase(key);
+                    if (isContext && (key === 'unionCols' && selectedColsCount < 2 || key === 'unionRows' && selectedRowsCount < 2)) {
+                        className += ' disabled'
+                    }
                     html += `<li data-action="${key}" class="${className}">${instance.config[menuName].items[key]}</li>`;
                 }
-
             });
 
             if (!instance.dom[menuName]) {
@@ -949,9 +988,9 @@ export default class BomTable {
 
     /**
      * Close context or header menu
-     * @param e {MouseEvent}
-     * @param menuName {String}
-     * @param lastSelected {Object}
+     * @param {MouseEvent} e
+     * @param {String} menuName
+     * @param {Object} lastSelected
      * @returns {BomTable}
      * @private
      */
@@ -985,7 +1024,7 @@ export default class BomTable {
 
     /**
      * Mouse down listener
-     * @param {MouseEvent}  e
+     * @param {MouseEvent} e
      * @private
      */
     _onmousedown(e) {
@@ -1058,7 +1097,7 @@ export default class BomTable {
 
     /**
      * Mouse up listener
-     * @param {MouseEvent}  e
+     * @param {MouseEvent} e
      * @private
      */
     _onmouseup(e) {
@@ -1517,8 +1556,8 @@ export default class BomTable {
     /**
      * Save last selected cell
      * @param {HTMLElement} el
-     * @param {number} colNum
-     * @param {number} rowNum
+     * @param {Number} colNum
+     * @param {Number} rowNum
      * @return {undefined|{el: *, colNum: *, rowNum: *}}
      * @private
      */
@@ -1530,8 +1569,8 @@ export default class BomTable {
 
     /**
      * Save and mark active area
-     * @param {object} map {start: {colNum, rowNum}, end: {colNum, rowNum}}
-     * @param {string} keyType - 'shiftKey' | 'ctrlKey' | 'none'
+     * @param {Object} map {start: {colNum, rowNum}, end: {colNum, rowNum}}
+     * @param {String} keyType - 'shiftKey' | 'ctrlKey' | 'none'
      * @return {BomTable}
      * @private
      */
@@ -1706,7 +1745,7 @@ export default class BomTable {
 
     /**
      * Get container top and lEft position
-     * @return {{}}
+     * @return {Object}
      * @private
      */
     _getWrapTopLeftPosition() {
@@ -1722,8 +1761,8 @@ export default class BomTable {
 
     /**
      * Create draggable square
-     * @param {number} endCol - end col
-     * @param {number} endRow - end row
+     * @param {Number} endCol - end col
+     * @param {Number} endRow - end row
      * @return {BomTable}
      * @private
      */
@@ -1909,7 +1948,7 @@ export default class BomTable {
     /**
      * Max col width
      * @param colNum
-     * @return {number}
+     * @return {Number}
      * @private
      */
     _getColWidth(colNum) {
@@ -2191,6 +2230,8 @@ export default class BomTable {
         let val = this.input.el.value,
             col = this.input.colNum,
             row = this.input.rowNum;
+
+        !isNaN(+val) && (val = +val);
 
         this.input.el.removeEventListener('input', this._onInput);
 
