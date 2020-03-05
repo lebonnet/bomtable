@@ -2231,7 +2231,7 @@ export default class BomTable {
             col = this.input.colNum,
             row = this.input.rowNum;
 
-        !isNaN(+val) && (val = +val);
+        val && !isNaN(+val) && (val = +val);
 
         this.input.el.removeEventListener('input', this._onInput);
 
