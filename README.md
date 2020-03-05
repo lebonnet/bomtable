@@ -156,6 +156,8 @@ removeRows({Array}) - remove get rows or selected rows | удалить стро
 
 removeCols({Array}) - remove get cols or selected cols | удалить столбцы по индексам передающихся входным параметром
 
+unionRows({Array})  - union get rows or selected rows | объеденить строки по индексам
+
 unionCols({Array})  - union get cols or selected cols | объеденить столбцы по индексам
 
 removeHeader() - remove table header | удалить заголовок таблицы
