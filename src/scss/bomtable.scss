@@ -37,6 +37,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     .bomtable-header-cell-btn {
         width: 15px;
         height: 10px;
+        min-height: unset;
         display: inline-block;
         position: relative;
         margin: 0 5px 0 15px;
@@ -339,6 +340,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             border-collapse: collapse !important;
             line-height: 0 !important;
             height: 0 !important;
+            min-height: 0 !important;
             padding-top: 0 !important;
             padding-bottom: 0 !important;
             overflow: hidden !important;
@@ -350,9 +352,10 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         .bomtable-header-cell-btn,
         .bomtable-header-cell-btn:before,
         .bomtable-header-cell-btn:after {
-            overflow: hidden;
-            line-height: 0;
-            height: 0;
+            overflow: hidden !important;
+            line-height: 0 !important;
+            height: 0 !important;
+            min-height: 0 !important;
         }
     }
     thead.bomtable-hidden {
