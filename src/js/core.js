@@ -701,7 +701,7 @@ export default class BomTable {
             this.dom.copyTable.classList.add(this.config.tableClass);
         }
 
-        this._prepareData(this.config.data)._renderHeader();
+        this._prepareData(this.config.data);
 
         if (!this.instanceData[0]) return this;
 
@@ -715,6 +715,7 @@ export default class BomTable {
             });
         }
 
+        this._renderHeader();
         this.dom.body = helper.createElement({tagName: 'tbody', parent: this.dom.table});
 
         this.instanceData.forEach((row, rowNum) => {
@@ -1218,7 +1219,7 @@ export default class BomTable {
      * @private
      */
     _ondblclick(e) {
-        if (instance.destroyed) return;
+        if (!instance || instance.destroyed) return;
 
         let el = e.target;
 
@@ -1237,7 +1238,7 @@ export default class BomTable {
      * @private
      */
     _oncontextmenu(e) {
-        if (instance.destroyed) return;
+        if (!instance || instance.destroyed) return;
 
         let el = e.target;
 
@@ -1254,7 +1255,7 @@ export default class BomTable {
      * @private
      */
     _keyDownWatcher(e) {
-        if (instance.destroyed) return;
+        if (!instance || instance.destroyed) return;
 
         if (e.key === 'Escape') {
             if (instance.mouseBtnPressed && instance.dom.copyAreaLeft) {
@@ -1406,7 +1407,7 @@ export default class BomTable {
      * @private
      */
     _onPaste(e) {
-        if (instance.destroyed) return;
+        if (!instance || instance.destroyed) return;
 
         e.stopPropagation();
         e.preventDefault();
@@ -1751,11 +1752,12 @@ export default class BomTable {
     _getWrapTopLeftPosition() {
         let cont = this._container,
             rect = cont.getBoundingClientRect(),
-            css = w.getComputedStyle(cont);
+            css = w.getComputedStyle(cont),
+            getNumber = helper.getNumberFromString;
 
         return {
-            top: rect.top + -cont.scrollTop + helper.getNumberFromString(css.paddingTop),
-            left: rect.left - cont.scrollLeft + helper.getNumberFromString(css.paddingLeft)
+            top: rect.top + -cont.scrollTop + getNumber(css.paddingTop) + getNumber(css.borderTopWidth),
+            left: rect.left - cont.scrollLeft + getNumber(css.paddingLeft) + getNumber(css.borderLeftWidth)
         };
     }
 
