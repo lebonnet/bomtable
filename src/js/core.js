@@ -609,7 +609,8 @@ export default class BomTable {
                 val = childWrap ? childWrap.innerHTML : th.innerHTML;
             if (cell !== val) {
                 childWrap ? childWrap.innerHTML = val : th.innerHTML = val;
-                thc.innerHTML = th.innerHTML
+                thc.innerHTML = th.innerHTML;
+                renders && renders(this, thc, colNum, -2, val, {});
             }
         });
 
@@ -656,8 +657,12 @@ export default class BomTable {
                     let childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
                         val = childWrap ? childWrap.innerHTML : th.innerHTML,
                         rowIndex = h === 'copyHeader' ? -2 : -1;
-                    rowIndex === -1 && this.instanceHeader.push(val);
                     this.dataMap[`${colNum}::${rowIndex}`] = th;
+                    if (rowIndex === -1) {
+                        this.instanceHeader.push(val);
+                    } else if (renders) {
+                         renders(this, th, colNum, rowIndex, val, {});
+                    }
                 });
             })
         }
@@ -765,6 +770,8 @@ export default class BomTable {
     _renderHeader() {
         if (!this.instanceData[0]) return this;
 
+        let renders = this.config.renders;
+
         this._prepareHeader(this.config.header);
 
         if (!this.dom.header && this.instanceHeader.length) {
@@ -775,9 +782,10 @@ export default class BomTable {
             helper.createElement({tagName: 'tr', parent: this.dom.copyHeader});
         }
 
-        this.instanceHeader.forEach((cell, colNum) => {
-            this.dataMap[`${colNum}::-1`] = this._createHeaderCell(cell);
-            this.dataMap[`${colNum}::-2`] = this._createHeaderCell(cell, true);
+        this.instanceHeader.forEach((value, colNum) => {
+            this.dataMap[`${colNum}::-1`] = this._createHeaderCell(value);
+            this.dataMap[`${colNum}::-2`] = this._createHeaderCell(value, true);
+            renders && renders(this, this.dataMap[`${colNum}::-2`], colNum, -2, value, {});
         });
 
         if (this.dom.header) {

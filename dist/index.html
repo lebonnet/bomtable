@@ -7,6 +7,7 @@
         .example {
             border: 1px solid tomato;
         }
+
         .bomtable th {
             height: 52px !important;
         }
@@ -77,8 +78,13 @@
             colsResize: true,
             rowsClass: 'row-class',
             colsClass: 'col-class',
-            renders: (instance, td, colNum, rowNum) => {
-                td.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
+            renders: (instance, el, colNum, rowNum) => {
+                if (rowNum < 0) { // header
+                    let f = colNum % 2 === 0 ? 'add' : 'remove';
+                    el.classList[f]('tada');
+                    return
+                }
+                el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
             },
             hooks: {
                 beforeHeaderMenuRender: (instance, list) => {
