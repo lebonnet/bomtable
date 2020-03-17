@@ -721,7 +721,7 @@ export default class BomTable {
         }
 
         this._renderHeader();
-        this.dom.body = helper.createElement({tagName: 'tbody', parent: this.dom.table});
+        this.dom.body = helper.createElement({tagName: 'tbody', parent: this.dom.table, selector: 'building'});
 
         this.instanceData.forEach((row, rowNum) => {
             let tr = this._createRow({index: rowNum, rowData: row, render: true});
@@ -755,9 +755,9 @@ export default class BomTable {
         }
 
         this._container.style.opacity = '0';
-
         setTimeout(() => {
             this._setContainerWidth()._calcColsWidth();
+            this.dom.body.classList.remove('building');
             this._container.style.opacity = ''
         }, 5);
 
@@ -1270,11 +1270,15 @@ export default class BomTable {
         if (e.key === 'Escape') {
             if (instance.mouseBtnPressed && instance.dom.copyAreaLeft) {
                 instance._removeCopyArea(false);
+                e.stopPropagation();
+                e.preventDefault();
                 return;
             }
             if (instance.colResizerPressedIndex != null) {
                 instance._setColResizerPosition(0, -1);
                 instance.colResizerPressedIndex = null;
+                e.stopPropagation();
+                e.preventDefault();
                 return;
             }
         }
@@ -1520,7 +1524,7 @@ export default class BomTable {
                 left = tdRect.left - wrapPos.left - 1;
 
             elHelper.left = `${left}px`;
-            elHelper.maxWidth= `${instance._container.offsetWidth - left - 25 + instance._container.scrollLeft}px`;
+            elHelper.maxWidth = `${instance._container.offsetWidth - left - 25 + instance._container.scrollLeft}px`;
             elHelper.minHeight = `${td.offsetHeight}px`;
         }, 50)
     }

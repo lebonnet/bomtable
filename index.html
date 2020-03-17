@@ -36,6 +36,34 @@
             [51, 4, 77, 8],
             [456],
             ['R57, R64, R65, R75, R77, R111, R221, R555']
+        ],
+        tmpData2 = [
+            ['BAT54CWT1G (ONS)', 'SOT-323-3', 100],
+            ['BAT54SWT1G (ONS)', 'SOT-323-3', 200],
+            ['LQM21FN4R7N00L (MUR)', '', 524],
+            ['CDRH3D16NP-100NC (SUMIDA)', '', 50],
+            ['KX-7', 'CERCAP 0402', 1],
+            ['Микросхема LM2575S-5.0', 'CERCAP 0603', 1],
+            ['Разъем для электродов mini-XLR 92М-503', 'CERCAP 0603', 1],
+            ['MAX6021AEUR+T (MAX)', 'CERCAP 0805', 1],
+            ['SPBT2632C2A.AT2 (ST)', '', 1],
+            ['AD7792BRUZ-REEL (AD)', 'TO-263-5', 30],
+            ['STM32F205RGT6 (ST)', '', 30],
+            ['L6924D013TR (ST)', 'TO-263-5', 30],
+            ['USBDF01W5 (ST)', 'TO-263-5', 30],
+            ['USBLC6-2P6 (ST)', '', 10],
+            ['KX-327RT 32.768 kHz (GEYER)', 'SOT-23-3', 50],
+            ['BAT54HT1G (ONS)', '', 50],
+            ['47346-0001 (MOL)', 'TSSOP-16', 50],
+            ['1-1734592-4 (TYCO)', 'LQFP-64', 50],
+            ['293D106X9016A2TE3 (VISHAY)', '', 50],
+            ['CC0603KRX5R8BB334 (YAG)', 'SOT-323-5', 50],
+            ['BMA150 (BOSCH)', 'SOT-563', 50],
+            ['MAX232N (TI)', '', 50],
+            ['CERCAP 0.1/16V 0603 KX7R', 'SOD-323', 50],
+            ['Микросхема 74HCT 123D', '', 52],
+            ['Конденсатор корп2225 X7R 100 0,15 мкФ±10%', '', 100],
+            ['DR-15-24 (MW)', '', 100]
         ];
 
     function boot() {
@@ -61,12 +89,8 @@
                 callback: (action, bomTable) => bomTable[action](),
             },
             header = [...tmpHeader],
-            data = [];
+            data = index % 2 === 0 ? tmpData : tmpData2;
 
-        tmpData.forEach((row, it) => {
-            // if ((index + it) % 2 === 0) return;
-            data.push(row)
-        });
         header.unshift(index + ' ' + index * 1000);
         window.bi = new BomTable({
             tableClass: 'ex-tbl',

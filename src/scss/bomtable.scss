@@ -335,6 +335,12 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         }
     }
 
+    .building {
+        td {
+            width: auto;
+            white-space: nowrap;
+        }
+    }
     &:not(.bomtable-copy-table) {
         th {
             border-collapse: collapse !important;
@@ -376,6 +382,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             background: $lightestBlue !important;
         }
     }
+
 }
 
 .bomtable-copy-table {
