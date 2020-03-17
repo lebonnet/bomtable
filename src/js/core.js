@@ -1400,6 +1400,13 @@ export default class BomTable {
             instance._setActiveArea(map);
         }
 
+        if (!el && e.ctrlKey && key.toLowerCase() === 'x') {
+            instance.selected.forEach(key => {
+                let [col, row] = helper._splitKey(key);
+                instance.dataCell = { col, row, val: ''};
+            });
+        }
+
         // need move active area
         if (moveSelect) {
             e.preventDefault();
