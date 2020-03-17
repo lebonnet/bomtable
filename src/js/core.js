@@ -1385,7 +1385,7 @@ export default class BomTable {
         }
 
         // ctrl + a
-        if (!el && e.ctrlKey && key === 'A') {
+        if (!el && e.ctrlKey && key.toLowerCase() === 'a') {
             moveSelect = false;
             data = instance.data;
             map.start.rowNum = 0;
@@ -1522,7 +1522,6 @@ export default class BomTable {
             elHelper.left = `${left}px`;
             elHelper.maxWidth= `${instance._container.offsetWidth - left - 25 + instance._container.scrollLeft}px`;
             elHelper.minHeight = `${td.offsetHeight}px`;
-            console.log('onContainerScroll', e);
         }, 50)
     }
 
