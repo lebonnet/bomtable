@@ -119,14 +119,16 @@ export function getNumberFromString(str) {
 }
 
 /**
- * Merge values if both values is number return number or string
- * @param {String|Number} v1
- * @param {String|Number} v2
- * @return {String|Number}
+ * Merge values
+ * @param {String|Number|null} v1
+ * @param {String|Number|null} v2
+ * @return {String|Number|null}
  */
 export function mergeValues(v1, v2) {
-    if (v1 === '' || v2 === '') return v1 || v2;
     let type1 = typeof v1, type2 = typeof v2;
+    if (type1 === type2 && v1 === v2 && !v1) return v1; // null, empty and undefined
+    if (v1 == null) v1 = '';
+    if (v2 == null) v2 = '';
     return type1 === 'number' && type1 === type2 ? v1 + v2 : prepareValue(`${v1} ${v2}`)
 }
 
