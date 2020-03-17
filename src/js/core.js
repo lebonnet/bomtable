@@ -661,7 +661,7 @@ export default class BomTable {
                     if (rowIndex === -1) {
                         this.instanceHeader.push(val);
                     } else if (renders) {
-                         renders(this, th, colNum, rowIndex, val, {});
+                        renders(this, th, colNum, rowIndex, val, {});
                     }
                 });
             })
@@ -750,6 +750,8 @@ export default class BomTable {
 
             this._container.style.position = 'relative';
             this._container.style.overflow = 'auto';
+
+            this._container.addEventListener('scroll', this._onContainerScroll);
         }
 
         this._container.style.opacity = '0';
@@ -1500,6 +1502,28 @@ export default class BomTable {
         });
 
         instance._setActiveArea(map);
+    }
+
+    /**
+     * On container scroll listener
+     * @param {KeyboardEvent|MouseEvent} e
+     * @private
+     */
+    _onContainerScroll(e) {
+        clearTimeout(instance.containerScrollTimeout);
+        instance.containerScrollTimeout = setTimeout(() => {
+            let elHelper = instance.dom.elHelper;
+            if (!elHelper || !instance.lastSelected) return;
+            let td = instance.lastSelected.el,
+                tdRect = td.getBoundingClientRect(),
+                wrapPos = instance._getWrapTopLeftPosition(),
+                left = tdRect.left - wrapPos.left - 1;
+
+            elHelper.left = `${left}px`;
+            elHelper.maxWidth= `${instance._container.offsetWidth - left - 25 + instance._container.scrollLeft}px`;
+            elHelper.minHeight = `${td.offsetHeight}px`;
+            console.log('onContainerScroll', e);
+        }, 50)
     }
 
     /**
@@ -2264,7 +2288,6 @@ export default class BomTable {
      */
     _createElHelper({td, left}) {
         let textareaStyle = w.getComputedStyle(this.input.el);
-
         this.dom.elHelper = helper.createElement({
             tagName: 'span',
             parent: this.dom.wrapper,
@@ -2277,7 +2300,7 @@ export default class BomTable {
                 opacity: 0,
                 display: 'block',
 
-                maxWidth: `${this.dom.body.offsetWidth - left}px`,
+                maxWidth: `${this._container.offsetWidth - left - 25 + this._container.scrollLeft}px`,
                 minHeight: `${td.offsetHeight}px`,
 
                 padding: textareaStyle.padding,
@@ -2370,7 +2393,11 @@ export default class BomTable {
 
         d.removeEventListener('keydown', instance._keyDownWatcher);
 
+        instance._container.removeEventListener('scroll', this._onContainerScroll);
         instance.dom._buffer && instance.dom._buffer.removeEventListener('paste', instance._onPaste);
+
+        clearTimeout(instance.containerScrollTimeout);
+        clearTimeout(instance.tapTimeout);
 
         instance.destroyed = 1;
         instance.clear();
