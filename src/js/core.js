@@ -1403,7 +1403,7 @@ export default class BomTable {
         if (!el && e.ctrlKey && key.toLowerCase() === 'x') {
             instance.selected.forEach(key => {
                 let [col, row] = helper._splitKey(key);
-                instance.dataCell = { col, row, val: ''};
+                instance.dataCell = {col, row, val: ''};
             });
         }
 
@@ -2205,13 +2205,13 @@ export default class BomTable {
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
             wrapPos = this._getWrapTopLeftPosition(),
-            left = tdRect.left - wrapPos.left - 1,
+            left = tdRect.left - wrapPos.left,
             textarea = helper.createElement({
                 tagName: 'textarea',
                 selector: 'bomtable-input',
                 parent: this.dom.wrapper,
                 css: {
-                    left: `${left}px`,
+                    left: `${(left > 0 ? left - 1 : left)}px`,
                     top: `${tdRect.top - wrapPos.top - 1}px`,
                 }
             });
@@ -2240,15 +2240,15 @@ export default class BomTable {
 
         let elHelper = instance.dom.elHelper,
             textarea = instance.input.el,
-            tdRect = instance.lastSelected.el.getBoundingClientRect();
-
+            tdRect = instance.lastSelected.el.getBoundingClientRect(),
+            alignment = instance.lastSelected.colNum ? 1 : 0;
         elHelper.innerText = `${textarea.value}.`;
 
         let elHelperStyles = w.getComputedStyle(elHelper),
             countLines = Math.ceil(elHelper.scrollWidth / elHelper.offsetWidth),
             height = Math.max(helper.getNumberFromString(elHelperStyles.lineHeight) * countLines, tdRect.height + 1),
             minHeight = `${height}px`,
-            minWidth = `${tdRect.width + 1}px`;
+            minWidth = `${tdRect.width + alignment}px`;
 
         elHelper.style.minHeight = minHeight;
         elHelper.style.minWidth = minWidth;
