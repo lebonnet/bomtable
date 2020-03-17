@@ -1512,7 +1512,7 @@ export default class BomTable {
             });
         });
 
-        instance._setActiveArea(map);
+        instance._calcColsWidth()._setActiveArea(map);
     }
 
     /**
