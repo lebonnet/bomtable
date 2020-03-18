@@ -714,7 +714,7 @@ export default class BomTable {
             this.dom.colgroup = helper.createElement({tagName: 'colgroup', parent: this.dom.table});
             this.dom.copyColgroup = helper.createElement({tagName: 'colgroup', parent: this.dom.copyTable});
 
-            this.instanceData[0].forEach(c => {
+            this.instanceData[0].forEach(() => {
                 helper.createElement({tagName: 'col', parent: this.dom.colgroup});
                 helper.createElement({tagName: 'col', parent: this.dom.copyColgroup});
             });
@@ -1812,6 +1812,8 @@ export default class BomTable {
      */
     _createSquare(endCol, endRow) {
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
+            topCorrector = this.instanceData.length === endRow + 1 ? 3 : 0,
+            rightCorrector = this.instanceData[0].length === endCol + 1 ? 3 : 0,
             wrapPos = this._getWrapTopLeftPosition(),
             rect = downRightTd.getBoundingClientRect();
 
@@ -1825,8 +1827,8 @@ export default class BomTable {
             });
         }
 
-        this.dom.square.style.top = rect.bottom - wrapPos.top + 'px';
-        this.dom.square.style.left = rect.right - wrapPos.left + 'px';
+        this.dom.square.style.top = rect.bottom - topCorrector - wrapPos.top + 'px';
+        this.dom.square.style.left = rect.right - rightCorrector - wrapPos.left + 'px';
 
         return this;
     }
@@ -2332,7 +2334,7 @@ export default class BomTable {
     /**
      * Get node colNum and rowNum
      * @param {HTMLElement} el
-     * @return {[ colNum{Number}, rowNum{Number} ]}
+     * @return {[ colNum, rowNum ]}
      * @private
      */
     _colNumRowNumByEl(el) {
