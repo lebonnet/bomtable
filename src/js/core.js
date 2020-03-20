@@ -884,9 +884,19 @@ export default class BomTable {
         instance._createMenu(e, 'contextMenu');
 
         if (instance.config.contextMenu) {
+            let left = e.pageX - wrapPos.left - w.pageXOffset,
+                top = e.pageY - wrapPos.top - w.pageYOffset,
+                menuWidth =instance.dom.contextMenu.offsetWidth,
+                menuHeight = instance.dom.contextMenu.offsetHeight;
+            if (menuWidth > instance._container.offsetWidth - left && left > menuWidth) {
+                left = left - menuWidth
+            }
+            if (menuHeight > instance._container.offsetHeight - top && top > menuHeight) {
+                top = top - menuHeight
+            }
             instance.dom.contextMenu.style.display = 'block';
-            instance.dom.contextMenu.style.left = e.pageX - wrapPos.left - w.pageXOffset + 'px';
-            instance.dom.contextMenu.style.top = e.pageY - wrapPos.top - w.pageYOffset + 'px';
+            instance.dom.contextMenu.style.left = left + 'px';
+            instance.dom.contextMenu.style.top = top + 'px';
         }
 
         return instance;
