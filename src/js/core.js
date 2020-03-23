@@ -931,7 +931,12 @@ export default class BomTable {
         el.parentNode.classList.add('active');
 
         if (instance.config.headerMenu) {
-            instance.dom.headerMenu.style.left = btnRect.left - wrapPos.left + 'px';
+            let left = btnRect.left - wrapPos.left,
+                menuWidth =instance.dom.headerMenu.offsetWidth;
+            if (menuWidth > instance._container.offsetWidth - left && left > menuWidth) {
+                left = left - menuWidth + el.offsetWidth
+            }
+            instance.dom.headerMenu.style.left = left + 'px';
             instance.dom.headerMenu.style.top = btnRect.bottom - wrapPos.top + 'px';
         }
 
