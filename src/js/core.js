@@ -886,7 +886,7 @@ export default class BomTable {
         if (instance.config.contextMenu) {
             let left = e.pageX - wrapPos.left - w.pageXOffset,
                 top = e.pageY - wrapPos.top - w.pageYOffset,
-                menuWidth =instance.dom.contextMenu.offsetWidth,
+                menuWidth = instance.dom.contextMenu.offsetWidth,
                 menuHeight = instance.dom.contextMenu.offsetHeight;
             if (menuWidth > instance._container.offsetWidth - left && left > menuWidth) {
                 left = left - menuWidth
@@ -932,7 +932,7 @@ export default class BomTable {
 
         if (instance.config.headerMenu) {
             let left = btnRect.left - wrapPos.left,
-                menuWidth =instance.dom.headerMenu.offsetWidth;
+                menuWidth = instance.dom.headerMenu.offsetWidth;
             if (menuWidth > instance._container.offsetWidth - left && left > menuWidth) {
                 left = left - menuWidth + el.offsetWidth
             }
@@ -1727,6 +1727,7 @@ export default class BomTable {
             th && th.classList.add('highlight');
         });
 
+        this._scrollToActive();
         return this;
     }
 
@@ -1737,7 +1738,7 @@ export default class BomTable {
      * @param {Number} endCol
      * @param {Number} endRow
      * @param {Number} borderWidth - border width
-     * @returns {{top: number, left: number, bottom: number, right: number}}
+     * @returns {{top: {Number}, left: {Number}, bottom: {Number}, right: {Number}}}
      * @private
      */
     _ariaPosition({startCol, startRow, endCol, endRow}, borderWidth = 1) {
@@ -1770,6 +1771,49 @@ export default class BomTable {
         return this
             ._addSquareArea(this._ariaPosition({startCol, startRow, endCol, endRow}), 'activeArea')
             ._createSquare(endCol, endRow);
+    }
+
+    /**
+     * scroll to active area
+     * @return {BomTable}
+     * @private
+     */
+    _scrollToActive() {
+        let selected = this.selected;
+        if (selected.length > 1) return this;
+        let container = this._container,
+            elRect = this.dataMap[selected[0]].getBoundingClientRect(),
+            wrapPos = this._getWrapTopLeftPosition(),
+            top = elRect.top - wrapPos.top - 1,
+            left = elRect.left - wrapPos.left,
+            right = left + elRect.width,
+            bottom = top + elRect.height + 1,
+
+            headerHeight = this.dom.copyHeader ? this.dom.copyHeader.clientHeight : 0,
+
+            topPoint = container.scrollTop,
+            bottomPoint = topPoint + container.clientHeight,
+            leftPoint = container.scrollLeft,
+            rightPoint = leftPoint + container.clientWidth,
+            scrollX = leftPoint,
+            scrollY = topPoint;
+
+        if (topPoint > top - headerHeight) {
+            scrollY = top - headerHeight
+        } else if (bottom > bottomPoint) {
+            scrollY = topPoint + bottom - bottomPoint
+        }
+
+        if (leftPoint > left) {
+            scrollX = left
+        } else if (right > rightPoint) {
+            scrollX = leftPoint + right - rightPoint
+        }
+
+        if (scrollX < 1 && scrollY < 1) return this;
+        container.scrollTo(scrollX, scrollY)
+
+        return this
     }
 
     /**
@@ -1813,7 +1857,7 @@ export default class BomTable {
             getNumber = helper.getNumberFromString;
 
         return {
-            top: rect.top + -cont.scrollTop + getNumber(css.paddingTop) + getNumber(css.borderTopWidth),
+            top: rect.top - cont.scrollTop + getNumber(css.paddingTop) + getNumber(css.borderTopWidth),
             left: rect.left - cont.scrollLeft + getNumber(css.paddingLeft) + getNumber(css.borderLeftWidth)
         };
     }
