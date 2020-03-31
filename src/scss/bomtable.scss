@@ -335,6 +335,21 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         }
     }
 
+    td {
+        position: relative;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 250px;
+
+        &.area {
+            background: $lightBlue !important;
+        }
+
+        &.pressed {
+            background: $lightestBlue !important;
+        }
+    }
+
     .building {
         td {
             width: auto;
@@ -366,21 +381,6 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     }
     thead.bomtable-hidden {
         opacity: 0;
-    }
-
-    td {
-        position: relative;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 250px;
-
-        &.area {
-            background: $lightBlue !important;
-        }
-
-        &.pressed {
-            background: $lightestBlue !important;
-        }
     }
 
 }

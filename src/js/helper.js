@@ -28,7 +28,7 @@ export function createElement({tagName, selector = '', html = null, parent = nul
  * @param {HTMLElement} el
  */
 export function removeElement(el) {
-    el.remove ? el.remove() : el.parentNode ? el.parentNode.removeChild(el) : null;
+    el && el.remove ? el.remove() : el.parentNode ? el.parentNode.removeChild(el) : null;
 }
 
 /**

@@ -2059,8 +2059,9 @@ export default class BomTable {
     _getColWidth(colNum) {
         let isHeader = this.dom.header,
             headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
-            fistTdW = this.dataMap[`${colNum}::0`].offsetWidth;
-        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, this.minColWidth]);
+            fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
+            colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].style.width) : 0;
+        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth]);
     }
 
     /**
