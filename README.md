@@ -2,6 +2,8 @@
 <img src="http://lebonnet.ru/bomtable/bt.png" alt="bomtable logo" />
 </div>
 
+[demo](https://lebonnet.github.io/)
+
 <br/>
 
 web table like simple excel<br/>
@@ -42,7 +44,7 @@ let instance = new BomTable({
 <br/>
 
 ### Examples
-- [See a live demo | посмотреть пример](http://lebonnet.ru/bomtable/index.html)
+- [ demo | посмотреть пример](https://lebonnet.github.io/)
 
 renders example
 ```javascript
