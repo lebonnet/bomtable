@@ -54,7 +54,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
 
         &:hover {
             background: transparent;
-            opacity: .8;
+            opacity: 0.8;
         }
 
         &:before {
@@ -233,7 +233,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             &.disabled {
                 background-color: $lightGray;
                 cursor: not-allowed;
-                opacity: .7;
+                opacity: 0.7;
             }
 
             &.add-row {
@@ -282,7 +282,6 @@ $darkBlue: scale-color($blue, $lightness: -15%);
                 display: none;
             }
         }
-
     }
 
     &.touched {
@@ -316,6 +315,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     td {
         border-top-width: 0;
         border-left-width: 0;
+        border: none;
         border-right: 1px solid $gray;
         border-bottom: 1px solid $gray;
         padding: 0 4px;
@@ -329,8 +329,13 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         font-size: 13px;
         font-weight: normal;
         box-sizing: border-box;
+        width: auto;
+        text-align: left;
 
         &:first-child {
+            width: auto;
+            text-align: left;
+            padding: 0 4px;
             border-left: 1px solid $gray;
         }
     }
@@ -382,7 +387,6 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     thead.bomtable-hidden {
         opacity: 0;
     }
-
 }
 
 .bomtable-copy-table {

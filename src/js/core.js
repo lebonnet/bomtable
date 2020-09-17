@@ -835,14 +835,15 @@ export default class BomTable {
      * Create header cell
      * @param value
      * @param {Boolean} copy
+     * @param {Boolean} onlyCreate
      * @returns {HTMLElement}
      * @private
      */
-    _createHeaderCell(value = '', copy = false) {
+    _createHeaderCell(value = '', copy = false, onlyCreate = false) {
         let parent = !copy ? this.dom.header.firstElementChild : this.dom.copyHeader.firstElementChild,
             hasHeader = this.config.headerMenu,
             thClass = hasHeader ? 'bomtable-nw' : '',
-            th = helper.createElement({tagName: 'th', selector: thClass, parent});
+            th = helper.createElement({tagName: 'th', selector: thClass, parent: onlyCreate ? null : parent});
 
         if (hasHeader) {
             let wrap = helper.createElement({tagName: 'div', selector: 'bomtable-header-cell-wrap', parent: th});
@@ -2057,11 +2058,38 @@ export default class BomTable {
      * @private
      */
     _getColWidth(colNum) {
-        let isHeader = this.dom.header,
-            headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
-            fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
-            colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].style.width) : 0;
-        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth]);
+        this.dom.tmpTable = helper.createElement({tagName: 'table', selector: 'bomtable bomtable-copy-table'});
+        this.dom.tmpTable.style.width = 'auto'
+        let renders = this.config.renders;
+
+        if (this.config.tableClass) {
+            this.dom.tmpTable.classList.add(this.config.tableClass);
+        }
+
+        if (this.instanceHeader.length) {
+            let header = helper.createElement({tagName: 'thead'});
+            let tr = helper.createElement({tagName: 'tr', parent: header}),
+                value = this.instanceHeader[colNum],
+                th = this._createHeaderCell(value, false, true);
+            renders && renders(this, th, colNum, -2, value, {});
+            tr.appendChild(th)
+            this.dom.tmpTable.appendChild(header)
+        }
+
+        this.dataCol(colNum).forEach((cell, rowNum) => {
+            let tr = helper.createElement({tagName: 'tr', parent: this.dom.tmpTable}),
+                td = helper.createElement({tagName: 'td', html: cell, parent: tr});
+            renders && renders(this, td, colNum, rowNum, cell, {});
+            tr.appendChild(td)
+        });
+
+        this.dom.wrapper.appendChild(this.dom.tmpTable);
+
+        let width = this.dom.tmpTable.lastElementChild.lastElementChild.offsetWidth
+
+        helper.removeElement(this.dom.tmpTable)
+        this.dom.tmpTable = null
+        return width
     }
 
     /**
