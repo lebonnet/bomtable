@@ -624,6 +624,7 @@ export default class BomTable {
      */
     _calcColsWidth() {
         if (!this.dom.colgroup) return this;
+        this.dom.table.style.width = 'auto'
         let isHeader = this.dom.header,
             colGroupChildren = helper._likeArray(this.dom.colgroup.children),
             copyColGroupChildren = helper._likeArray(this.dom.copyColgroup.children);
@@ -2058,38 +2059,11 @@ export default class BomTable {
      * @private
      */
     _getColWidth(colNum) {
-        this.dom.tmpTable = helper.createElement({tagName: 'table', selector: 'bomtable bomtable-copy-table'});
-        this.dom.tmpTable.style.width = 'auto'
-        let renders = this.config.renders;
-
-        if (this.config.tableClass) {
-            this.dom.tmpTable.classList.add(this.config.tableClass);
-        }
-
-        if (this.instanceHeader.length) {
-            let header = helper.createElement({tagName: 'thead'});
-            let tr = helper.createElement({tagName: 'tr', parent: header}),
-                value = this.instanceHeader[colNum],
-                th = this._createHeaderCell(value, false, true);
-            renders && renders(this, th, colNum, -2, value, {});
-            tr.appendChild(th)
-            this.dom.tmpTable.appendChild(header)
-        }
-
-        this.dataCol(colNum).forEach((cell, rowNum) => {
-            let tr = helper.createElement({tagName: 'tr', parent: this.dom.tmpTable}),
-                td = helper.createElement({tagName: 'td', html: cell, parent: tr});
-            renders && renders(this, td, colNum, rowNum, cell, {});
-            tr.appendChild(td)
-        });
-
-        this.dom.wrapper.appendChild(this.dom.tmpTable);
-
-        let width = this.dom.tmpTable.lastElementChild.lastElementChild.offsetWidth
-
-        helper.removeElement(this.dom.tmpTable)
-        this.dom.tmpTable = null
-        return width
+        let isHeader = this.dom.header,
+            headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
+            fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
+            colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].style.width) : 0;
+        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth]);
     }
 
     /**
@@ -2115,6 +2089,7 @@ export default class BomTable {
      */
     _setContainerWidth() {
         this.dom.wrapper.style.width = '10000000px';
+        this.dom.table.style.width = 'auto'
         let width = 0,
             isHeader = this.dom.header;
         isHeader && this.dom.header.classList.remove('bomtable-hidden');

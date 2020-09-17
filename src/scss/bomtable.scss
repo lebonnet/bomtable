@@ -262,8 +262,8 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         }
     }
 
-    .bomtable-nw {
-        white-space: nowrap;
+    table .bomtable-nw {
+        white-space: nowrap !important;
     }
 
     .bomtable-header-cell-btn .bomtable-header-menu {
@@ -292,114 +292,111 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             margin-top: -9px;
         }
     }
-}
 
-.bomtable {
-    border-collapse: separate;
-    border-spacing: 0;
-    margin: 0;
-    border-width: 0;
-    table-layout: fixed;
-    outline-width: 0;
-    max-width: none;
-    max-height: none;
-    position: relative;
-    top: -5px;
-    z-index: 5;
-
-    tr {
-        background: #fff;
-    }
-
-    th,
-    td {
-        border-top-width: 0;
-        border-left-width: 0;
-        border: none;
-        border-right: 1px solid $gray;
-        border-bottom: 1px solid $gray;
-        padding: 0 4px;
-        height: 28px;
-        line-height: 23px;
-        empty-cells: show;
-        vertical-align: top;
-        overflow: hidden;
-        white-space: pre-line;
-        min-width: 35px;
-        font-size: 13px;
-        font-weight: normal;
-        box-sizing: border-box;
-        width: auto;
-        text-align: left;
-
-        &:first-child {
-            width: auto;
-            text-align: left;
-            padding: 0 4px;
-            border-left: 1px solid $gray;
-        }
-    }
-
-    td {
+    table.bomtable {
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 0;
+        border-width: 0;
+        table-layout: fixed;
+        outline-width: 0;
+        max-width: none;
+        max-height: none;
         position: relative;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 250px;
+        top: -5px;
+        z-index: 5;
 
-        &.area {
-            background: $lightBlue !important;
+        tr {
+            background: #fff;
         }
 
-        &.pressed {
-            background: $lightestBlue !important;
-        }
-    }
-
-    .building {
+        th,
         td {
-            width: auto;
-            white-space: nowrap;
+            border-top-width: 0;
+            border-left-width: 0;
+            border-right: 1px solid $gray;
+            border-bottom: 1px solid $gray;
+            padding: 0 4px;
+            height: 28px;
+            line-height: 23px;
+            empty-cells: show;
+            vertical-align: top;
+            overflow: hidden;
+            white-space: pre-line;
+            min-width: 35px;
+            font-size: 13px;
+            font-weight: normal;
+            box-sizing: border-box;
+            text-align: left;
+
+            &:first-child {
+                border-left: 1px solid $gray;
+            }
+        }
+
+        td {
+            position: relative;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 250px;
+
+            &.area {
+                background: $lightBlue !important;
+            }
+
+            &.pressed {
+                background: $lightestBlue !important;
+            }
+        }
+
+        .building {
+            td {
+                width: auto;
+                white-space: nowrap;
+            }
+        }
+
+        &:not(.bomtable-copy-table) {
+            th {
+                border-collapse: collapse !important;
+                line-height: 0 !important;
+                height: 0 !important;
+                min-height: 0 !important;
+                padding-top: 0 !important;
+                padding-bottom: 0 !important;
+                overflow: hidden !important;
+                border-top: 0 !important;
+                border-bottom: 0 !important;
+            }
+
+            .bomtable-header-cell-wrap,
+            .bomtable-header-cell-btn,
+            .bomtable-header-cell-btn:before,
+            .bomtable-header-cell-btn:after {
+                overflow: hidden !important;
+                line-height: 0 !important;
+                height: 0 !important;
+                min-height: 0 !important;
+            }
+        }
+
+        thead.bomtable-hidden {
+            opacity: 0;
         }
     }
-    &:not(.bomtable-copy-table) {
-        th {
-            border-collapse: collapse !important;
-            line-height: 0 !important;
-            height: 0 !important;
-            min-height: 0 !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            overflow: hidden !important;
-            border-top: 0 !important;
-            border-bottom: 0 !important;
+
+    table.bomtable-copy-table {
+        &.sticky {
+            position: sticky;
+            top: 0;
         }
 
-        .bomtable-header-cell-wrap,
-        .bomtable-header-cell-btn,
-        .bomtable-header-cell-btn:before,
-        .bomtable-header-cell-btn:after {
-            overflow: hidden !important;
-            line-height: 0 !important;
-            height: 0 !important;
-            min-height: 0 !important;
-        }
-    }
-    thead.bomtable-hidden {
-        opacity: 0;
-    }
-}
+        z-index: 20;
 
-.bomtable-copy-table {
-    &.sticky {
-        position: sticky;
-        top: 0;
-    }
-
-    z-index: 20;
-
-    thead {
-        th {
-            border-top: 1px solid #cccccc;
+        thead {
+            th {
+                border-top: 1px solid #cccccc;
+            }
         }
     }
 }
