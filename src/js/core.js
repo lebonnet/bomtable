@@ -634,7 +634,7 @@ export default class BomTable {
             copyColGroupChildren[colNum].style.width = colGroupChildren[colNum].style.width = `${width}px`;
         });
         isHeader && this.dom.header.classList.add('bomtable-hidden');
-
+        this.dom.table.style.width = ''
         return this
     }
 
@@ -2063,7 +2063,8 @@ export default class BomTable {
             headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
             fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
             colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].style.width) : 0;
-        return this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth]);
+        let w = this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth]);
+        return Math.ceil(w)
     }
 
     /**
@@ -2094,12 +2095,14 @@ export default class BomTable {
             isHeader = this.dom.header;
         isHeader && this.dom.header.classList.remove('bomtable-hidden');
         this.instanceData[0].forEach((c, colNum) => width += this._getColWidth(colNum));
-        this.dom.wrapper.style.width = `${width}px`;
+        this.dom.wrapper.style.width = `${Math.ceil(width)}px`;
         isHeader && this.dom.header.classList.add('bomtable-hidden');
+        this.dom.table.style.width = ''
         return this
     }
 
     /**
+     * Set width for column
      * @param {MouseEvent} event
      * @return {BomTable}
      * @private

@@ -10,7 +10,8 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     font-family: 'Roboto', Verdana, sans-serif;
     font-size: 13px;
     position: relative;
-    margin: 0 5px 0 0;
+    margin: 0;
+    padding: 0;
     background-color: #fff;
 
     * {
@@ -302,6 +303,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         outline-width: 0;
         max-width: none;
         max-height: none;
+        width: 100%;
         position: relative;
         top: -5px;
         z-index: 5;
