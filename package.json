@@ -5,7 +5,9 @@
   "main": "src/js/bomtable.js",
   "scripts": {
     "start": "webpack-dev-server --mode development --hot --colors --progress",
-    "build": "webpack --mode production --colors --progress"
+    "build": "webpack --mode production --colors --progress",
+    "ship": "npm version patch",
+    "postversion": "npm publish"
   },
   "repository": {
     "type": "git",
