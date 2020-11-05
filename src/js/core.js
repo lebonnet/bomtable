@@ -1,5 +1,5 @@
 import * as helper from "./helper";
-import * as v from "../../version.json";
+import {version} from "../../version.json";
 
 const
     d = document,
@@ -50,7 +50,7 @@ export default class BomTable {
 
         this.minColWidth = 60;
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window;
-        this.version = v.version;
+        this.version = version;
 
         return instance = this._ini();
     }
@@ -2177,13 +2177,16 @@ export default class BomTable {
         if (!this.dom.copyAreaLeft) return this;
         this._removeSquareArea('copyArea');
 
+        let map
+
         if (saveValue && this.squareDragArea.length) {
 
             let squareAreaMap = {},
                 copyDataKeys = [],
                 lsas = this.lastSelectArea.start,
-                lsae = this.lastSelectArea.end,
-                map = {start: {}, end: {}};
+                lsae = this.lastSelectArea.end
+
+            map = {start: {}, end: {}};
 
             for (let rowNum = lsas.row; rowNum <= lsae.row; rowNum++) {
                 let rowData = [];
@@ -2252,7 +2255,6 @@ export default class BomTable {
                     })
                 });
 
-                this._setActiveArea(map);
             }
 
         }
@@ -2260,7 +2262,11 @@ export default class BomTable {
         this.squareDragArea = [];
         this.direction = {};
 
-        return this._setContainerWidth()._calcColsWidth();
+        this._setContainerWidth()._calcColsWidth();
+
+        map && this._setActiveArea(map);
+
+        return this
     }
 
     /**
