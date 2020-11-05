@@ -2,7 +2,6 @@ const
     path = require('path'),
     argv = require('yargs').argv,
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
-    UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
     isDevelopment = argv.mode === 'development',
     distPath = path.join(__dirname, '/dist'),
@@ -68,24 +67,7 @@ const config = {
             }
         }),
     ],
-    optimization: !isDevelopment ? {
-        minimizer: [
-            new UglifyJsPlugin({
-                parallel: true,
-                sourceMap: false,
-                uglifyOptions: {
-                    ecma: 6,
-                    compress: {
-                        drop_console: true,
-                    },
-                    output: {
-                        comments: false,
-                        beautify: false,
-                    }
-                }
-            }),
-        ],
-    } : {},
+
     devServer: {
         contentBase: distPath,
         port: 83,

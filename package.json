@@ -1,12 +1,11 @@
 {
   "name": "bomtable",
-  "version": "2.1.24",
+  "version": "2.1.25",
   "description": "web table like simple excel",
   "main": "src/js/bomtable.js",
   "scripts": {
     "start": "webpack serve --mode development --hot --progress",
-    "build": "webpack --mode production --colors --progress",
-    "ship": "npm version patch",
+    "build": "webpack --mode production --progress",
     "postversion": "npm publish"
   },
   "repository": {
@@ -41,7 +40,6 @@
     "sass-loader": "^10.0.5",
     "style-loader": "^2.0.0",
     "svg-url-loader": "^6.0.0",
-    "uglifyjs-webpack-plugin": "^2.2.0",
     "webpack": "^5.4.0",
     "webpack-cli": "^4.2.0",
     "webpack-dev-server": "^3.11.0",
