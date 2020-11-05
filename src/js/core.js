@@ -569,7 +569,7 @@ export default class BomTable {
         this.selectedMap.forEach(key => {
             rows[key.split('::')[1]] = 1;
         });
-        return Object.keys(rows).map(r => +r);
+        return Object.keys(rows).map(r => +r) || [];
     }
 
     /**
@@ -973,6 +973,8 @@ export default class BomTable {
      * @private
      */
     _createMenu(e, menuName) {
+        if (instance.destroyed) return instance;
+
         let html = '',
             isContext = menuName === 'contextMenu',
             className;
