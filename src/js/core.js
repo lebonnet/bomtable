@@ -1302,6 +1302,8 @@ export default class BomTable {
             }
         }
 
+        if (!instance.instanceData[0]) return
+
         let el = instance.input && instance.input.el,
             data,
             key = e.key,
@@ -2146,8 +2148,10 @@ export default class BomTable {
      * @private
      */
     _setColResizerPosition(colNum, position) {
-        let th = this.dataMap[`${colNum}::-2`],
-            wrapPos = this._getWrapTopLeftPosition(),
+        let th = this.dataMap[`${colNum}::-2`]
+
+        if (!th) return this
+        let wrapPos = this._getWrapTopLeftPosition(),
             thRect = th.getBoundingClientRect(),
             thRight = position || thRect.right,
             tableRightPosition = this.dom.table.getBoundingClientRect().right;
@@ -2468,6 +2472,7 @@ export default class BomTable {
      * 'destroy' and clear instance
      */
     destroy() {
+        if (!instance) return
 
         d.removeEventListener('mousedown', instance._onmousedown);
         d.removeEventListener('mouseup', instance._onmouseup);
