@@ -141,7 +141,7 @@ export default class History {
                 bt.instanceData[row][col] = data
                 break
             case 'addRow':
-                isUndo && (prevParams.data = [[...bt.dataRow(params.row)]])
+                isUndo && (prevParams = { data: [[...bt.dataRow(params.row)]] })
                 bt._removeRows([params.row])
                 break
             case 'addCol':
