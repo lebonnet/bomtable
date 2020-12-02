@@ -217,6 +217,15 @@ export function _keysIgnore(key) {
 }
 
 /**
+ * Clone array (max level 2)
+ * @param array
+ * @returns {*}
+ */
+export function cloneArray(array) {
+    return array.map(a => [...a])
+}
+
+/**
  * Split key by ::
  * @param {String} key
  * @returns {[Number, Number]}

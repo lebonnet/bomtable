@@ -260,6 +260,12 @@ $darkBlue: scale-color($blue, $lightness: -15%);
             &.union-cols {
                 background-image: url('../img/union-cols.svg');
             }
+            &.redo {
+                background-image: url('../img/redo.svg');
+            }
+            &.undo {
+                background-image: url('../img/undo.svg');
+            }
         }
     }
 

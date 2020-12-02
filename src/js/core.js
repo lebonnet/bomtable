@@ -1,3 +1,4 @@
+import History from './History'
 import * as helper from './helper'
 import { version } from '../../package.json'
 
@@ -23,6 +24,7 @@ export default class BomTable {
                 rowsClass: '', // css class for table rows
                 colsClass: '', // css class for table cols
 
+                useHistory: true, // use state history
                 colsResize: false, // resizable columns
                 renders: null,
 
@@ -37,6 +39,9 @@ export default class BomTable {
                         hr1: '',
                         unionRows: 'union rows',
                         unionCols: 'union cols',
+                        hr2: '',
+                        undo: 'undo',
+                        redo: 'redo',
                     },
                     callback: null, // function can be call after click context menu item
                 },
@@ -53,6 +58,10 @@ export default class BomTable {
         this.version = version
 
         instance = this._ini()
+
+        if (this.config.useHistory) {
+            this.history = new History({ bt: this })
+        }
 
         return instance
     }
@@ -105,10 +114,11 @@ export default class BomTable {
      */
     set data(data) {
         if (!Array.isArray(data)) throw new Error('Data must be an array')
+        let prevData = helper.cloneArray(this.data)
         this.config.header = this.header
         this.config.data = data
-
         this.clear()._render()._renderHelpers()
+        this.history && this.history.push('setData', { data: prevData })
     }
 
     /**
@@ -125,9 +135,10 @@ export default class BomTable {
      */
     set header(header) {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array')
+        let prevHeader = [...this.header]
         this.config.header = header
-
         this.removeHeader()._renderHeader().render()
+        this.history && this.history.push('setHeader', { data: prevHeader })
     }
 
     /**
@@ -146,13 +157,20 @@ export default class BomTable {
      */
     set dataCell({ col, row, val }) {
         let td = this.dataMap[`${col}::${row}`],
+            prevVal = this.instanceData[row][col],
             valType = typeof val
-        if (td.bomtableValType === valType && val === td.innerHTML) return this
+
+        if (td.bomtableValType === valType && val === prevVal) return this
+
         td.bomtableValType = valType
+
         val = helper.prepareValue(val)
         td.innerHTML = val
+
         this.instanceData[row][col] = val
         this._rerenderActiveArea()
+
+        this.history && this.history.push('setDataCell', { col, row, data: prevVal })
 
         return this
     }
@@ -393,6 +411,19 @@ export default class BomTable {
      */
     addRow() {
         let index = this.lastSelected ? this.lastSelected.rowNum : this.instanceData.length
+        this._addRow(index)
+
+        this.history && this.history.push('addRow', { row: index })
+        return this
+    }
+
+    /**
+     * Add new row in table
+     * @param {Number} index - row number after insert new row
+     * @returns {BomTable}
+     * @private
+     */
+    _addRow(index) {
         this._createRow({ index, render: true })
 
         Object.keys(this.dataMap).forEach(key => {
@@ -408,15 +439,28 @@ export default class BomTable {
      * @return {BomTable}
      */
     addCol() {
-        let num = this.lastSelected && this.lastSelected.colNum,
-            lastColIndex,
+        let index = this.lastSelected && this.lastSelected.colNum
+        this._addCol(index)
+
+        this.history && this.history.push('addCol', { col: index })
+        return this
+    }
+
+    /**
+     * Add new col
+     * @param {Number} index - col number after insert new col
+     * @returns {BomTable}
+     * @private
+     */
+    _addCol(index) {
+        let lastColIndex,
             it = 0,
             colsClass = this.config.colsClass || '',
             col = helper.createElement({ tagName: 'col' }),
             copyCol = col.cloneNode(false)
-        if (num != null) {
+        if (index != null) {
             Object.keys(this.dataMap).forEach(key => {
-                if (key.indexOf(`${num}::`) !== 0) return
+                if (key.indexOf(`${index}::`) !== 0) return
 
                 let el = this.dataMap[key],
                     parent = el.parentElement,
@@ -435,8 +479,8 @@ export default class BomTable {
                 parent.insertBefore(child, el.nextSibling)
             })
             if (this.dom.header) {
-                this.dom.colgroup.insertBefore(col, this.dom.colgroup.children[num].nextSibling)
-                this.dom.copyColgroup.insertBefore(copyCol, this.dom.copyColgroup.children[num].nextSibling)
+                this.dom.colgroup.insertBefore(col, this.dom.colgroup.children[index].nextSibling)
+                this.dom.copyColgroup.insertBefore(copyCol, this.dom.copyColgroup.children[index].nextSibling)
             }
             this._manualColSize = {}
         } else {
@@ -467,16 +511,38 @@ export default class BomTable {
     removeRows(nums = []) {
         let rows = nums.length ? nums : this.selectedRows
 
+        let tmp = [],
+            rowValues = []
+
         rows.forEach(rowNum => {
             let firstTd = this.dataMap[`0::${rowNum}`],
                 parentTr = firstTd && firstTd.parentNode
             if (!parentTr) return
+
+            rowValues.push({ row: rowNum, data: this.dataRow(rowNum) })
+            tmp.push(rowNum)
+        })
+
+        this._removeRows(tmp)
+        this.history && this.history.push('removeRows', { data: rowValues })
+        return this
+    }
+
+    /**
+     * Remove rows
+     * @param {Array} rows - index removes rows
+     * @returns {BomTable}
+     * @private
+     */
+    _removeRows(rows) {
+        if (!rows.length) return this
+        rows.forEach(rowNum => {
+            let parentTr = this.dataMap[`0::${rowNum}`].parentNode
             helper._likeArray(parentTr.children).forEach(td => {
                 delete this.cellMeta[td.bomtableKey]
             })
             helper.removeElement(parentTr)
         })
-
         return this._reindex()
     }
 
@@ -486,8 +552,24 @@ export default class BomTable {
      * @return {BomTable}
      */
     removeCols(nums = []) {
-        let cols = nums.length ? nums : this.selectedCols
+        let cols = nums.length ? nums : this.selectedCols,
+            prevHeader = [...this.header],
+            prevData = helper.cloneArray(this.data)
 
+        this._removeCols(cols)
+
+        this.history && this.history.push('removeCols', { data: prevData, header: prevHeader })
+        return this
+    }
+
+    /**
+     * Remove cols
+     * @param {Array} cols - index removes cols
+     * @returns {BomTable}
+     * @private
+     */
+    _removeCols(cols) {
+        if (!cols.length) return this
         cols.forEach(colNum => {
             Object.keys(this.dataMap).forEach(key => {
                 if (!key.indexOf(`${colNum}::`)) {
@@ -510,7 +592,8 @@ export default class BomTable {
         })
         this._manualColSize = {}
 
-        return this._reindex()._setContainerWidth()._calcColsWidth()
+        this._reindex()._setContainerWidth()._calcColsWidth()
+        return this
     }
 
     /**
@@ -524,6 +607,7 @@ export default class BomTable {
         if (rows.length === 1) return this
         let firstRowIndex = rows.shift(),
             data = this.data,
+            prevData = helper.cloneArray(data),
             fistRow = data[firstRowIndex]
 
         rows.forEach(rowIndex => {
@@ -535,7 +619,10 @@ export default class BomTable {
             helper.removeElement(this.dom.rows[rowIndex])
         })
 
-        return this._reindex()
+        this._reindex()
+        this.history && this.history.push('unionRows', { data: prevData })
+
+        return this
     }
 
     /**
@@ -549,8 +636,10 @@ export default class BomTable {
         if (cols.length === 1) return this
 
         let firstColNum = cols.shift(),
-            header = this.header.filter((h, num) => !cols.includes(num)),
-            data = this.data
+            data = this.data,
+            prevHeader = [...this.header],
+            prevData = helper.cloneArray(data),
+            header = this.header.filter((h, num) => !cols.includes(num))
 
         data.forEach((row, rowNum) => {
             let firstVal = '',
@@ -576,6 +665,30 @@ export default class BomTable {
         this.config.data = data
         this.config.header = header
         this.clear()._render()._renderHelpers()
+
+        this.history && this.history.push('unionCols', { data: prevData, header: prevHeader })
+
+        return this
+    }
+
+    /**
+     * undo
+     * @returns {BomTable}}
+     */
+    undo() {
+        if (!instance.history) return instance
+        instance.history.undo()
+        return instance
+    }
+
+    /**
+     * redo
+     * @returns {BomTable}}
+     */
+    redo() {
+        if (!instance.history) return instance
+        instance.history.redo()
+        return instance
     }
 
     /**
@@ -1023,6 +1136,7 @@ export default class BomTable {
         if (instance.destroyed) return instance
 
         let html = '',
+            history = this.history,
             isContext = menuName === 'contextMenu',
             className
 
@@ -1047,6 +1161,9 @@ export default class BomTable {
                         ((key === 'unionCols' && selectedColsCount < 2) ||
                             (key === 'unionRows' && selectedRowsCount < 2))
                     ) {
+                        className += ' disabled'
+                    }
+                    if (history && ((key === 'undo' && !history.hasUndo) || (key === 'redo' && !history.hasRedo))) {
                         className += ' disabled'
                     }
                     html += `<li data-action="${key}" class="${className}">${instance.config[menuName].items[key]}</li>`
@@ -1374,6 +1491,16 @@ export default class BomTable {
 
         if (e.ctrlKey && !el && key.toLowerCase() !== 'a') {
             instance._focusBuffer()
+        }
+
+        if (e.ctrlKey && key.toLowerCase() === 'z') {
+            instance.undo()
+            return
+        }
+
+        if (e.ctrlKey && key.toLowerCase() === 'y') {
+            instance.redo()
+            return
         }
 
         el && e.stopPropagation()
@@ -1908,6 +2035,7 @@ export default class BomTable {
             th && th.classList.remove('highlight')
         })
 
+        this._removeSquare()
         return this
     }
 
@@ -2554,6 +2682,7 @@ export default class BomTable {
 
         instance.config = {}
 
+        instance.history && instance.history.destroy()
         instance = null
     }
 }
