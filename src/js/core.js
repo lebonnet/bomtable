@@ -1676,6 +1676,8 @@ export default class BomTable {
             }
         }
 
+        if (!selectedArea[0] || !pasteData[0]) return
+
         if (selectedArea[0].length > pasteData[0].length) {
             pasteData.forEach(row => {
                 let index = 0,
