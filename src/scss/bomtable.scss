@@ -11,8 +11,8 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     font-size: 13px;
     position: relative;
     margin: 0;
-    padding: 0;
     background-color: #fff;
+    padding: 0 1px 1px 0;
 
     * {
         margin: 0;
