@@ -153,7 +153,7 @@ export default class History {
                 bt._removeRows([params.row])
                 break
             case 'addCol':
-                isUndo && (prevParams = { data: cloneArray(bt.data) })
+                isUndo && (prevParams = { data: cloneArray(bt.data), header: [...bt.header] })
                 bt._removeCols([params.col + 1])
                 break
             case 'removeRows':

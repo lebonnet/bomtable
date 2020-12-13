@@ -798,6 +798,7 @@ export default class BomTable {
 
         if (this.dom.header && this.dom.header.firstElementChild) {
             ;['header', 'copyHeader'].forEach(h => {
+                if (!this.dom[h].firstElementChild) return
                 helper._likeArray(this.dom[h].firstElementChild.children).forEach((th, colNum) => {
                     let childWrap = helper
                             ._likeArray(th.children)
