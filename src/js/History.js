@@ -130,15 +130,23 @@ export default class History {
                 bt.removeHeader()._renderHeader().render()
                 break
             case 'setDataCell':
-                let { col, row, data } = params,
-                    td = bt.dataMap[`${col}::${row}`],
-                    valType = typeof data
+                let prevValues = { data: [] }
+                params.data.forEach(h => {
+                    let { col, row, val } = h,
+                        td = bt.dataMap[`${col}::${row}`],
+                        valType = typeof val
 
-                isUndo && (prevParams = { col, row, data: bt.instanceData[row][col] })
+                    if (isUndo) {
+                        prevValues.data.push({ col, row, val: bt.instanceData[row][col] })
+                    }
 
-                td.bomtableValType = valType
-                td.innerHTML = data
-                bt.instanceData[row][col] = data
+                    td.bomtableValType = valType
+                    td.innerHTML = val
+                    bt.instanceData[row][col] = val
+                })
+                if (prevValues.data.length) {
+                    prevParams = prevValues
+                }
                 break
             case 'addRow':
                 isUndo && (prevParams = { data: [[...bt.dataRow(params.row)]] })

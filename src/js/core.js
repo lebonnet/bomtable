@@ -156,6 +156,23 @@ export default class BomTable {
      * @param {*} val - new value
      */
     set dataCell({ col, row, val }) {
+        let prevVal = this.instanceData[row][col]
+        this._setDataCell({ col, row, val })._rerenderActiveArea()
+
+        this.history && this.history.push('setDataCell', { data: [{ col, row, val: prevVal }] })
+
+        return this
+    }
+
+    /**
+     * Set new cell value
+     * @param col
+     * @param row
+     * @param val
+     * @returns {BomTable}
+     * @private
+     */
+    _setDataCell({ col, row, val }) {
         let td = this.dataMap[`${col}::${row}`],
             prevVal = this.instanceData[row][col],
             valType = typeof val
@@ -168,10 +185,6 @@ export default class BomTable {
         td.innerHTML = val
 
         this.instanceData[row][col] = val
-        this._rerenderActiveArea()
-
-        this.history && this.history.push('setDataCell', { col, row, data: prevVal })
-
         return this
     }
 
@@ -1582,12 +1595,19 @@ export default class BomTable {
                 break
             case 'Delete':
                 if (!el) {
+                    let prevValues = []
                     instance.selectedMap.forEach(key => {
                         let [col, row] = helper._splitKey(key)
-                        instance.dataMap[`${col}::${row}`] && (instance.dataCell = { col, row, val: '' })
+                        if (instance.dataMap[key]) {
+                            prevValues.push({ col, row, val: instance.dataCell(col, row) })
+                            instance._setDataCell({ col, row, val: '' })
+                        }
                     })
                     keyMustIgnore = true
                     instance._rerenderActiveArea()
+                    if (instance.history && prevValues.length) {
+                        instance.history.push('setDataCell', { data: prevValues })
+                    }
                 }
                 break
         }
@@ -1604,11 +1624,20 @@ export default class BomTable {
             instance._setActiveArea(map)
         }
 
+        // ctrl + x
         if (!el && e.ctrlKey && key.toLowerCase() === 'x') {
+            let prevValues = []
             instance.selected.forEach(key => {
                 let [col, row] = helper._splitKey(key)
-                instance.dataCell = { col, row, val: '' }
+                if (instance.dataMap[key]) {
+                    prevValues.push({ col, row, val: instance.dataCell(col, row) })
+                    instance._setDataCell({ col, row, val: '' })
+                }
             })
+            instance._rerenderActiveArea()
+            if (instance.history && prevValues.length) {
+                instance.history.push('setDataCell', { data: prevValues })
+            }
         }
 
         // need move active area
@@ -1699,6 +1728,7 @@ export default class BomTable {
 
         let map = { start: {}, end: {} }
 
+        let prevValues = []
         selectedArea.forEach((row, rowIndex) => {
             row.forEach((key, colIndex) => {
                 let [colNum, rowNum] = helper._splitKey(key)
@@ -1709,14 +1739,17 @@ export default class BomTable {
                 if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = colNum
                 if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = rowNum
 
-                instance.dataMap[`${colNum}::${rowNum}`] &&
-                    (instance.dataCell = {
-                        col: colNum,
-                        row: rowNum,
-                        val: pasteData[rowIndex][colIndex],
-                    })
+                if (instance.dataMap[key]) {
+                    prevValues.push({ col: colNum, row: rowNum, val: instance.dataCell(colNum, rowNum) })
+                    instance._setDataCell({ col: colNum, row: rowNum, val: pasteData[rowIndex][colIndex] })
+                }
             })
         })
+
+        instance._rerenderActiveArea()
+        if (instance.history && prevValues.length) {
+            instance.history.push('setDataCell', { data: prevValues })
+        }
 
         instance._calcColsWidth()._setActiveArea(map)
     }
@@ -2430,6 +2463,7 @@ export default class BomTable {
                     })
                 }
 
+                let prevValues = []
                 squareAreaMap.forEach((row, rowIndex) => {
                     row.forEach((key, colIndex) => {
                         let copyKey = copyDataKeys[rowIndex][colIndex],
@@ -2446,9 +2480,15 @@ export default class BomTable {
                         let [colCopyNum, rowCopyNum] = helper._splitKey(copyKey),
                             val = this.dataCell(colCopyNum, rowCopyNum)
 
-                        instance.dataCell = { col: colNum, row: rowNum, val }
+                        prevValues.push({ col: colNum, row: rowNum, val: this.dataCell(colNum, rowNum) })
+                        this._setDataCell({ col: colNum, row: rowNum, val })
                     })
                 })
+
+                this._rerenderActiveArea()
+                if (this.history && prevValues.length) {
+                    this.history.push('setDataCell', { data: prevValues })
+                }
             }
         }
 
