@@ -748,11 +748,13 @@ export default class BomTable {
 
         this.instanceHeader.forEach((cell, colNum) => {
             let th = this.dataMap[`${colNum}::-1`],
-                thc = this.dataMap[`${colNum}::-2`],
-                childWrap = helper._likeArray(th.children).find(c => c.classList.contains('bomtable-header-cell-wrap')),
-                val = childWrap ? childWrap.innerHTML : th.innerHTML
+                thc = this.dataMap[`${colNum}::-2`]
+            let childWrap = helper
+                    ._likeArray(th.children[0].children)
+                    .find(c => c.classList.contains('bomtable-header-cell-wrap')),
+                val = childWrap.innerHTML
             if (cell !== val) {
-                childWrap ? (childWrap.innerHTML = val) : (th.innerHTML = val)
+                childWrap.innerHTML = val
                 thc.innerHTML = th.innerHTML
                 renders && renders(this, thc, colNum, -2, val, {})
             }
@@ -771,11 +773,14 @@ export default class BomTable {
         this.dom.table.style.width = 'auto'
         let isHeader = this.dom.header,
             colGroupChildren = helper._likeArray(this.dom.colgroup.children),
-            copyColGroupChildren = helper._likeArray(this.dom.copyColgroup.children)
+            copyColGroupChildren = this.dom.copyColgroup && helper._likeArray(this.dom.copyColgroup.children)
         isHeader && this.dom.header.classList.remove('bomtable-hidden')
         this.instanceData[0].forEach((cell, colNum) => {
             let width = this._getColWidth(colNum)
-            copyColGroupChildren[colNum].style.width = colGroupChildren[colNum].style.width = `${width}px`
+            colGroupChildren[colNum].width = width
+            if (copyColGroupChildren) {
+                copyColGroupChildren[colNum].width = width
+            }
         })
         isHeader && this.dom.header.classList.add('bomtable-hidden')
         this.dom.table.style.width = ''
@@ -801,9 +806,9 @@ export default class BomTable {
                 if (!this.dom[h].firstElementChild) return
                 helper._likeArray(this.dom[h].firstElementChild.children).forEach((th, colNum) => {
                     let childWrap = helper
-                            ._likeArray(th.children)
+                            ._likeArray(th.children[0].children)
                             .find(c => c.classList.contains('bomtable-header-cell-wrap')),
-                        val = childWrap ? childWrap.innerHTML : th.innerHTML,
+                        val = childWrap.innerHTML,
                         rowIndex = h === 'copyHeader' ? -2 : -1
                     this.dataMap[`${colNum}::${rowIndex}`] = th
                     if (rowIndex === -1) {
@@ -841,23 +846,31 @@ export default class BomTable {
      * @private
      */
     _render() {
-        let renders = this.config.renders
+        let renders = this.config.renders,
+            withHeader = this.config.header && this.config.header.length
 
         this.dom.table = helper.createElement({
             tagName: 'table',
             selector: 'bomtable',
         })
-        this.dom.copyTable = helper.createElement({
-            tagName: 'table',
-            selector: 'bomtable',
-        })
 
-        this.dom.copyTable.classList.add('bomtable-copy-table')
-        this.config.stickyHeader && this.dom.copyTable.classList.add('sticky')
+        if (withHeader) {
+            this.dom.copyTable = helper.createElement({
+                tagName: 'table',
+                selector: 'bomtable bomtable-copy-table',
+            })
+        }
+
+        withHeader && this.config.stickyHeader && this.dom.copyTable.classList.add('sticky')
 
         if (this.config.tableClass) {
             this.dom.table.classList.add(this.config.tableClass)
-            this.dom.copyTable.classList.add(this.config.tableClass)
+            withHeader && this.dom.copyTable.classList.add(this.config.tableClass)
+        }
+
+        if (withHeader && this.config.headerMenu) {
+            this.dom.table.classList.add('bomtable-header-menu')
+            this.dom.copyTable.classList.add('bomtable-header-menu')
         }
 
         this._prepareData(this.config.data)
@@ -869,14 +882,15 @@ export default class BomTable {
                 tagName: 'colgroup',
                 parent: this.dom.table,
             })
-            this.dom.copyColgroup = helper.createElement({
-                tagName: 'colgroup',
-                parent: this.dom.copyTable,
-            })
+            withHeader &&
+                (this.dom.copyColgroup = helper.createElement({
+                    tagName: 'colgroup',
+                    parent: this.dom.copyTable,
+                }))
 
             this.instanceData[0].forEach(() => {
                 helper.createElement({ tagName: 'col', parent: this.dom.colgroup })
-                helper.createElement({ tagName: 'col', parent: this.dom.copyColgroup })
+                withHeader && helper.createElement({ tagName: 'col', parent: this.dom.copyColgroup })
             })
         }
 
@@ -909,7 +923,7 @@ export default class BomTable {
 
             this.isTouch && this.dom.wrapper.classList.add('touched')
 
-            this.dom.wrapper.appendChild(this.dom.copyTable)
+            withHeader && this.dom.wrapper.appendChild(this.dom.copyTable)
             this.dom.wrapper.appendChild(this.dom.table)
 
             this._container.style.position = 'relative'
@@ -1008,29 +1022,33 @@ export default class BomTable {
      */
     _createHeaderCell(value = '', copy = false, onlyCreate = false) {
         let parent = !copy ? this.dom.header.firstElementChild : this.dom.copyHeader.firstElementChild,
-            hasHeader = this.config.headerMenu,
-            thClass = hasHeader ? 'bomtable-nw' : '',
+            hasHeaderMenu = this.config.headerMenu,
             th = helper.createElement({
                 tagName: 'th',
-                selector: thClass,
+                selector: 'bomtable-nw',
                 parent: onlyCreate ? null : parent,
             })
 
-        if (hasHeader) {
-            let wrap = helper.createElement({
-                tagName: 'div',
-                selector: 'bomtable-header-cell-wrap',
-                parent: th,
-            })
+        let thCont = helper.createElement({
+            tagName: 'div',
+            selector: 'bomtable-header-container',
+            parent: th,
+        })
+
+        let wrap = helper.createElement({
+            tagName: 'div',
+            selector: 'bomtable-header-cell-wrap',
+            parent: thCont,
+        })
+
+        if (hasHeaderMenu) {
             helper.createElement({
                 tagName: 'button',
                 selector: 'bomtable-header-cell-btn',
-                parent: th,
+                parent: thCont,
             })
-            wrap.innerHTML = value
-        } else {
-            th.innerHTML = value
         }
+        wrap.innerHTML = value
 
         return th
     }
@@ -1416,7 +1434,11 @@ export default class BomTable {
 
         if (instance.lastHover === el) return
 
-        if (instance.colResizerPressedIndex == null && instance.config.colsResize && el.tagName === 'TH') {
+        let isFirstEl = instance.dom.header
+            ? el.tagName === 'TH'
+            : el.tagName === 'TD' && instance.dataMap[`${el.cellIndex}::0`] === el
+
+        if (instance.colResizerPressedIndex == null && instance.config.colsResize && isFirstEl) {
             instance._setColResizerPosition(el.cellIndex)
         }
 
@@ -2294,7 +2316,7 @@ export default class BomTable {
         let isHeader = this.dom.header,
             headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
             fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
-            colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].style.width) : 0
+            colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].width) : 0
         let w = this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth])
         return Math.ceil(w)
     }
@@ -2349,14 +2371,15 @@ export default class BomTable {
         }
 
         let colNum = this.colResizerPressedIndex,
-            thLeft = this.dataMap[`${colNum}::-2`].getBoundingClientRect().left,
+            el = isHeader ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`],
+            leftEl = el.getBoundingClientRect().left,
             wrapPosLeft = this._getWrapTopLeftPosition().left,
-            width = event.clientX - wrapPosLeft - (thLeft - wrapPosLeft),
+            width = event.clientX - wrapPosLeft - (leftEl - wrapPosLeft),
             colEl = helper._likeArray(this.dom.colgroup.children)[colNum]
         if (width < this.minColWidth) width = this.minColWidth
-        colEl.style.width = `${width}px`
+        colEl.width = width
 
-        width = Math.max.apply(Math, [width, this.dataMap[`${colNum}::0`].offsetWidth])
+        // width = Math.max.apply(Math, [width, this.dataMap[`${colNum}::0`].offsetWidth])
         this._manualColSize[colNum] = width
         this.colResizerPressedIndex = null
 
@@ -2376,21 +2399,21 @@ export default class BomTable {
      * @private
      */
     _setColResizerPosition(colNum, position) {
-        let th = this.dataMap[`${colNum}::-2`]
+        let el = this.dom.header ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`]
 
-        if (!th) return this
+        if (!el) return this
         let wrapPos = this._getWrapTopLeftPosition(),
-            thRect = th.getBoundingClientRect(),
-            thRight = position || thRect.right,
+            elRect = el.getBoundingClientRect(),
+            elRight = position || elRect.right,
             tableRightPosition = this.dom.table.getBoundingClientRect().right
 
-        if (thRight < wrapPos.left) thRight = wrapPos.left
-        if (thRight > tableRightPosition) thRight = tableRightPosition
-        let calcPosition = thRight - wrapPos.left
+        if (elRight < wrapPos.left) elRight = wrapPos.left
+        if (elRight > tableRightPosition) elRight = tableRightPosition
+        let calcPosition = elRight - wrapPos.left
 
         this.dom._colResizer.style.left = `${calcPosition - 5}px`
-        this.dom._colResizer.style.top = `${thRect.top - wrapPos.top}px`
-        this.dom._colResizer.style.height = `${th.offsetHeight}px`
+        this.dom._colResizer.style.top = `${elRect.top - wrapPos.top}px`
+        this.dom._colResizer.style.height = `${el.offsetHeight}px`
         this.dom._colResizerLine.style.left = `${calcPosition}px`
 
         !position && (this.dom._colResizer.dataset.colNum = colNum)

@@ -19,9 +19,23 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         padding: 0;
     }
 
+    .bomtable-header-container {
+        position: relative;
+        height: 100%;
+    }
+
     .bomtable-header-cell-wrap {
         position: relative;
-        display: inline-block;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .bomtable-header-menu {
+        .bomtable-header-cell-wrap {
+            padding-right: 30px;
+        }
     }
 
     .bomtable-header-cell-btn:before,
@@ -40,8 +54,9 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         height: 10px;
         min-height: unset;
         display: inline-block;
-        position: relative;
-        margin: 0 5px 0 15px;
+        position: absolute;
+        right: 5px;
+        top: 7px;
         line-height: 10px;
         font-size: 14px;
         padding: 0;
@@ -78,7 +93,9 @@ $darkBlue: scale-color($blue, $lightness: -15%);
     }
 
     .bomtable-no-header {
-        border-top: 1px solid $gray;
+        tr:first-child td {
+            border-top: 1px solid $gray;
+        }
     }
 
     .bomtable-square {
@@ -311,7 +328,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         max-height: none;
         width: 100%;
         position: relative;
-        top: -5px;
+        top: 0;
         z-index: 5;
 
         tr {
@@ -403,7 +420,8 @@ $darkBlue: scale-color($blue, $lightness: -15%);
 
         thead {
             th {
-                border-top: 1px solid #cccccc;
+                vertical-align: middle;
+                border-top: 1px solid $gray;
             }
         }
     }
