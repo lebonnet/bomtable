@@ -5,8 +5,6 @@ import { version } from '../../package.json'
 const d = document,
     w = window
 
-let instance = null
-
 export default class BomTable {
     constructor(opts = {}) {
         /**
@@ -57,13 +55,13 @@ export default class BomTable {
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
         this.version = version
 
-        instance = this._ini()
+        this._ini()
 
         if (this.config.useHistory) {
             this.history = new History({ bt: this })
         }
 
-        return instance
+        return this
     }
 
     /**
@@ -81,29 +79,27 @@ export default class BomTable {
      * @private
      */
     _callListeners() {
-        if (this.isTouch) {
-            d.addEventListener('touchstart', this._onmousedown, {
-                passive: false,
-                cancelable: true,
-            })
-            d.addEventListener('touchend', this._onmouseup)
+        let events = ['mousemove', 'mouseover', 'dblclick', 'contextmenu', 'keydown']
 
-            w.addEventListener('touchmove', this._ontouchmove, {
-                passive: false,
-                cancelable: true,
-            })
+        if (this.isTouch) {
+            events.push('touchstart')
+            events.push('touchend')
+            events.push('touchmove')
         } else {
-            d.addEventListener('mousedown', this._onmousedown)
-            d.addEventListener('mouseup', this._onmouseup)
+            events.push('mousedown')
+            events.push('mouseup')
         }
 
-        d.addEventListener('mousemove', this._onmousemove)
-        d.addEventListener('mouseover', this._onmouseover)
-
-        d.addEventListener('dblclick', this._ondblclick)
-        d.addEventListener('contextmenu', this._oncontextmenu)
-
-        d.addEventListener('keydown', this._keyDownWatcher)
+        events.forEach(event => {
+            let opts = ['touchmove', 'touchmove'].includes(event)
+                ? {
+                      passive: false,
+                      cancelable: true,
+                  }
+                : undefined
+            this.handlers[`_on${event}`] = this[`_on${event}`].bind(null, this)
+            d.addEventListener(event, this.handlers[`_on${event}`], opts)
+        })
 
         return this._renderHelpers()
     }
@@ -689,9 +685,9 @@ export default class BomTable {
      * @returns {BomTable}}
      */
     undo() {
-        if (!instance.history) return instance
-        instance.history.undo()
-        return instance
+        if (!this.history) return this
+        this.history.undo()
+        return this
     }
 
     /**
@@ -699,9 +695,9 @@ export default class BomTable {
      * @returns {BomTable}}
      */
     redo() {
-        if (!instance.history) return instance
-        instance.history.redo()
-        return instance
+        if (!this.history) return this
+        this.history.redo()
+        return this
     }
 
     /**
@@ -771,10 +767,10 @@ export default class BomTable {
     _calcColsWidth() {
         if (!this.dom.colgroup) return this
         this.dom.table.style.width = 'auto'
-        let isHeader = this.dom.header,
+        let hasHeader = this.dom.header,
             colGroupChildren = helper._likeArray(this.dom.colgroup.children),
             copyColGroupChildren = this.dom.copyColgroup && helper._likeArray(this.dom.copyColgroup.children)
-        isHeader && this.dom.header.classList.remove('bomtable-hidden')
+        hasHeader && this.dom.header.classList.remove('bomtable-hidden')
         this.instanceData[0].forEach((cell, colNum) => {
             let width = this._getColWidth(colNum)
             colGroupChildren[colNum].width = width
@@ -782,7 +778,7 @@ export default class BomTable {
                 copyColGroupChildren[colNum].width = width
             }
         })
-        isHeader && this.dom.header.classList.add('bomtable-hidden')
+        hasHeader && this.dom.header.classList.add('bomtable-hidden')
         this.dom.table.style.width = ''
         return this
     }
@@ -929,7 +925,7 @@ export default class BomTable {
             this._container.style.position = 'relative'
             this._container.style.overflow = 'auto'
 
-            this._container.addEventListener('scroll', this._onContainerScroll)
+            this._container.addEventListener('scroll', this._onContainerScroll.bind(this))
         }
 
         this._container.style.opacity = '0'
@@ -995,7 +991,7 @@ export default class BomTable {
                 selector: 'bomtable-buffer',
                 parent: this.dom.wrapper,
             })
-            this.dom._buffer.addEventListener('paste', this._onPaste)
+            this.dom._buffer.addEventListener('paste', this._onPaste.bind(this))
         }
         if (this.config.colsResize) {
             this.dom._colResizer = helper.createElement({
@@ -1078,25 +1074,25 @@ export default class BomTable {
      */
     createContextMenu(e) {
         let wrapPos = this._getWrapTopLeftPosition()
-        instance._createMenu(e, 'contextMenu')
+        this._createMenu(e, 'contextMenu')
 
-        if (instance.config.contextMenu) {
+        if (this.config.contextMenu) {
             let left = e.pageX - wrapPos.left - w.pageXOffset,
                 top = e.pageY - wrapPos.top - w.pageYOffset,
-                menuWidth = instance.dom.contextMenu.offsetWidth,
-                menuHeight = instance.dom.contextMenu.offsetHeight
-            if (menuWidth > instance._container.offsetWidth - left && left > menuWidth) {
+                menuWidth = this.dom.contextMenu.offsetWidth,
+                menuHeight = this.dom.contextMenu.offsetHeight
+            if (menuWidth > this._container.offsetWidth - left && left > menuWidth) {
                 left = left - menuWidth
             }
-            if (menuHeight > instance._container.offsetHeight - top && top > menuHeight) {
+            if (menuHeight > this._container.offsetHeight - top && top > menuHeight) {
                 top = top - menuHeight
             }
-            instance.dom.contextMenu.style.display = 'block'
-            instance.dom.contextMenu.style.left = left + 'px'
-            instance.dom.contextMenu.style.top = top + 'px'
+            this.dom.contextMenu.style.display = 'block'
+            this.dom.contextMenu.style.left = left + 'px'
+            this.dom.contextMenu.style.top = top + 'px'
         }
 
-        return instance
+        return this
     }
 
     /**
@@ -1105,11 +1101,7 @@ export default class BomTable {
      * @return {BomTable}
      */
     closeContextMenu(e) {
-        let colNum = instance.lastSelected ? instance.lastSelected.colNum : null,
-            rowNum = instance.lastSelected ? instance.lastSelected.rowNum : null,
-            lastSelected = { colNum, rowNum }
-
-        return instance._closeMenu(e, 'contextMenu', lastSelected)
+        return this._closeMenu(e, 'contextMenu')
     }
 
     /**
@@ -1122,21 +1114,21 @@ export default class BomTable {
             wrapPos = this._getWrapTopLeftPosition(),
             btnRect = el.getBoundingClientRect()
 
-        instance.dom.contextMenu = instance._createMenu(e, 'headerMenu')
+        this.dom.contextMenu = this._createMenu(e, 'headerMenu')
 
         el.parentNode.classList.add('active')
 
-        if (instance.config.headerMenu) {
+        if (this.config.headerMenu) {
             let left = btnRect.left - wrapPos.left,
-                menuWidth = instance.dom.headerMenu.offsetWidth
-            if (menuWidth > instance._container.offsetWidth - left && left > menuWidth) {
+                menuWidth = this.dom.headerMenu.offsetWidth
+            if (menuWidth > this._container.offsetWidth - left && left > menuWidth) {
                 left = left - menuWidth + el.offsetWidth
             }
-            instance.dom.headerMenu.style.left = left + 'px'
-            instance.dom.headerMenu.style.top = btnRect.bottom - wrapPos.top + 'px'
+            this.dom.headerMenu.style.left = left + 'px'
+            this.dom.headerMenu.style.top = btnRect.bottom - wrapPos.top + 'px'
         }
 
-        return instance
+        return this
     }
 
     /**
@@ -1145,16 +1137,11 @@ export default class BomTable {
      * @return {BomTable}
      */
     closeHeaderMenu(e) {
-        let lastSelected
-        Object.keys(instance.dataMap).forEach(key => {
-            let el = this.dataMap[key],
-                [colNum, rowNum] = helper._splitKey(key)
-            if (rowNum >= 0 || !el.classList.contains('active')) return
+        helper._likeArray(d.querySelectorAll('.bomtable-header-container.active')).forEach(el => {
             el.classList.remove('active')
-            lastSelected = { colNum, rowNum }
         })
 
-        return instance._closeMenu(e, 'headerMenu', lastSelected)
+        return this._closeMenu(e, 'headerMenu')
     }
 
     /**
@@ -1165,26 +1152,27 @@ export default class BomTable {
      * @private
      */
     _createMenu(e, menuName) {
-        if (instance.destroyed) return instance
+        if (this.destroyed) return this
 
         let html = '',
             history = this.history,
             isContext = menuName === 'contextMenu',
             className
 
-        if (instance.config[menuName]) {
+        if (this.config[menuName]) {
             e.preventDefault()
 
-            let data = { list: Object.assign({}, instance.config[menuName].items) },
-                selectedColsCount = instance.selectedCols.length,
-                selectedRowsCount = instance.selectedRows.length,
+            let data = { list: Object.assign({}, this.config[menuName].items) },
+                selectedColsCount = this.selectedCols.length,
+                selectedRowsCount = this.selectedRows.length,
                 hookName = `before${helper.firstCharToUp(menuName)}Render`
 
-            if (instance.config.hooks[hookName]) {
-                instance.config.hooks[hookName](instance, data.list)
+            if (this.config.hooks[hookName]) {
+                this.config.hooks[hookName](this, data.list)
             }
+            let isHrReg = /^hr+[0-9]*$/
             Object.keys(data.list).forEach(key => {
-                if (/^hr+[0-9]*$/.test(key)) {
+                if (isHrReg.test(key)) {
                     html += `<li class="bomtable-hr"></li>`
                 } else {
                     className = helper.camelCaseToKebabCase(key)
@@ -1198,58 +1186,61 @@ export default class BomTable {
                     if (history && ((key === 'undo' && !history.hasUndo) || (key === 'redo' && !history.hasRedo))) {
                         className += ' disabled'
                     }
-                    html += `<li data-action="${key}" class="${className}">${instance.config[menuName].items[key]}</li>`
+                    html += `<li data-action="${key}" class="${className}">${this.config[menuName].items[key]}</li>`
                 }
             })
 
-            if (!instance.dom[menuName]) {
-                instance.dom[menuName] = helper.createElement({
+            if (!this.dom[menuName]) {
+                this.dom[menuName] = helper.createElement({
                     tagName: 'ul',
                     selector: `bomtable-${helper.camelCaseToKebabCase(menuName)}`,
-                    parent: instance.dom.wrapper,
+                    parent: this.dom.wrapper,
                 })
             }
 
-            instance.dom[menuName].innerHTML = html
+            this.dom[menuName].innerHTML = html
         }
 
-        return instance
+        return this
     }
 
     /**
      * Close context or header menu
      * @param {MouseEvent} e
      * @param {String} menuName
-     * @param {Object} lastSelected
      * @returns {BomTable}
      * @private
      */
-    _closeMenu(e, menuName, lastSelected) {
+    _closeMenu(e, menuName) {
         let el = e && e.target,
             action
 
         if (
             el &&
             !e.button &&
-            instance.dom[menuName] &&
-            instance.dom[menuName].children &&
-            helper._likeArray(instance.dom[menuName].children).some(li => li === el)
+            this.dom[menuName] &&
+            this.dom[menuName].children &&
+            helper._likeArray(this.dom[menuName].children).some(li => li === el)
         ) {
             action = el.dataset.action
 
-            if (instance.config[menuName].callback) {
-                instance.config[menuName].callback(action, instance, e, lastSelected)
-            } else if (instance[action]) {
-                instance[action]()
+            let colNum = this.lastSelected ? this.lastSelected.colNum : null,
+                rowNum = this.lastSelected ? this.lastSelected.rowNum : null,
+                lastSelected = { colNum, rowNum }
+
+            if (this.config[menuName].callback) {
+                this.config[menuName].callback(action, this, e, lastSelected)
+            } else if (this[action]) {
+                this[action]()
             } else {
                 throw new Error(`Undefined action ${action}`)
             }
         }
 
-        instance.dom[menuName] && helper.removeElement(instance.dom[menuName])
-        instance.dom[menuName] = null
+        this.dom[menuName] && helper.removeElement(this.dom[menuName])
+        this.dom[menuName] = null
 
-        return instance
+        return this
     }
 
     /**
@@ -1257,11 +1248,22 @@ export default class BomTable {
      */
 
     /**
-     * Mouse down listener
+     * Touch start listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _onmousedown(e) {
+    _ontouchstart(instance, e) {
+        this._onmousedown(instance, e)
+    }
+
+    /**
+     * Mouse down listener
+     * @param {BomTable} instance
+     * @param {MouseEvent} e
+     * @private
+     */
+    _onmousedown(instance, e) {
         if (!instance || instance.destroyed) return
 
         let el = e.target
@@ -1270,7 +1272,7 @@ export default class BomTable {
             instance.countTouch++
 
             if (instance.tapped === el) {
-                instance._ondblclick(e)
+                instance._ondblclick(instance, e)
                 e.preventDefault()
                 clearTimeout(instance.tapTimeout)
                 instance.tapped = false
@@ -1327,11 +1329,22 @@ export default class BomTable {
     }
 
     /**
-     * Mouse up listener
+     * Touch end listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _onmouseup(e) {
+    _ontouchend(instance, e) {
+        this._onmouseup(instance, e)
+    }
+
+    /**
+     * Mouse up listener
+     * @param {BomTable} instance
+     * @param {MouseEvent} e
+     * @private
+     */
+    _onmouseup(instance, e) {
         if (!instance || instance.destroyed) return
 
         let el = e.target
@@ -1358,10 +1371,11 @@ export default class BomTable {
 
     /**
      * Touch move listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _ontouchmove(e) {
+    _ontouchmove(instance, e) {
         if (!instance || instance.destroyed) return
 
         if (!instance.mouseBtnPressed || instance.countTouch > 1) return true
@@ -1404,25 +1418,27 @@ export default class BomTable {
 
     /**
      * Mouse over listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _onmouseover(e) {
+    _onmouseover(instance, e) {
         if (!instance || instance.destroyed) return
 
         let el = e.target
 
         if (!instance.mouseBtnPressed || !helper.isTableCell(el)) return
 
-        !instance.squarePressed && instance._setActiveCell(e)
+        !instance.squarePressed && instance._setActiveCell(e, el)
     }
 
     /**
      * Mouse move listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _onmousemove(e) {
+    _onmousemove(instance, e) {
         if (!instance || instance.destroyed) return
 
         let el = e.target
@@ -1453,10 +1469,11 @@ export default class BomTable {
 
     /**
      * On mouse double click listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _ondblclick(e) {
+    _ondblclick(instance, e) {
         if (!instance || instance.destroyed) return
 
         let el = e.target
@@ -1465,17 +1482,18 @@ export default class BomTable {
             return
         }
 
-        instance._setActiveCell(e)
+        instance._setActiveCell(e, el)
 
         instance._createInput()
     }
 
     /**
      * Context menu listener
+     * @param {BomTable} instance
      * @param {MouseEvent} e
      * @private
      */
-    _oncontextmenu(e) {
+    _oncontextmenu(instance, e) {
         if (!instance || instance.destroyed) return
 
         let el = e.target
@@ -1489,10 +1507,11 @@ export default class BomTable {
 
     /**
      * On key down listener
+     * @param {BomTable} instance
      * @param {KeyboardEvent} e
      * @private
      */
-    _keyDownWatcher(e) {
+    _onkeydown(instance, e) {
         if (!instance || instance.destroyed) return
 
         if (e.key === 'Escape') {
@@ -1684,7 +1703,7 @@ export default class BomTable {
      * @private
      */
     _onPaste(e) {
-        if (!instance || instance.destroyed) return
+        if (!this || this.destroyed) return
 
         e.stopPropagation()
         e.preventDefault()
@@ -1692,8 +1711,8 @@ export default class BomTable {
         let tmp = [],
             selectedArea = [],
             pasteData = (e.clipboardData || window.clipboardData).getData('Text'),
-            selectedCols = instance.selectedCols,
-            selectedRows = instance.selectedRows,
+            selectedCols = this.selectedCols,
+            selectedRows = this.selectedRows,
             oneSelected = selectedCols.length === selectedRows.length && selectedRows.length === 1
 
         selectedRows.forEach(r => {
@@ -1762,19 +1781,19 @@ export default class BomTable {
                 if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = colNum
                 if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = rowNum
 
-                if (instance.dataMap[key]) {
-                    prevValues.push({ col: colNum, row: rowNum, val: instance.dataCell(colNum, rowNum) })
-                    instance._setDataCell({ col: colNum, row: rowNum, val: pasteData[rowIndex][colIndex] })
+                if (this.dataMap[key]) {
+                    prevValues.push({ col: colNum, row: rowNum, val: this.dataCell(colNum, rowNum) })
+                    this._setDataCell({ col: colNum, row: rowNum, val: pasteData[rowIndex][colIndex] })
                 }
             })
         })
 
-        instance._rerenderActiveArea()
-        if (instance.history && prevValues.length) {
-            instance.history.push('setDataCell', { data: prevValues })
+        this._rerenderActiveArea()
+        if (this.history && prevValues.length) {
+            this.history.push('setDataCell', { data: prevValues })
         }
 
-        instance._calcColsWidth()._setActiveArea(map)
+        this._calcColsWidth()._setActiveArea(map)
     }
 
     /**
@@ -1783,17 +1802,18 @@ export default class BomTable {
      * @private
      */
     _onContainerScroll(e) {
-        clearTimeout(instance.containerScrollTimeout)
-        instance.containerScrollTimeout = setTimeout(() => {
-            let elHelper = instance.dom.elHelper
-            if (!elHelper || !instance.lastSelected) return
-            let td = instance.lastSelected.el,
+        if (!this || this.destroyed) return
+        clearTimeout(this.containerScrollTimeout)
+        this.containerScrollTimeout = setTimeout(() => {
+            let elHelper = this.dom.elHelper
+            if (!elHelper || !this.lastSelected) return
+            let td = this.lastSelected.el,
                 tdRect = td.getBoundingClientRect(),
-                wrapPos = instance._getWrapTopLeftPosition(),
+                wrapPos = this._getWrapTopLeftPosition(),
                 left = tdRect.left - wrapPos.left - 1
 
             elHelper.left = `${left}px`
-            elHelper.maxWidth = `${instance._container.offsetWidth - left - 25 + instance._container.scrollLeft}px`
+            elHelper.maxWidth = `${this._container.offsetWidth - left - 25 + this._container.scrollLeft}px`
             elHelper.minHeight = `${td.offsetHeight}px`
         }, 50)
     }
@@ -1818,14 +1838,14 @@ export default class BomTable {
     /**
      * Set active cell
      * @param {MouseEvent} e - event
-     * @param {HTMLElement|null} el - target over element
-     * @return {{el: HTMLElement, colNum: number, rowNum: number}}
+     * @param {HTMLElement} el - target over element
+     * @return {{el: HTMLElement, colNum: number, rowNum: number} || {}}
      */
-    _setActiveCell(e, el = null) {
+    _setActiveCell(e, el) {
         let type = e.type,
             keyType = 'none'
 
-        if (!el) el = e.target
+        if (!el) return {}
 
         if (e.shiftKey) {
             keyType = 'shiftKey'
@@ -1836,7 +1856,10 @@ export default class BomTable {
         this._removePressed()
         helper.clearSelected()
 
-        let [colNum, rowNum] = this._colNumRowNumByEl(el)
+        let res = this._colNumRowNumByEl(el)
+        if (!res) return {}
+
+        let [colNum, rowNum] = res
 
         if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = { el, colNum, rowNum }
@@ -2313,10 +2336,10 @@ export default class BomTable {
      * @private
      */
     _getColWidth(colNum) {
-        let isHeader = this.dom.header,
-            headerColW = isHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
+        let hasHeader = this.dom.header,
+            headerColW = hasHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
             fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
-            colElWidth = isHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].width) : 0
+            colElWidth = hasHeader ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].width) : 0
         let w = this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth])
         return Math.ceil(w)
     }
@@ -2346,11 +2369,11 @@ export default class BomTable {
         this.dom.wrapper.style.width = '10000000px'
         this.dom.table.style.width = 'auto'
         let width = 0,
-            isHeader = this.dom.header
-        isHeader && this.dom.header.classList.remove('bomtable-hidden')
+            hasHeader = this.dom.header
+        hasHeader && this.dom.header.classList.remove('bomtable-hidden')
         this.instanceData[0].forEach((c, colNum) => (width += this._getColWidth(colNum)))
         this.dom.wrapper.style.width = `${Math.ceil(width)}px`
-        isHeader && this.dom.header.classList.add('bomtable-hidden')
+        hasHeader && this.dom.header.classList.add('bomtable-hidden')
         this.dom.table.style.width = ''
         return this
     }
@@ -2364,14 +2387,14 @@ export default class BomTable {
     _setColSize(event) {
         if (this.colResizerPressedIndex == null) return this
 
-        let isHeader = this.dom.header
+        let hasHeader = this.dom.header
 
-        if (isHeader) {
+        if (hasHeader) {
             this.dom.header.classList.remove('bomtable-hidden')
         }
 
         let colNum = this.colResizerPressedIndex,
-            el = isHeader ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`],
+            el = hasHeader ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`],
             leftEl = el.getBoundingClientRect().left,
             wrapPosLeft = this._getWrapTopLeftPosition().left,
             width = event.clientX - wrapPosLeft - (leftEl - wrapPosLeft),
@@ -2383,7 +2406,7 @@ export default class BomTable {
         this._manualColSize[colNum] = width
         this.colResizerPressedIndex = null
 
-        if (isHeader) {
+        if (hasHeader) {
             this.dom.header.classList.add('bomtable-hidden')
         }
 
@@ -2414,7 +2437,8 @@ export default class BomTable {
         this.dom._colResizer.style.left = `${calcPosition - 5}px`
         this.dom._colResizer.style.top = `${elRect.top - wrapPos.top}px`
         this.dom._colResizer.style.height = `${el.offsetHeight}px`
-        this.dom._colResizerLine.style.left = `${calcPosition}px`
+        this.dom._colResizerLine.style.left = `${calcPosition - 2}px`
+        this.dom._colResizerLine.style.height = `${this._container.offsetHeight - 2}px`
 
         !position && (this.dom._colResizer.dataset.colNum = colNum)
 
@@ -2548,7 +2572,7 @@ export default class BomTable {
                 },
             })
 
-        textarea.addEventListener('input', this._onInput)
+        textarea.addEventListener('input', this._onInput.bind(this))
 
         if (setCellValue) {
             textarea.value = td.innerHTML
@@ -2572,12 +2596,12 @@ export default class BomTable {
      * @private
      */
     _updateInputSize() {
-        if (!instance.dom.elHelper || !instance.input) return instance
+        if (!this.dom.elHelper || !this.input) return this
 
-        let elHelper = instance.dom.elHelper,
-            textarea = instance.input.el,
-            tdRect = instance.lastSelected.el.getBoundingClientRect(),
-            alignment = instance.lastSelected.colNum ? 1 : 0
+        let elHelper = this.dom.elHelper,
+            textarea = this.input.el,
+            tdRect = this.lastSelected.el.getBoundingClientRect(),
+            alignment = this.lastSelected.colNum ? 1 : 0
         elHelper.innerText = `${textarea.value}.`
 
         let elHelperStyles = w.getComputedStyle(elHelper),
@@ -2593,7 +2617,7 @@ export default class BomTable {
         textarea.style.minWidth = minWidth
         textarea.style.minHeight = minHeight
         textarea.style.height = `${elHelper.offsetHeight}px`
-        return instance
+        return this
     }
 
     /**
@@ -2621,7 +2645,7 @@ export default class BomTable {
         if (!saveValue) return this
         this.dataCell = { col, row, val }
 
-        return this._setContainerWidth()._calcColsWidth()
+        return this
     }
 
     /**
@@ -2669,7 +2693,8 @@ export default class BomTable {
      * @private
      */
     _colNumRowNumByEl(el) {
-        return helper._splitKey(Object.keys(this.dataMap).find(key => this.dataMap[key] === el))
+        let index = Object.keys(this.dataMap).find(key => this.dataMap[key] === el)
+        return index ? helper._splitKey(index) : null
     }
 
     /**
@@ -2677,11 +2702,12 @@ export default class BomTable {
      * @private
      */
     _onInput() {
-        instance._updateInputSize()
+        if (!this || this.destroyed || !this.dom.elHelper || !this.input) return this
+        this._updateInputSize()
     }
 
     /**
-     * Clear data of instance
+     * Clear data of this
      * @return {BomTable}
      */
     clear() {
@@ -2689,6 +2715,7 @@ export default class BomTable {
             this.dom = {}
         }
 
+        this.handlers = {}
         this._removeInput(false)
         this._removeCopyArea(false)
 
@@ -2717,38 +2744,30 @@ export default class BomTable {
         this.selected = []
         this.lastSelected = null
 
+        this.mouseDownElement = null
         this.lastHover = null
         return this
     }
 
     /**
-     * 'destroy' and clear instance
+     * 'destroy' and clear this
      */
     destroy() {
-        if (!instance) return
+        Object.keys(this.handlers).forEach(event => {
+            let domEvent = event.substr(3)
+            d.removeEventListener(domEvent, this.handlers[event])
+        })
 
-        d.removeEventListener('mousedown', instance._onmousedown)
-        d.removeEventListener('mouseup', instance._onmouseup)
+        clearTimeout(this.containerScrollTimeout)
+        clearTimeout(this.tapTimeout)
 
-        d.removeEventListener('mouseenter', instance._onmousemove)
-        d.removeEventListener('mouseover', instance._onmouseover)
+        this.destroyed = 1
+        this.clear()
 
-        d.removeEventListener('dblclick', instance._ondblclick)
+        this.config = {}
 
-        d.removeEventListener('keydown', instance._keyDownWatcher)
+        this.history && this.history.destroy()
 
-        instance._container.removeEventListener('scroll', this._onContainerScroll)
-        instance.dom._buffer && instance.dom._buffer.removeEventListener('paste', instance._onPaste)
-
-        clearTimeout(instance.containerScrollTimeout)
-        clearTimeout(instance.tapTimeout)
-
-        instance.destroyed = 1
-        instance.clear()
-
-        instance.config = {}
-
-        instance.history && instance.history.destroy()
-        instance = null
+        this.history = null
     }
 }
