@@ -1,5 +1,5 @@
 <div align="center">
-<img src="http://lebonnet.ru/bomtable/bt.png" alt="bomtable logo" />
+<img src="https://lebonnet.github.io/logo.png" alt="bomtable logo" />
 </div>
 
 [demo](https://lebonnet.github.io/)
