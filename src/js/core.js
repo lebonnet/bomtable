@@ -1173,7 +1173,7 @@ export default class BomTable {
             let isHrReg = /^hr+[0-9]*$/
             Object.keys(data.list).forEach(key => {
                 if (isHrReg.test(key)) {
-                    html += `<li class="bomtable-hr"></li>`
+                    html += `<li class='bomtable-hr'></li>`
                 } else {
                     className = helper.camelCaseToKebabCase(key)
                     if (
@@ -1186,7 +1186,7 @@ export default class BomTable {
                     if (history && ((key === 'undo' && !history.hasUndo) || (key === 'redo' && !history.hasRedo))) {
                         className += ' disabled'
                     }
-                    html += `<li data-action="${key}" class="${className}">${this.config[menuName].items[key]}</li>`
+                    html += `<li data-action='${key}' class='${className}'>${this.config[menuName].items[key]}</li>`
                 }
             })
 
@@ -1254,7 +1254,7 @@ export default class BomTable {
      * @private
      */
     _ontouchstart(instance, e) {
-        this._onmousedown(instance, e)
+        instance._onmousedown(instance, e)
     }
 
     /**
@@ -1335,7 +1335,7 @@ export default class BomTable {
      * @private
      */
     _ontouchend(instance, e) {
-        this._onmouseup(instance, e)
+        instance._onmouseup(instance, e)
     }
 
     /**
@@ -1864,9 +1864,10 @@ export default class BomTable {
         if (['mousedown', 'touchstart'].includes(type)) {
             this.mouseDownElement = { el, colNum, rowNum }
         }
-        this.mouseDownElement.el.classList.add('pressed')
 
-        this.mouseDownElement &&
+        if (this.mouseDownElement) {
+            this.mouseDownElement.el && this.mouseDownElement.el.classList.add('pressed')
+
             this._setActiveArea(
                 {
                     start: {
@@ -1880,6 +1881,7 @@ export default class BomTable {
                 },
                 keyType,
             )
+        }
 
         return this._setLastSelected(el, colNum, rowNum)
     }
@@ -1979,7 +1981,7 @@ export default class BomTable {
                 } else {
                     this.selected.push(key)
                 }
-                el.classList.toggle('area')
+                el && el.classList.toggle('area')
             })
         })
 
