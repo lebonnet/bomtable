@@ -2040,6 +2040,7 @@ export default class BomTable {
      * @private
      */
     _rerenderActiveArea() {
+        if (this.destroyed) return this
         if (!Object.keys(this.lastSelectArea).length) return this
         let area = this.lastSelectArea,
             startCol = area.start.col,
@@ -2147,6 +2148,7 @@ export default class BomTable {
      * @private
      */
     _createSquare(endCol, endRow) {
+        if (!this.instanceData) return this
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
             topCorrector = this.instanceData.length === endRow + 1 ? 3 : 0,
             rightCorrector = this.instanceData[0].length === endCol + 1 ? 3 : 0,
