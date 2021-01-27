@@ -1,12 +1,12 @@
 {
   "name": "bomtable",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "web table like simple excel",
   "main": "src/js/bomtable.js",
   "scripts": {
     "start": "webpack serve --mode development --hot --progress",
     "build": "webpack --mode production --progress",
-    "postversion": "npm publish"
+    "postversion": "npm publish --verbose"
   },
   "repository": {
     "type": "git",
