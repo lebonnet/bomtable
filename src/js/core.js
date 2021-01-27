@@ -1215,10 +1215,11 @@ export default class BomTable {
         let el = e && e.target,
             action
 
+        if (!this.dom[menuName]) return this
+
         if (
             el &&
             !e.button &&
-            this.dom[menuName] &&
             this.dom[menuName].children &&
             helper._likeArray(this.dom[menuName].children).some(li => li === el)
         ) {
@@ -1237,7 +1238,7 @@ export default class BomTable {
             }
         }
 
-        this.dom[menuName] && helper.removeElement(this.dom[menuName])
+        helper.removeElement(this.dom[menuName])
         this.dom[menuName] = null
 
         return this
