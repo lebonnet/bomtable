@@ -2061,7 +2061,7 @@ export default class BomTable {
      */
     _scrollToActive() {
         let selected = this.selected
-        if (selected.length > 1) return this
+        if (selected.length > 1 || !this.dataMap[selected[0]]) return this
         let container = this._container,
             elRect = this.dataMap[selected[0]].getBoundingClientRect(),
             wrapPos = this._getWrapTopLeftPosition(),
