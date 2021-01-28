@@ -2150,13 +2150,15 @@ export default class BomTable {
      */
     _createSquare(endCol, endRow) {
         if (!this.instanceData) return this
+
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
             topCorrector = this.instanceData.length === endRow + 1 ? 3 : 0,
             rightCorrector = this.instanceData[0].length === endCol + 1 ? 3 : 0,
-            wrapPos = this._getWrapTopLeftPosition(),
-            rect = downRightTd.getBoundingClientRect()
+            wrapPos = this._getWrapTopLeftPosition()
 
-        if (downRightTd.tagName !== 'TD') return this
+        if (!downRightTd || downRightTd.tagName !== 'TD') return this
+
+        let rect = downRightTd.getBoundingClientRect()
 
         if (!this.dom.square) {
             this.dom.square = helper.createElement({
