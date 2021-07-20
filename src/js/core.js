@@ -1855,7 +1855,10 @@ export default class BomTable {
         }
 
         this._removePressed()
-        helper.clearSelected()
+
+        if (e.type !== 'dblclick') {
+            helper.clearSelected()
+        }
 
         let res = this._colNumRowNumByEl(el)
         if (!res) return {}
@@ -1934,7 +1937,7 @@ export default class BomTable {
         }
 
         // clear selected
-        ;['shiftKey', 'none'].includes(keyType) && this.clearActiveArea()
+        ;['shiftKey', 'none'].includes(keyType) && this._clearActiveArea()
 
         // revert if right to left
         if (startCol > endCol) {
@@ -2100,11 +2103,16 @@ export default class BomTable {
      * @return {BomTable}
      */
     clearActiveArea() {
-        if (!this.dom.activeAreaLeft) return this
+        this._removeActiveArea()._clearActiveArea()
+    }
 
-        this._removeSquareArea('activeArea')
-
-        this.dom.activeAreaLeft = this.dom.activeAreaRight = this.dom.activeAreaTop = this.dom.activeAreaBottom = null
+    /**
+     * Clear active area without border lines
+     * @return {BomTable}
+     * @private
+     */
+    _clearActiveArea() {
+        if (!this.lastSelected && !this.selected.length) return this
 
         this.instanceData.length &&
             this.selectedMap.forEach(key => {
@@ -2120,7 +2128,16 @@ export default class BomTable {
             th && th.classList.remove('highlight')
         })
 
-        this._removeSquare()
+        return this._removeSquare()
+    }
+
+    /**
+     * Remove active area border lines
+     * @private
+     */
+    _removeActiveArea() {
+        this._removeSquareArea('activeArea')
+        this.dom.activeAreaLeft = this.dom.activeAreaRight = this.dom.activeAreaTop = this.dom.activeAreaBottom = null
         return this
     }
 
@@ -2552,7 +2569,7 @@ export default class BomTable {
 
         this._setContainerWidth()._calcColsWidth()
 
-        map && this._setActiveArea(map)
+        map && Object.keys(map.start).length && Object.keys(map.end).length && this._setActiveArea(map)
 
         return this
     }
@@ -2561,9 +2578,10 @@ export default class BomTable {
      * Create table textarea
      * @param {boolean} setCellValue - set in input cell value (default - set)
      * @private
+     * @return BomTable
      */
     _createInput(setCellValue = true) {
-        if (!this.lastSelected || this.lastSelected.el.tagName !== 'TD') return
+        if (!this.lastSelected || this.lastSelected.el.tagName !== 'TD') return this
 
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),

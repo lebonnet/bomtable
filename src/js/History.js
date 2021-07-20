@@ -169,7 +169,7 @@ export default class History {
         let ls = bt.lastSelected
         if (ls && (ls.colNum > bt.dataRow(0).length - 1 || ls.rowNum > bt.dataCol(0).length - 1)) {
             bt.clearActiveArea()
-        } else if (ls) {
+        } else if (ls || bt.lastSelectArea) {
             bt._rerenderActiveArea()
         }
 

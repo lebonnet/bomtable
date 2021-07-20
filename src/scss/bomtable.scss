@@ -119,6 +119,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         background-color: $darkBlue;
         width: 3px;
         height: 3px;
+        transition: all 200ms cubic-bezier(0, 0, 0, 0.98);
     }
 
     .bomtable-copy-area-bottom {
@@ -135,6 +136,7 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         width: 1px;
         height: 1px;
         box-sizing: border-box;
+        transition: all 70ms;
     }
 
     .bomtable td::selection,
