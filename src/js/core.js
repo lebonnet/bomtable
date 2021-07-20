@@ -2149,7 +2149,7 @@ export default class BomTable {
      * @private
      */
     _createSquare(endCol, endRow) {
-        if (!this.instanceData) return this
+        if (!this.instanceData || !this.instanceData.length) return this
 
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
             topCorrector = this.instanceData.length === endRow + 1 ? 3 : 0,

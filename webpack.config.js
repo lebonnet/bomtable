@@ -1,5 +1,4 @@
-const
-    path = require('path'),
+const path = require('path'),
     argv = require('yargs').argv,
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
@@ -8,50 +7,64 @@ const
 
 const config = {
     entry: {
-        main: './src/js/bomtable.js'
+        main: './src/js/bomtable.js',
     },
     output: {
         filename: 'bomtable.min.js',
-        path: distPath
+        path: distPath,
     },
     module: {
-        rules: [{
-            test: /\.html$/,
-            use: 'html-loader'
-        }, {
-            test: /\.js$/,
-            exclude: /node_modules/,
-            use: [{
-                loader: 'babel-loader',
-                options: {
-                    presets: [
-                        "@babel/preset-env"
-                    ]
-                }
-            }]
-        }, {
-            test: /\.scss$/,
-            exclude: /node_modules/,
-            use: [
-                isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
-                {
-                    loader: 'css-loader',
-                },
-                'sass-loader',
-                'resolve-url-loader'
-            ]
-        }, {
-            test: /\.svg$/,
-            loader: 'svg-url-loader'
-        }]
+        rules: [
+            {
+                test: /\.html$/,
+                use: 'html-loader',
+            },
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: [
+                    {
+                        loader: 'babel-loader',
+                        options: {
+                            presets: ['@babel/preset-env'],
+                        },
+                    },
+                ],
+            },
+            {
+                test: /\.scss$/,
+                exclude: /node_modules/,
+                use: [
+                    isDevelopment ? 'style-loader' : MiniCssExtractPlugin.loader,
+                    {
+                        loader: 'css-loader',
+                    },
+                    {
+                        loader: 'resolve-url-loader',
+                    },
+                    {
+                        loader: 'sass-loader',
+                        options: {
+                            sourceMap: true,
+                        },
+                    },
+                ],
+            },
+            {
+                test: /\.svg$/,
+                type: 'asset/inline',
+                use: 'svgo-loader',
+            },
+        ],
     },
     plugins: [
         new MiniCssExtractPlugin({
             filename: '[name].css',
-            chunkFilename: '[id].css'
+            chunkFilename: '[id].css',
         }),
         new HtmlWebpackPlugin({
-            template: './index.html'
+            template: './index.html',
+            scriptLoading: 'blocking',
         }),
     ],
 
@@ -59,8 +72,8 @@ const config = {
         contentBase: distPath,
         port: 83,
         compress: true,
-        open: true
-    }
-};
+        open: true,
+    },
+}
 
-module.exports = config;
+module.exports = config
