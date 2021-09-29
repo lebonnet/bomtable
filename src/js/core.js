@@ -620,7 +620,7 @@ export default class BomTable {
             fistRow = data[firstRowIndex]
 
         rows.forEach(rowIndex => {
-            data[rowIndex].forEach((cell, colIndex) => {
+            data[rowIndex] && data[rowIndex].forEach((cell, colIndex) => {
                 let newValue = helper.mergeValues(fistRow[colIndex], cell)
                 fistRow[colIndex] = newValue
                 this.dataMap[`${colIndex}::${firstRowIndex}`].innerHTML = newValue
@@ -930,6 +930,7 @@ export default class BomTable {
 
         this._container.style.opacity = '0'
         setTimeout(() => {
+            if (!this.dom.wrapper) return
             this._setContainerWidth()._calcColsWidth()
             this.dom.body.classList.remove('building')
             this._container.style.opacity = ''
