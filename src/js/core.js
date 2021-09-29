@@ -2421,12 +2421,11 @@ export default class BomTable {
             el = hasHeader ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`],
             leftEl = el.getBoundingClientRect().left,
             wrapPosLeft = this._getWrapTopLeftPosition().left,
-            width = event.clientX - wrapPosLeft - (leftEl - wrapPosLeft),
+            width = this.dom._colResizerLine.getBoundingClientRect().x - wrapPosLeft - (leftEl - wrapPosLeft),
             colEl = helper._likeArray(this.dom.colgroup.children)[colNum]
         if (width < this.minColWidth) width = this.minColWidth
         colEl.width = width
 
-        // width = Math.max.apply(Math, [width, this.dataMap[`${colNum}::0`].offsetWidth])
         this._manualColSize[colNum] = width
         this.colResizerPressedIndex = null
 
@@ -2452,17 +2451,18 @@ export default class BomTable {
         let wrapPos = this._getWrapTopLeftPosition(),
             elRect = el.getBoundingClientRect(),
             elRight = position || elRect.right,
-            tableRightPosition = this.dom.table.getBoundingClientRect().right
+            containerRightPosition = this._container.offsetWidth
 
         if (elRight < wrapPos.left) elRight = wrapPos.left
-        if (elRight > tableRightPosition) elRight = tableRightPosition
+        if (elRight > containerRightPosition) {
+            elRight = containerRightPosition
+        }
         let calcPosition = elRight - wrapPos.left
 
         this.dom._colResizer.style.left = `${calcPosition - 5}px`
         this.dom._colResizer.style.top = `${elRect.top - wrapPos.top}px`
         this.dom._colResizer.style.height = `${el.offsetHeight}px`
         this.dom._colResizerLine.style.left = `${calcPosition - 2}px`
-        this.dom._colResizerLine.style.height = `${this._container.offsetHeight - 2}px`
 
         !position && (this.dom._colResizer.dataset.colNum = colNum)
 
