@@ -70,7 +70,9 @@ export default class BomTable {
      * @private
      */
     _ini() {
-        return this.clear()._render()._callListeners()
+        return this.clear()
+            ._render()
+            ._callListeners()
     }
 
     /**
@@ -113,7 +115,9 @@ export default class BomTable {
         let prevData = helper.cloneArray(this.data)
         this.config.header = this.header
         this.config.data = data
-        this.clear()._render()._renderHelpers()
+        this.clear()
+            ._render()
+            ._renderHelpers()
         this.history && this.history.push('setData', { data: prevData })
     }
 
@@ -133,7 +137,9 @@ export default class BomTable {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array')
         let prevHeader = [...this.header]
         this.config.header = header
-        this.removeHeader()._renderHeader().render()
+        this.removeHeader()
+            ._renderHeader()
+            .render()
         this.history && this.history.push('setHeader', { data: prevHeader })
     }
 
@@ -509,7 +515,9 @@ export default class BomTable {
             }
         }
 
-        return this._reindex()._setContainerWidth()._calcColsWidth()
+        return this._reindex()
+            ._setContainerWidth()
+            ._calcColsWidth()
     }
 
     /**
@@ -601,7 +609,9 @@ export default class BomTable {
         })
         this._manualColSize = {}
 
-        this._reindex()._setContainerWidth()._calcColsWidth()
+        this._reindex()
+            ._setContainerWidth()
+            ._calcColsWidth()
         return this
     }
 
@@ -620,11 +630,12 @@ export default class BomTable {
             fistRow = data[firstRowIndex]
 
         rows.forEach(rowIndex => {
-            data[rowIndex] && data[rowIndex].forEach((cell, colIndex) => {
-                let newValue = helper.mergeValues(fistRow[colIndex], cell)
-                fistRow[colIndex] = newValue
-                this.dataMap[`${colIndex}::${firstRowIndex}`].innerHTML = newValue
-            })
+            data[rowIndex] &&
+                data[rowIndex].forEach((cell, colIndex) => {
+                    let newValue = helper.mergeValues(fistRow[colIndex], cell)
+                    fistRow[colIndex] = newValue
+                    this.dataMap[`${colIndex}::${firstRowIndex}`].innerHTML = newValue
+                })
             helper.removeElement(this.dom.rows[rowIndex])
         })
 
@@ -673,7 +684,9 @@ export default class BomTable {
 
         this.config.data = data
         this.config.header = header
-        this.clear()._render()._renderHelpers()
+        this.clear()
+            ._render()
+            ._renderHelpers()
 
         this.history && this.history.push('unionCols', { data: prevData, header: prevHeader })
 
@@ -756,7 +769,9 @@ export default class BomTable {
             }
         })
 
-        return this._setContainerWidth()._calcColsWidth()._rerenderActiveArea()
+        return this._setContainerWidth()
+            ._calcColsWidth()
+            ._rerenderActiveArea()
     }
 
     /**
@@ -2002,7 +2017,10 @@ export default class BomTable {
 
         this._createSquare(endCol, endRow)
 
-        this._addSquareArea(this._ariaPosition({ startCol, startRow, endCol, endRow }), 'activeArea')
+        let position = this._ariaPosition({ startCol, startRow, endCol, endRow })
+        if (position) {
+            this._addSquareArea(position, 'activeArea')
+        }
 
         header.length &&
             this.selectedCols.forEach(colIndex => {
@@ -2021,15 +2039,19 @@ export default class BomTable {
      * @param {Number} endCol
      * @param {Number} endRow
      * @param {Number} borderWidth - border width
-     * @returns {{top: {Number}, left: {Number}, bottom: {Number}, right: {Number}}}
+     * @returns {{top: {Number}, left: {Number}, bottom: {Number}, right: {Number}}||false}
      * @private
      */
     _ariaPosition({ startCol, startRow, endCol, endRow }, borderWidth = 1) {
         let borderHalf = Math.ceil(borderWidth / 2),
-            firstTd = this.dataMap[`${startCol}::${startRow}`],
-            firstRect = firstTd.getBoundingClientRect(),
-            lastTd = this.dataMap[`${endCol}::${endRow}`],
-            lastRect = lastTd.getBoundingClientRect()
+            firstTd = this.dataMap[`${startCol}::${startRow}`]
+        if (!firstTd) return false
+
+        let firstRect = firstTd.getBoundingClientRect(),
+            lastTd = this.dataMap[`${endCol}::${endRow}`]
+        if (!lastTd) return false
+
+        let lastRect = lastTd.getBoundingClientRect()
 
         return {
             left: firstRect.left - (!startCol ? 0 : borderHalf),
@@ -2052,10 +2074,9 @@ export default class BomTable {
             startRow = area.start.row,
             endCol = area.end.col,
             endRow = area.end.row
-        return this._addSquareArea(
-            this._ariaPosition({ startCol, startRow, endCol, endRow }),
-            'activeArea',
-        )._createSquare(endCol, endRow)
+        let position = this._ariaPosition({ startCol, startRow, endCol, endRow })
+        if (!position) return this
+        return this._addSquareArea(position, 'activeArea')._createSquare(endCol, endRow)
     }
 
     /**
@@ -2288,10 +2309,10 @@ export default class BomTable {
 
         helper.clearSelected()
 
-        this._addSquareArea(
-            this._ariaPosition({ startCol, startRow, endCol, endRow }, 3),
-            'copyArea',
-        )._setSquareDragCell({ startCol, endCol, startRow, endRow })
+        let position = this._ariaPosition({ startCol, startRow, endCol, endRow }, 3)
+        if (position) {
+            this._addSquareArea(position, 'copyArea')._setSquareDragCell({ startCol, endCol, startRow, endRow })
+        }
     }
 
     /**
@@ -2434,7 +2455,9 @@ export default class BomTable {
             this.dom.header.classList.add('bomtable-hidden')
         }
 
-        return this._setColResizerPosition(0, -1)._setContainerWidth()._calcColsWidth()
+        return this._setColResizerPosition(0, -1)
+            ._setContainerWidth()
+            ._calcColsWidth()
     }
 
     /**
