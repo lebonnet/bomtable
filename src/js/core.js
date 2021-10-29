@@ -1,6 +1,5 @@
 import History from './History'
 import * as helper from './helper'
-import { version } from '../../package.json'
 
 export default class BomTable {
     constructor(opts = {}) {
@@ -50,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = version
+        this.version = VERSION
 
         this._ini()
 
@@ -1521,7 +1520,7 @@ export default class BomTable {
             }
         }
 
-        if (!this.thisData[0]) return
+        if (!this.instanceData[0]) return
 
         let el = this.input && this.input.el,
             data,
@@ -1529,8 +1528,8 @@ export default class BomTable {
             val = el && el.value,
             colNum = this.lastSelected && this.lastSelected.colNum,
             rowNum = this.lastSelected && this.lastSelected.rowNum,
-            totalCols = this.thisData[0].length - 1,
-            totalRows = this.thisData.length - 1,
+            totalCols = this.instanceData[0].length - 1,
+            totalRows = this.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
             map = { start: { colNum, rowNum }, end: { colNum, rowNum } },
             keyMustIgnore = helper._keysIgnore(key)
@@ -2455,8 +2454,6 @@ export default class BomTable {
             elRight = containerRightPosition
         }
         let calcPosition = elRight - wrapPos.left
-
-        console.log({ calcPosition })
 
         this.dom._colResizer.style.left = `${calcPosition - 5}px`
         this.dom._colResizer.style.top = `${elRect.top - wrapPos.top}px`
