@@ -67,6 +67,7 @@ export default class BomTable {
      * @private
      */
     _ini() {
+        this.key = helper.randKey()
         return this.clear()._render()._callListeners()
     }
 
@@ -76,7 +77,7 @@ export default class BomTable {
      * @private
      */
     _callListeners() {
-        let events = ['mousemove', 'mouseover', 'dblclick', 'contextmenu', 'keydown']
+        let events = ['contextmenu', 'keydown']
 
         if (this.isTouch) {
             events.push('touchstart')
@@ -922,10 +923,12 @@ export default class BomTable {
 
             this._container.style.position = 'relative'
             this._container.style.overflow = 'auto'
-
-            this._container.addEventListener('scroll', this._onContainerScroll.bind(this))
+            ;['scroll', 'dblclick', 'mousemove', 'mouseover'].forEach(event => {
+                this._container.addEventListener(event, this[`_onContainer${helper.firstCharToUp(event)}`].bind(this))
+            })
         }
 
+        this._container.instanceKey = this.key
         this._container.style.opacity = '0'
         setTimeout(() => {
             if (!this.dom.wrapper) return
@@ -990,7 +993,8 @@ export default class BomTable {
                 selector: 'bomtable-buffer',
                 parent: this.dom.wrapper,
             })
-            this.dom._buffer.addEventListener('paste', this._onPaste.bind(this))
+            this.dom._buffer.addEventListener('paste', this._onBufferPaste.bind(this))
+            this.dom._buffer.addEventListener('keydown', this._onBufferKeyDown.bind(this))
         }
         if (this.config.colsResize) {
             this.dom._colResizer = helper.createElement({
@@ -1271,7 +1275,7 @@ export default class BomTable {
             this.countTouch++
 
             if (this.tapped === el) {
-                this._ondblclick(e)
+                this._onContainerDblclick(e)
                 e.preventDefault()
                 clearTimeout(this.tapTimeout)
                 this.tapped = false
@@ -1364,6 +1368,10 @@ export default class BomTable {
         }
 
         this._setColSize(e)._removeCopyArea()
+
+        if (this._checkContainer(e)) {
+            this._focusBuffer(e)
+        }
     }
 
     /**
@@ -1417,7 +1425,7 @@ export default class BomTable {
      * @param {MouseEvent} e
      * @private
      */
-    _onmouseover(e) {
+    _onContainerMouseover(e) {
         if (!this || this.destroyed) return
 
         let el = e.target
@@ -1432,7 +1440,7 @@ export default class BomTable {
      * @param {MouseEvent} e
      * @private
      */
-    _onmousemove(e) {
+    _onContainerMousemove(e) {
         if (!this || this.destroyed) return
 
         let el = e.target
@@ -1466,7 +1474,7 @@ export default class BomTable {
      * @param {MouseEvent} e
      * @private
      */
-    _ondblclick(e) {
+    _onContainerDblclick(e) {
         if (!this || this.destroyed) return
 
         let el = e.target
@@ -1475,97 +1483,38 @@ export default class BomTable {
             return
         }
 
+        if (!this._checkContainer(e)) return
+
         this._setActiveCell(e, el)
 
         this._createInput()
     }
 
     /**
-     * Context menu listener
-     * @param {MouseEvent} e
+     * On buffer keydown listener
+     * @param e {KeyboardEvent}
      * @private
      */
-    _oncontextmenu(e) {
+    _onBufferKeyDown(e) {
         if (!this || this.destroyed) return
 
-        let el = e.target
-
-        if (!helper.parents(el).some(p => p === this._container)) {
-            return
-        }
-
-        this.createContextMenu(e)
-    }
-
-    /**
-     * On key down listener
-     * @param {KeyboardEvent} e
-     * @private
-     */
-    _onkeydown(e) {
-        if (!this || this.destroyed) return
-
-        if (e.key === 'Escape') {
-            if (this.mouseBtnPressed && this.dom.copyAreaLeft) {
-                this._removeCopyArea(false)
-                e.stopPropagation()
-                e.preventDefault()
-                return
-            }
-            if (this.colResizerPressedIndex != null) {
-                this._setColResizerPosition(0, -1)
-                this.colResizerPressedIndex = null
-                e.stopPropagation()
-                e.preventDefault()
-                return
-            }
-        }
-
-        if (!this.instanceData[0]) return
-
-        let el = this.input && this.input.el,
-            data,
-            key = e.key,
-            val = el && el.value,
+        let data,
+            eventKey = e.key,
             colNum = this.lastSelected && this.lastSelected.colNum,
             rowNum = this.lastSelected && this.lastSelected.rowNum,
             totalCols = this.instanceData[0].length - 1,
             totalRows = this.instanceData.length - 1,
             moveSelect = false, // признак движения выделения клавишами
             map = { start: { colNum, rowNum }, end: { colNum, rowNum } },
-            keyMustIgnore = helper._keysIgnore(key)
+            keyMustIgnore = helper._keysIgnore(eventKey)
 
-        if (e.ctrlKey && !el && key.toLowerCase() !== 'a') {
-            this._focusBuffer()
-        }
-
-        if (e.ctrlKey && key.toLowerCase() === 'z') {
-            this.undo()
-            return
-        }
-
-        if (e.ctrlKey && key.toLowerCase() === 'y') {
-            this.redo()
-            return
-        }
-
-        el && e.stopPropagation()
-
-        if (key === 'Tab') {
-            key = 'ArrowRight'
-        }
-
-        if (this.selected.length > 1 && this.mouseDownElement && key.substr(0, 5) === 'Arrow') {
+        if (this.selected.length > 1 && this.mouseDownElement && eventKey.substr(0, 5) === 'Arrow') {
             rowNum = map.start.rowNum = map.end.rowNum = this.mouseDownElement.rowNum
             colNum = map.start.colNum = map.end.colNum = this.mouseDownElement.colNum
         }
 
-        switch (key) {
+        switch (eventKey) {
             case 'ArrowLeft':
-                // cursor move inside input
-                if (el && el.selectionStart !== 0) {
-                    return
-                }
                 if (colNum > 0) {
                     moveSelect = true
                     map.start.colNum = map.end.colNum = colNum - 1
@@ -1578,10 +1527,6 @@ export default class BomTable {
                 }
                 break
             case 'ArrowRight':
-                // cursor move inside input
-                if (el && el.selectionEnd < val.length) {
-                    return
-                }
                 if (totalCols === colNum) {
                     moveSelect = true
                     if (rowNum === totalRows) rowNum = -1
@@ -1618,35 +1563,30 @@ export default class BomTable {
                 }
                 break
             case 'Enter':
-                el ? this._removeInput() : this._createInput()
+                if (this._checkContainer(e)) {
+                    this._createInput()
+                }
                 e.preventDefault()
                 break
-            case 'Escape':
-                this.mouseBtnPressed = 0
-                this.squarePressed = 0
-                this._removeInput(false)
-                break
             case 'Delete':
-                if (!el) {
-                    let prevValues = []
-                    this.selectedMap.forEach(key => {
-                        let [col, row] = helper._splitKey(key)
-                        if (this.dataMap[key]) {
-                            prevValues.push({ col, row, val: this.dataCell(col, row) })
-                            this._setDataCell({ col, row, val: '' })
-                        }
-                    })
-                    keyMustIgnore = true
-                    this._rerenderActiveArea()
-                    if (this.history && prevValues.length) {
-                        this.history.push('setDataCell', { data: prevValues })
+                let prevValues = []
+                this.selectedMap.forEach(i => {
+                    let [col, row] = helper._splitKey(i)
+                    if (this.dataMap[i]) {
+                        prevValues.push({ col, row, val: this.dataCell(col, row) })
+                        this._setDataCell({ col, row, val: '' })
                     }
+                })
+                keyMustIgnore = true
+                this._rerenderActiveArea()
+                if (this.history && prevValues.length) {
+                    this.history.push('setDataCell', { data: prevValues })
                 }
                 break
         }
 
         // ctrl + a
-        if (!el && e.ctrlKey && key.toLowerCase() === 'a') {
+        if (e.ctrlKey && eventKey.toLowerCase() === 'a') {
             moveSelect = false
             data = this.data
             map.start.rowNum = 0
@@ -1658,11 +1598,11 @@ export default class BomTable {
         }
 
         // ctrl + x
-        if (!el && e.ctrlKey && key.toLowerCase() === 'x') {
+        if (e.ctrlKey && eventKey.toLowerCase() === 'x') {
             let prevValues = []
-            this.selected.forEach(key => {
-                let [col, row] = helper._splitKey(key)
-                if (this.dataMap[key]) {
+            this.selected.forEach(i => {
+                let [col, row] = helper._splitKey(i)
+                if (this.dataMap[i]) {
                     prevValues.push({ col, row, val: this.dataCell(col, row) })
                     this._setDataCell({ col, row, val: '' })
                 }
@@ -1681,9 +1621,73 @@ export default class BomTable {
             if (map.end.rowNum < 1) map.end.rowNum = 0
             this._removePressed()
             this._setActiveArea(map)
-        } else if (!el && !e.ctrlKey && !e.shiftKey && !keyMustIgnore && !this.mouseBtnPressed) {
+        } else if (!e.ctrlKey && !e.shiftKey && !keyMustIgnore && !this.mouseBtnPressed) {
             this._createInput(false)
         }
+    }
+
+    /**
+     * Context menu listener
+     * @param {MouseEvent} e
+     * @private
+     */
+    _oncontextmenu(e) {
+        if (!this || this.destroyed) return
+
+        let el = e.target
+
+        if (!helper.parents(el).some(p => p === this._container)) {
+            return
+        }
+        if (!this._checkContainer(e)) return
+
+        this.createContextMenu(e)
+    }
+
+    /**
+     * On key down listener
+     * @param {KeyboardEvent} e
+     * @private
+     */
+    _onkeydown(e) {
+        if (!this || this.destroyed) return
+
+        if (e.key === 'Escape') {
+            if (this.mouseBtnPressed && this.dom.copyAreaLeft) {
+                this._removeCopyArea(false)
+                e.stopPropagation()
+                e.preventDefault()
+                return
+            }
+            if (this.colResizerPressedIndex != null) {
+                this._setColResizerPosition(0, -1)
+                this.colResizerPressedIndex = null
+                e.stopPropagation()
+                e.preventDefault()
+                return
+            }
+        }
+
+        if (!this.instanceData[0]) return
+
+        let el = this.input && this.input.el,
+            eventKey = e.key
+
+        if (e.ctrlKey && !el && eventKey.toLowerCase() !== 'a' && this._checkContainer(e)) {
+            this._focusBuffer(e)._setValueToBuffer()
+        }
+
+        if (e.ctrlKey && eventKey.toLowerCase() === 'z') {
+            this.undo()
+            return
+        }
+
+        if (e.ctrlKey && eventKey.toLowerCase() === 'y') {
+            this.redo()
+            return
+        }
+
+        el && e.stopPropagation()
 
         this.closeContextMenu(e)
     }
@@ -1693,7 +1697,7 @@ export default class BomTable {
      * @param {KeyboardEvent} e
      * @private
      */
-    _onPaste(e) {
+    _onBufferPaste(e) {
         if (!this || this.destroyed) return
 
         e.stopPropagation()
@@ -1810,20 +1814,109 @@ export default class BomTable {
     }
 
     /**
-     * Create copy/paste buffer and set focus
+     * On input change value listener
      * @private
      */
-    _focusBuffer() {
-        let str = []
+    _onInput() {
+        if (!this || this.destroyed || !this.dom.elHelper || !this.input) return this
+        this._updateInputSize()
+    }
 
+    /**
+     * On key down input listener
+     * @param e {KeyboardEvent}
+     * @private
+     */
+    _onInputKeyDown(e) {
+        if (!this || this.destroyed || !e.target) return
+
+        let el = e.target,
+            val = el.value
+
+        // cursor move inside input
+        if (
+            (e.key === 'ArrowLeft' && el.selectionStart !== 0) ||
+            (e.key === 'ArrowRight' && el.selectionEnd < val.length)
+        ) {
+            return
+        }
+
+        let needMove = false,
+            focusToBuffer = false,
+            cancel = false,
+            saveValue = true
+        switch (e.key) {
+            case 'ArrowLeft':
+            case 'ArrowRight':
+            case 'ArrowUp':
+            case 'ArrowDown':
+                focusToBuffer = true
+                needMove = true
+                break
+            case 'Escape':
+                cancel = true
+                saveValue = false
+                break
+        }
+
+        if (e.ctrlKey && e.key === 'Enter') {
+            cancel = true
+            saveValue = true
+        }
+
+        if (focusToBuffer || cancel) {
+            this._focusBuffer(e)
+        }
+
+        if (cancel) {
+            this.mouseBtnPressed = 0
+            this.squarePressed = 0
+            this._removeInput(saveValue)
+            e.stopPropagation()
+            e.preventDefault()
+        }
+
+        if (needMove) {
+            this._onBufferKeyDown(e)
+        }
+    }
+
+    /**
+     * Set focus buffer
+     * @param e {MouseEvent|KeyboardEvent}
+     * @returns {BomTable}
+     * @private
+     */
+    _focusBuffer(e) {
+        if (this.destroyed) return this
+
+        if (!this._checkContainer(e)) return this
+
+        let el = e.target,
+            wrapPos = this._getWrapTopLeftPosition()
+        let rect = el.getBoundingClientRect()
+        this.dom._buffer.style.top = rect.top - wrapPos.top + 'px'
+        this.dom._buffer.style.left = rect.left - wrapPos.left + 'px'
+        this.dom._buffer.focus()
+        return this
+    }
+
+    /**
+     * Set value from data to copy/paste buffer
+     * @returns {BomTable}
+     * @private
+     */
+    _setValueToBuffer() {
+        if (this.destroyed) return this
+
+        let str = []
         this.selectedData.forEach(row => {
             str.push(row.join('\t'))
         })
-
         this.dom._buffer.value = str.join('\n')
-
         this.dom._buffer.select()
-        this.dom._buffer.focus()
+
+        return this
     }
 
     /**
@@ -1877,7 +1970,7 @@ export default class BomTable {
             )
         }
 
-        return this._setLastSelected(el, colNum, rowNum)
+        return this._setLastSelected(el, +colNum, +rowNum)
     }
 
     /**
@@ -2595,6 +2688,7 @@ export default class BomTable {
             })
 
         textarea.addEventListener('input', this._onInput.bind(this))
+        textarea.addEventListener('keydown', this._onInputKeyDown.bind(this))
 
         if (setCellValue) {
             textarea.value = td.innerHTML
@@ -2720,12 +2814,17 @@ export default class BomTable {
     }
 
     /**
-     * Event on change value on input
+     * Check witch container is now active
+     * @param e {MouseEvent|KeyboardEvent}
+     * @returns {boolean}
      * @private
      */
-    _onInput() {
-        if (!this || this.destroyed || !this.dom.elHelper || !this.input) return this
-        this._updateInputSize()
+    _checkContainer(e) {
+        let el = e.target
+        if (!el || !el.parentNode) return true
+        let container = helper.parents(el).find(e => e === this._container)
+        if (!container) return false
+        return this.key === container.instanceKey
     }
 
     /**
@@ -2786,6 +2885,7 @@ export default class BomTable {
         this.destroyed = 1
         this.clear()
 
+        this.key = ''
         this.config = {}
 
         this.history && this.history.destroy()
