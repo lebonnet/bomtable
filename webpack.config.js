@@ -1,9 +1,12 @@
 const path = require('path'),
+    { DefinePlugin } = require('webpack'),
     argv = require('yargs').argv,
     MiniCssExtractPlugin = require('mini-css-extract-plugin'),
     HtmlWebpackPlugin = require('html-webpack-plugin'),
+    TerserPlugin = require('terser-webpack-plugin'),
     isDevelopment = argv.mode === 'development',
-    distPath = path.join(__dirname, '/dist')
+    distPath = path.join(__dirname, '/dist'),
+    { version } = require('./package.json')
 
 const config = {
     entry: {
@@ -58,6 +61,9 @@ const config = {
         ],
     },
     plugins: [
+        new DefinePlugin({
+            VERSION: JSON.stringify(version),
+        }),
         new MiniCssExtractPlugin({
             filename: '[name].css',
             chunkFilename: '[id].css',
@@ -67,9 +73,22 @@ const config = {
             scriptLoading: 'blocking',
         }),
     ],
-
+    optimization: {
+        minimize: !isDevelopment,
+        minimizer: [
+            new TerserPlugin({
+                terserOptions: {
+                    compress: {
+                        drop_console: true,
+                    },
+                },
+            }),
+        ],
+    },
     devServer: {
-        contentBase: distPath,
+        static: {
+            directory: distPath,
+        },
         port: 83,
         compress: true,
         open: true,
