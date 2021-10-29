@@ -4,5 +4,9 @@
     "singleQuote": true,
     "arrowParens": "avoid",
     "trailingComma": "all",
-    "printWidth": 120
+    "printWidth": 120,
+    "endOfLine": "crlf",
+    "rules": {
+        "newline-per-chained-call": false
+    }
 }
