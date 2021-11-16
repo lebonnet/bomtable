@@ -76,7 +76,7 @@ new BomTable({
     </pre
             >
             <div class="example2"></div>
-            <h3>with sticky header, resizable cols, hook and renders example</h3>
+            <h3>with sticky header (+header menu), resizable cols, hook and renders example</h3>
             <pre>
 new BomTable({
     tableClass: 'ex-tbl',
@@ -104,6 +104,24 @@ new BomTable({
             ['Volkswagen Tiguan', 27666, 106, '+160%']
         ],
     header: ['Модель', '2017 год, шт.', '2016 год, шт.', 'Динамика'],
+    headerMenu: {
+        items: {
+            addRow: 'add row',
+            addCol: 'add col',
+            hr: '',
+            removeRows: 'remove rows',
+            removeCols: 'remove cols',
+            hr2: '',
+            customFn: 'custom function',
+        },
+        callback: (action, bomTable) => {
+            if (action === 'customFn') {
+                alert('custom function')
+                return
+            }
+            bomTable[action]()
+        },
+    },
     renders: (instance, el, colNum, rowNum) => {
         if (rowNum < 0) {
             return
@@ -191,6 +209,24 @@ new BomTable({
                         return
                     }
                     el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
+                },
+                headerMenu: {
+                    items: {
+                        addRow: 'add row',
+                        addCol: 'add col',
+                        hr: '',
+                        removeRows: 'remove rows',
+                        removeCols: 'remove cols',
+                        hr2: '',
+                        customFn: 'custom function',
+                    },
+                    callback: (action, bomTable) => {
+                        if (action === 'customFn') {
+                            alert('custom function')
+                            return
+                        }
+                        bomTable[action]()
+                    },
                 },
                 hooks: {
                     beforeHeaderMenuRender: (instance, list) => {

@@ -69,29 +69,29 @@ let instance = new BomTable({
 ```javascript
 let opts = {
     data: [], // data for table body (default empty array) | массив с данными
-    header: '', // table header (default empty string) | массив с заголовками для таблицы
-    stickyHeader: true, // sticky table header | прилипающий заголовок таблицы 
-    touchSupport: true, // support touch in browsers | поддержка касаний в браузерах
+    header: null, // table header (default null) | массив с заголовками для таблицы
+    stickyHeader: true, // sticky table header (default true) | прилипающий заголовок таблицы 
+    touchSupport: true, // support touch in browsers (default true) | поддержка касаний в браузерах
     tableClass: '', // css class for table (default empty) | css класс для таблицы
     container: null, // node or selector for mount table (default null) | HTML элемент или селектор для монтирования таблицы
     rowsClass: '', // css class for table rows (default empty string) | css класс для строк
     colsClass: '', // css class for table cols (default empty string) | css класс для столбцов
     useHistory: true, // use state history (default true) | использовать историю состояния
-    colsResize: false, // resizable columns | колонки изменяемого размера
+    colsResize: false, // resizable columns (default false) | колонки изменяемого размера
 
-    renders: null, // function for render cells | функция для рендера ячеек
+    renders: null, // function for render cells (default null) | функция для рендера ячеек
 
     // context menu | контекстное меню
     contextMenu: {
-        items: {}, // items - object with list item | объект со списком элементов меню
-        callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
+        items: {}, // items - object with list item (default {}) | объект со списком элементов меню
+        callback: (action, instance, event) => {} // on contextmenu callback function (default null) | функция обратного вызова, срабатывает по клику по пункту меню
     },
 
     // if headers sets, use this menu like context menu | если заданы заголовки, готовить так же как контекстное меню
     // default empty
     headerMenu: {
-        items: {}, // items - object with list item | объект со списком элементов меню
-        callback: (action, instance, event) => {} // default null | функция обратного вызова, срабатывает по клику по пункту меню
+        items: {}, // items - object with list item (default {}) | объект со списком элементов меню
+        callback: (action, instance, event) => {} // on header menu click function (default null) | функция обратного вызова, срабатывает по клику по пункту меню
     },
 
     // event hooks 

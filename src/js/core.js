@@ -11,7 +11,7 @@ export default class BomTable {
         this.config = Object.assign(
             {
                 data: [], // data for table body
-                header: '', // table header
+                header: null, // table header
                 stickyHeader: true, // sticky table header
                 tableClass: '', // css class table
                 touchSupport: true, // support touch in browsers
@@ -1890,7 +1890,7 @@ export default class BomTable {
     _focusBuffer(e) {
         if (this.destroyed) return this
 
-        if (!this._checkContainer(e)) return this
+        if (!this._checkContainer(e) || this.isTouch) return this
 
         let el = e.target,
             wrapPos = this._getWrapTopLeftPosition()
