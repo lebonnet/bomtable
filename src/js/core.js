@@ -437,7 +437,7 @@ export default class BomTable {
             this.dataMap[key].classList.remove('area')
         })
 
-        this._removeSquare()
+        this._removeSquares()
         return this._reindex()
     }
 
@@ -1084,16 +1084,24 @@ export default class BomTable {
             let left = e.pageX - wrapPos.left - w.pageXOffset,
                 top = e.pageY - wrapPos.top - w.pageYOffset,
                 menuWidth = this.dom.contextMenu.offsetWidth,
-                menuHeight = this.dom.contextMenu.offsetHeight
+                menuHeight = this.dom.contextMenu.offsetHeight,
+                diffHeight = this._container.offsetHeight - top
+
             if (menuWidth > this._container.offsetWidth - left && left > menuWidth) {
                 left = left - menuWidth
             }
-            if (menuHeight > this._container.offsetHeight - top && top > menuHeight) {
+            if (!this.isTouch && menuHeight > diffHeight && top > menuHeight) {
                 top = top - menuHeight
             }
             this.dom.contextMenu.style.display = 'block'
             this.dom.contextMenu.style.left = left + 'px'
             this.dom.contextMenu.style.top = top + 'px'
+
+            if (this.isTouch && menuHeight > diffHeight) {
+                this.dom.contextMenu.style.height = diffHeight - 5 + 'px'
+                this.dom.contextMenu.style.minHeight = '40px'
+                this.dom.contextMenu.style.overflow = 'scroll'
+            }
         }
 
         return this
@@ -1164,7 +1172,7 @@ export default class BomTable {
             className
 
         if (this.config[menuName]) {
-            e.preventDefault()
+            !this.isTouch && e.preventDefault()
 
             let data = { list: Object.assign({}, this.config[menuName].items) },
                 selectedColsCount = this.selectedCols.length,
@@ -1254,16 +1262,21 @@ export default class BomTable {
 
     /**
      * Touch start listener
-     * @param {MouseEvent} e
+     * @param {TouchEvent} e
      * @private
      */
     _ontouchstart(e) {
+        let touches = e.touches
+        if (touches.length === 1) {
+            e.pageX = touches[0].pageX
+            e.pageY = touches[0].pageY
+        }
         this._onmousedown(e)
     }
 
     /**
      * Mouse down listener
-     * @param {MouseEvent} e
+     * @param {MouseEvent|TouchEvent} e
      * @private
      */
     _onmousedown(e) {
@@ -1271,12 +1284,16 @@ export default class BomTable {
 
         let el = e.target
 
-        if (this.isTouch) {
+        if (el.classList.contains('bomtable-context-btn')) {
+            this.createContextMenu(e)
+            return
+        }
+
+        if (this.isTouch && !this.input) {
             this.countTouch++
 
             if (this.tapped === el) {
                 this._onContainerDblclick(e)
-                e.preventDefault()
                 clearTimeout(this.tapTimeout)
                 this.tapped = false
                 return false
@@ -1306,7 +1323,7 @@ export default class BomTable {
             }
 
             this.clearActiveArea()
-            this._removeSquare()
+            this._removeSquares()
             this._removePressed()
 
             return
@@ -1314,7 +1331,7 @@ export default class BomTable {
 
         this.mouseBtnPressed = 1
 
-        this._removeSquare()
+        this._removeSquares()
 
         helper.parents(el).some(p => {
             if (p.tagName === 'TH') {
@@ -1352,12 +1369,17 @@ export default class BomTable {
         if (this.isTouch) {
             this.countTouch--
         }
+
+        if (el.classList.contains('bomtable-context-btn')) {
+            this.createContextMenu(e)
+        }
+
         this.mouseBtnPressed = 0
         this.squarePressed = 0
 
         if (
             this.colResizerPressedIndex == null &&
-            e.which === 1 &&
+            (e.which === 1 || this.isTouch) &&
             el.classList.contains('bomtable-header-cell-btn') &&
             !el.parentNode.classList.contains('active')
         ) {
@@ -1632,7 +1654,7 @@ export default class BomTable {
      * @private
      */
     _oncontextmenu(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed || this.input) return
 
         let el = e.target
 
@@ -2034,7 +2056,7 @@ export default class BomTable {
             endRow = map.start.rowNum
         }
 
-        if (map.start.rowNum !== -1 && startRow === -1) {
+        if (startRow < 0) {
             startRow = 0
         }
         // array rows
@@ -2082,7 +2104,7 @@ export default class BomTable {
             end: { col: endCol, row: endRow },
         }
 
-        this._createSquare(endCol, endRow)
+        this._createSquares()
 
         let position = this._ariaPosition({ startCol, startRow, endCol, endRow })
         if (position) {
@@ -2143,7 +2165,7 @@ export default class BomTable {
             endRow = area.end.row
         let position = this._ariaPosition({ startCol, startRow, endCol, endRow })
         if (!position) return this
-        return this._addSquareArea(position, 'activeArea')._createSquare(endCol, endRow)
+        return this._addSquareArea(position, 'activeArea')._createSquares()
     }
 
     /**
@@ -2217,7 +2239,7 @@ export default class BomTable {
             th && th.classList.remove('highlight')
         })
 
-        return this._removeSquare()
+        return this._removeSquares()
     }
 
     /**
@@ -2249,12 +2271,12 @@ export default class BomTable {
 
     /**
      * Create draggable square
-     * @param {Number} endCol - end col
-     * @param {Number} endRow - end row
      * @return {BomTable}
      * @private
      */
-    _createSquare(endCol, endRow) {
+    _createSquares() {
+        let { col: endCol, row: endRow } = this.lastSelectArea.end
+
         if (!this.instanceData || !this.instanceData.length) return this
 
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
@@ -2264,7 +2286,7 @@ export default class BomTable {
 
         if (!downRightTd || downRightTd.tagName !== 'TD') return this
 
-        let rect = downRightTd.getBoundingClientRect()
+        let rectDownRight = downRightTd.getBoundingClientRect()
 
         if (!this.dom.square) {
             this.dom.square = helper.createElement({
@@ -2274,8 +2296,27 @@ export default class BomTable {
             })
         }
 
-        this.dom.square.style.top = rect.bottom - topCorrector - wrapPos.top + 'px'
-        this.dom.square.style.left = rect.right - rightCorrector - wrapPos.left + 'px'
+        if (this.isTouch && this.config.contextMenu) {
+            let { col: startCol, row: startRow } = this.lastSelectArea.start,
+                topRightTd = this.dataMap[`${endCol}::${startRow}`]
+
+            if ((startCol !== endCol || startRow !== endRow) && topRightTd) {
+                let rectTopRight = topRightTd.getBoundingClientRect()
+                if (!this.dom.contextBtn) {
+                    this.dom.contextBtn = helper.createElement({
+                        tagName: 'div',
+                        selector: 'bomtable-context-btn',
+                        parent: this.dom.wrapper,
+                    })
+                }
+
+                this.dom.contextBtn.style.top = rectTopRight.top - wrapPos.top + 'px'
+                this.dom.contextBtn.style.left = rectDownRight.right - rightCorrector - wrapPos.left + 'px'
+            }
+        }
+
+        this.dom.square.style.top = rectDownRight.bottom - topCorrector - wrapPos.top + 'px'
+        this.dom.square.style.left = rectDownRight.right - rightCorrector - wrapPos.left + 'px'
 
         return this
     }
@@ -2285,9 +2326,13 @@ export default class BomTable {
      * @return {BomTable}
      * @private
      */
-    _removeSquare() {
+    _removeSquares() {
         this.dom.square && helper.removeElement(this.dom.square)
         this.dom.square = null
+
+        this.dom.contextBtn && helper.removeElement(this.dom.contextBtn)
+        this.dom.contextBtn = null
+
         return this
     }
 
@@ -2694,8 +2739,6 @@ export default class BomTable {
             textarea.value = td.innerHTML
         }
 
-        textarea.focus()
-
         this.input = {
             el: textarea,
             colNum: this.lastSelected.colNum,
@@ -2703,7 +2746,11 @@ export default class BomTable {
         }
         this._createElHelper({ td, left })
 
-        return this._updateInputSize()._removeSquare()
+        this._updateInputSize()._removeSquares()
+
+        textarea.focus()
+
+        return this
     }
 
     /**

@@ -110,6 +110,21 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         cursor: crosshair;
     }
 
+    .bomtable-context-btn {
+        position: absolute;
+        z-index: 40;
+        background-color: $lightGray;
+        background-image: url('../img/hamburger.svg');
+        background-repeat: no-repeat;
+        background-position: center center;
+        width: 15px;
+        height: 15px;
+        border: 1px solid rgba(0, 0, 0, 0.4);
+        margin-left: -9px;
+        margin-top: -9px;
+        cursor: pointer;
+    }
+
     .bomtable-copy-area-left,
     .bomtable-copy-area-right,
     .bomtable-copy-area-top,
