@@ -1,6 +1,5 @@
 import History from './History'
 import * as helper from './helper'
-const { version } = require('./../../package.json')
 
 export default class BomTable {
     constructor(opts = {}) {
@@ -50,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = version
+        this.version = '2.3.21'
 
         this._ini()
 

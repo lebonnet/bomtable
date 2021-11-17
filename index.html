@@ -43,6 +43,7 @@
                 </a>
             </div>
             <h3>simple, no header</h3>
+
             <pre>
 new BomTable({
     tableClass: 'ex-tbl',
@@ -61,6 +62,7 @@ new BomTable({
             >
             <div class="example1"></div>
             <h3>with header, resizable cols</h3>
+
             <pre>
 new BomTable({
     tableClass: 'ex-tbl',
@@ -81,6 +83,7 @@ new BomTable({
             >
             <div class="example2"></div>
             <h3>with sticky header (+header menu), resizable cols, hook and renders example</h3>
+
             <pre>
 new BomTable({
     tableClass: 'ex-tbl',
@@ -127,7 +130,7 @@ new BomTable({
         },
     },
     renders: (instance, el, colNum, rowNum) => {
-        if (rowNum < 0) {
+        if (rowNum === -1 || rowNum === -2) {
             return
         }
         el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
@@ -208,8 +211,7 @@ new BomTable({
                 ],
                 header: ['Модель', '2017 год, шт.', '2016 год, шт.', 'Динамика'],
                 renders: (instance, el, colNum, rowNum) => {
-                    // is header
-                    if (rowNum < 0) {
+                    if (rowNum === -1 || rowNum === -2) {
                         return
                     }
                     el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
