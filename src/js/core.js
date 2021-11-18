@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.3.21'
+        this.version = '2.4.0'
 
         this._ini()
 
@@ -67,7 +67,9 @@ export default class BomTable {
      */
     _ini() {
         this.key = helper.randKey()
-        return this.clear()._render()._callListeners()
+        return this.clear()
+            ._render()
+            ._callListeners()
     }
 
     /**
@@ -88,7 +90,7 @@ export default class BomTable {
         }
 
         events.forEach(event => {
-            let opts = ['touchmove', 'touchmove'].includes(event)
+            let opts = ['touchstart', 'touchmove', 'touchend'].includes(event)
                 ? {
                       passive: false,
                       cancelable: true,
@@ -110,7 +112,9 @@ export default class BomTable {
         let prevData = helper.cloneArray(this.data)
         this.config.header = this.header
         this.config.data = data
-        this.clear()._render()._renderHelpers()
+        this.clear()
+            ._render()
+            ._renderHelpers()
         this.history && this.history.push('setData', { data: prevData })
     }
 
@@ -130,7 +134,9 @@ export default class BomTable {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array')
         let prevHeader = [...this.header]
         this.config.header = header
-        this.removeHeader()._renderHeader().render()
+        this.removeHeader()
+            ._renderHeader()
+            .render()
         this.history && this.history.push('setHeader', { data: prevHeader })
     }
 
@@ -506,7 +512,9 @@ export default class BomTable {
             }
         }
 
-        return this._reindex()._setContainerWidth()._calcColsWidth()
+        return this._reindex()
+            ._setContainerWidth()
+            ._calcColsWidth()
     }
 
     /**
@@ -598,7 +606,9 @@ export default class BomTable {
         })
         this._manualColSize = {}
 
-        this._reindex()._setContainerWidth()._calcColsWidth()
+        this._reindex()
+            ._setContainerWidth()
+            ._calcColsWidth()
         return this
     }
 
@@ -671,7 +681,9 @@ export default class BomTable {
 
         this.config.data = data
         this.config.header = header
-        this.clear()._render()._renderHelpers()
+        this.clear()
+            ._render()
+            ._renderHelpers()
 
         this.history && this.history.push('unionCols', { data: prevData, header: prevHeader })
 
@@ -754,7 +766,9 @@ export default class BomTable {
             }
         })
 
-        return this._setContainerWidth()._calcColsWidth()._rerenderActiveArea()
+        return this._setContainerWidth()
+            ._calcColsWidth()
+            ._rerenderActiveArea()
     }
 
     /**
@@ -904,27 +918,7 @@ export default class BomTable {
         })
 
         if (!this.dom.wrapper) {
-            this._container =
-                typeof this.config.container === 'string'
-                    ? document.querySelector(this.config.container)
-                    : this.config.container
-
-            this.dom.wrapper = helper.createElement({
-                tagName: 'div',
-                selector: 'bomtable-wrapper',
-                parent: this._container,
-            })
-
-            this.isTouch && this.dom.wrapper.classList.add('touched')
-
-            withHeader && this.dom.wrapper.appendChild(this.dom.copyTable)
-            this.dom.wrapper.appendChild(this.dom.table)
-
-            this._container.style.position = 'relative'
-            this._container.style.overflow = 'auto'
-            ;['scroll', 'dblclick', 'mousemove', 'mouseover'].forEach(event => {
-                this._container.addEventListener(event, this[`_onContainer${helper.firstCharToUp(event)}`].bind(this))
-            })
+            this._renderContainer()
         }
 
         this._container.instanceKey = this.key
@@ -935,6 +929,39 @@ export default class BomTable {
             this.dom.body.classList.remove('building')
             this._container.style.opacity = ''
         }, 5)
+
+        return this
+    }
+
+    /**
+     * Render table container
+     * @return {BomTable}
+     * @private
+     */
+    _renderContainer() {
+        let withHeader = this.config.header && this.config.header.length
+
+        this._container =
+            typeof this.config.container === 'string'
+                ? document.querySelector(this.config.container)
+                : this.config.container
+
+        this.dom.wrapper = helper.createElement({
+            tagName: 'div',
+            selector: 'bomtable-wrapper',
+            parent: this._container,
+        })
+
+        this.isTouch && this.dom.wrapper.classList.add('touched')
+
+        withHeader && this.dom.wrapper.appendChild(this.dom.copyTable)
+        this.dom.wrapper.appendChild(this.dom.table)
+
+        this._container.style.position = 'relative'
+        this._container.style.overflow = 'auto'
+        ;['scroll', 'dblclick', 'mousemove', 'mouseover'].forEach(event => {
+            this._container.addEventListener(event, this[`_onContainer${helper.firstCharToUp(event)}`].bind(this))
+        })
 
         return this
     }
@@ -1240,12 +1267,14 @@ export default class BomTable {
                 rowNum = this.lastSelected ? this.lastSelected.rowNum : null,
                 lastSelected = { colNum, rowNum }
 
-            if (this.config[menuName].callback) {
-                this.config[menuName].callback(action, this, e, lastSelected)
-            } else if (this[action]) {
-                this[action]()
-            } else {
-                throw new Error(`Undefined action ${action}`)
+            if (action) {
+                if (this.config[menuName].callback) {
+                    this.config[menuName].callback(action, this, e, lastSelected)
+                } else if (this[action]) {
+                    this[action]()
+                } else {
+                    throw new Error(`Undefined action ${action}`)
+                }
             }
         }
 
@@ -1269,6 +1298,8 @@ export default class BomTable {
         if (touches.length === 1) {
             e.pageX = touches[0].pageX
             e.pageY = touches[0].pageY
+
+            this._touchStartPoint = { x: e.pageX, y: e.pageY }
         }
         this._onmousedown(e)
     }
@@ -1289,7 +1320,7 @@ export default class BomTable {
         }
 
         if (this.isTouch && !this.input) {
-            this.countTouch++
+            this._countTouch++
 
             if (this.tapped === el) {
                 this._onContainerDblclick(e)
@@ -1306,7 +1337,11 @@ export default class BomTable {
 
         if (this.input && el === this.input.el) return
 
-        this._removeInput(!this.isTouch)
+        this._removeInput(true)
+
+        if (this._checkClickOnContextMenu(e)) {
+            return
+        }
 
         this.closeContextMenu(e)
 
@@ -1322,8 +1357,8 @@ export default class BomTable {
             }
 
             this.clearActiveArea()
-            this._removeSquares()
-            this._removePressed()
+                ._removeSquares()
+                ._removePressed()
 
             return
         }
@@ -1358,15 +1393,39 @@ export default class BomTable {
 
     /**
      * Mouse up listener
-     * @param {MouseEvent} e
+     * @param {MouseEvent|TouchEvent} e
      * @private
      */
     _onmouseup(e) {
         if (!this || this.destroyed) return
 
-        let el = e.target
+        let el = e.target,
+            clickOnContextMenu = this._checkClickOnContextMenu(e)
+
         if (this.isTouch) {
-            this.countTouch--
+            if (this._countTouch) {
+                this._countTouch--
+            }
+
+            if (this._touchStartPoint.x && e.changedTouches.length) {
+                let { pageX, pageY } = e.changedTouches[0],
+                    { x, y } = this._touchStartPoint
+
+                // swipe on context menu
+                if ((Math.abs(pageX - x) > 5 || Math.abs(pageY - y) > 5) && clickOnContextMenu) {
+                    this._touchStartPoint = {}
+                    return
+                }
+            }
+            this._touchStartPoint = {}
+        }
+
+        if (clickOnContextMenu) {
+            this.closeContextMenu(e)
+                .clearActiveArea()
+                ._removeSquares()
+                ._removePressed()
+            return
         }
 
         if (el.classList.contains('bomtable-context-btn')) {
@@ -1403,7 +1462,7 @@ export default class BomTable {
     _ontouchmove(e) {
         if (!this || this.destroyed) return
 
-        if (!this.mouseBtnPressed || this.countTouch > 1) return true
+        if (!this.mouseBtnPressed || this._countTouch > 1) return true
         e.preventDefault()
 
         let touch = e.targetTouches[0],
@@ -1923,6 +1982,18 @@ export default class BomTable {
     }
 
     /**
+     * Check click on context menu
+     * @param e {MouseEvent|TouchEvent}
+     * @returns {boolean}
+     * @private
+     */
+    _checkClickOnContextMenu(e) {
+        let el = e.target,
+            menuClass = 'bomtable-context-menu'
+        return el.classList.contains(menuClass) || helper.parents(el).some(p => p.classList.contains(menuClass))
+    }
+
+    /**
      * Set value from data to copy/paste buffer
      * @returns {BomTable}
      * @private
@@ -2213,7 +2284,7 @@ export default class BomTable {
      * @return {BomTable}
      */
     clearActiveArea() {
-        this._removeActiveArea()._clearActiveArea()
+        return this._removeActiveArea()._clearActiveArea()
     }
 
     /**
@@ -2296,10 +2367,10 @@ export default class BomTable {
         }
 
         if (this.isTouch && this.config.contextMenu) {
-            let { col: startCol, row: startRow } = this.lastSelectArea.start,
+            let startRow = this.lastSelectArea.start.row,
                 topRightTd = this.dataMap[`${endCol}::${startRow}`]
 
-            if ((startCol !== endCol || startRow !== endRow) && topRightTd) {
+            if (topRightTd) {
                 let rectTopRight = topRightTd.getBoundingClientRect()
                 if (!this.dom.contextBtn) {
                     this.dom.contextBtn = helper.createElement({
@@ -2567,7 +2638,9 @@ export default class BomTable {
             this.dom.header.classList.add('bomtable-hidden')
         }
 
-        return this._setColResizerPosition(0, -1)._setContainerWidth()._calcColsWidth()
+        return this._setColResizerPosition(0, -1)
+            ._setContainerWidth()
+            ._calcColsWidth()
     }
 
     /**
@@ -2738,6 +2811,10 @@ export default class BomTable {
             textarea.value = td.innerHTML
         }
 
+        if (this.input) {
+            this._removeInput(false)
+        }
+
         this.input = {
             el: textarea,
             colNum: this.lastSelected.colNum,
@@ -2892,7 +2969,9 @@ export default class BomTable {
         this.cellMeta = {}
 
         this._manualColSize = {}
-        this.countTouch = 0
+        this._countTouch = 0
+        this._touchStartPoint = {}
+
         this.tapped = false
 
         this.lastSelectArea = {}
