@@ -67,9 +67,7 @@ export default class BomTable {
      */
     _ini() {
         this.key = helper.randKey()
-        return this.clear()
-            ._render()
-            ._callListeners()
+        return this.clear()._render()._callListeners()
     }
 
     /**
@@ -112,9 +110,7 @@ export default class BomTable {
         let prevData = helper.cloneArray(this.data)
         this.config.header = this.header
         this.config.data = data
-        this.clear()
-            ._render()
-            ._renderHelpers()
+        this.clear()._render()._renderHelpers()
         this.history && this.history.push('setData', { data: prevData })
     }
 
@@ -134,9 +130,7 @@ export default class BomTable {
         if (header && !Array.isArray(header)) throw new Error('Header must be an array')
         let prevHeader = [...this.header]
         this.config.header = header
-        this.removeHeader()
-            ._renderHeader()
-            .render()
+        this.removeHeader()._renderHeader().render()
         this.history && this.history.push('setHeader', { data: prevHeader })
     }
 
@@ -512,9 +506,7 @@ export default class BomTable {
             }
         }
 
-        return this._reindex()
-            ._setContainerWidth()
-            ._calcColsWidth()
+        return this._reindex()._setContainerWidth()._calcColsWidth()
     }
 
     /**
@@ -606,9 +598,7 @@ export default class BomTable {
         })
         this._manualColSize = {}
 
-        this._reindex()
-            ._setContainerWidth()
-            ._calcColsWidth()
+        this._reindex()._setContainerWidth()._calcColsWidth()
         return this
     }
 
@@ -681,9 +671,7 @@ export default class BomTable {
 
         this.config.data = data
         this.config.header = header
-        this.clear()
-            ._render()
-            ._renderHelpers()
+        this.clear()._render()._renderHelpers()
 
         this.history && this.history.push('unionCols', { data: prevData, header: prevHeader })
 
@@ -766,9 +754,7 @@ export default class BomTable {
             }
         })
 
-        return this._setContainerWidth()
-            ._calcColsWidth()
-            ._rerenderActiveArea()
+        return this._setContainerWidth()._calcColsWidth()._rerenderActiveArea()
     }
 
     /**
@@ -1356,9 +1342,7 @@ export default class BomTable {
                 this.colResizerPressedIndex = +el.dataset.colNum
             }
 
-            this.clearActiveArea()
-                ._removeSquares()
-                ._removePressed()
+            this.clearActiveArea()._removeSquares()._removePressed()
 
             return
         }
@@ -1421,10 +1405,7 @@ export default class BomTable {
         }
 
         if (clickOnContextMenu) {
-            this.closeContextMenu(e)
-                .clearActiveArea()
-                ._removeSquares()
-                ._removePressed()
+            this.closeContextMenu(e).clearActiveArea()._removeSquares()._removePressed()
             return
         }
 
@@ -1990,7 +1971,10 @@ export default class BomTable {
     _checkClickOnContextMenu(e) {
         let el = e.target,
             menuClass = 'bomtable-context-menu'
-        return el.classList.contains(menuClass) || helper.parents(el).some(p => p.classList.contains(menuClass))
+        return (
+            (el.classList.contains && el.classList.contains(menuClass)) ||
+            helper.parents(el).some(p => p.classList.contains && p.classList.contains(menuClass))
+        )
     }
 
     /**
@@ -2638,9 +2622,7 @@ export default class BomTable {
             this.dom.header.classList.add('bomtable-hidden')
         }
 
-        return this._setColResizerPosition(0, -1)
-            ._setContainerWidth()
-            ._calcColsWidth()
+        return this._setColResizerPosition(0, -1)._setContainerWidth()._calcColsWidth()
     }
 
     /**
