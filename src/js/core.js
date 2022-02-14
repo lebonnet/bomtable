@@ -1430,7 +1430,7 @@ export default class BomTable {
 
         this._setColSize(e)._removeCopyArea()
 
-        if (this._checkContainer(e)) {
+        if (this._checkContainer(e) && !this.input) {
             this._focusBuffer(e)
         }
     }
@@ -1536,15 +1536,15 @@ export default class BomTable {
      * @private
      */
     _onContainerDblclick(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) return true
 
         let el = e.target
 
         if (el.tagName !== 'TD') {
-            return
+            return true
         }
 
-        if (!this._checkContainer(e)) return
+        if (!this._checkContainer(e)) return true
 
         this._setActiveCell(e, el)
 
