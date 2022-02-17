@@ -2364,7 +2364,8 @@ export default class BomTable {
                     })
                 }
 
-                this.dom.contextBtn.style.top = rectTopRight.top - wrapPos.top + 'px'
+                let topCorrector = !startRow && !this.dom.header ? 9 : 0
+                this.dom.contextBtn.style.top = rectTopRight.top - wrapPos.top + topCorrector + 'px'
                 this.dom.contextBtn.style.left = rectDownRight.right - rightCorrector - wrapPos.left + 'px'
             }
         }
