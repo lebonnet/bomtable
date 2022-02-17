@@ -1299,6 +1299,7 @@ export default class BomTable {
         if (!this || this.destroyed) return
 
         let el = e.target
+        this._hideColResizer(e)
 
         if (el.classList.contains('bomtable-context-btn')) {
             this.createContextMenu(e)
@@ -1332,14 +1333,15 @@ export default class BomTable {
         this.closeContextMenu(e)
 
         if (!helper.parents(el).some(p => p === this.dom.table || p === this.dom.copyTable)) {
+            this.mouseBtnPressed = 1
             if (this.dom.square && this.dom.square === el) {
-                this.squarePressed = 1
                 this.mouseBtnPressed = 1
                 return
             }
 
             if (this.dom._colResizer === el) {
                 this.colResizerPressedIndex = +el.dataset.colNum
+                this.dom._colResizer.classList.add('pressed')
             }
 
             this.clearActiveArea()._removeSquares()._removePressed()
@@ -1447,7 +1449,7 @@ export default class BomTable {
         e.preventDefault()
 
         let touch = e.targetTouches[0],
-            windowYScroll = window.pageYOffset,
+            windowYScroll = window.scrollY,
             el = null,
             X = touch.pageX,
             Y = touch.pageY
@@ -1467,6 +1469,12 @@ export default class BomTable {
                 return true
             }
         })
+
+        if (this.colResizerPressedIndex != null) {
+            this._setColResizerPosition(this.colResizerPressedIndex, X + 2.5)
+            helper.clearSelected()
+            return
+        }
 
         if (!el || this.lastHover === el) return
 
@@ -2044,6 +2052,19 @@ export default class BomTable {
                 },
                 keyType,
             )
+
+            if (
+                this.mouseDownElement.rowNum < 0 &&
+                this.isTouch &&
+                this.config.colsResize &&
+                this.colResizerPressedIndex == null &&
+                this.mouseDownElement.colNum === colNum
+            ) {
+                this._setColResizerPosition(el.cellIndex)
+                this.dom._colResizer.classList.add('active')
+            } else {
+                this._hideColResizer(e)
+            }
         }
 
         return this._setLastSelected(el, +colNum, +rowNum)
@@ -2619,11 +2640,26 @@ export default class BomTable {
         this._manualColSize[colNum] = width
         this.colResizerPressedIndex = null
 
+        this._hideColResizer(event)
+
         if (hasHeader) {
             this.dom.header.classList.add('bomtable-hidden')
         }
 
         return this._setColResizerPosition(0, -1)._setContainerWidth()._calcColsWidth()
+    }
+
+    /**
+     * Hide colResize element
+     * @param {MouseEvent|TouchEvent} event
+     * @private
+     */
+    _hideColResizer(event) {
+        if (!this.dom._colResizer) {
+            return
+        }
+        this.dom._colResizer.classList.remove('active')
+        this.dom._colResizer.classList.remove('pressed')
     }
 
     /**
@@ -2634,7 +2670,7 @@ export default class BomTable {
      * @return {BomTable}
      * @private
      */
-    _setColResizerPosition(colNum, position) {
+    _setColResizerPosition(colNum, position = null) {
         let el = this.dom.header ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`]
 
         if (!el) return this
@@ -2649,6 +2685,9 @@ export default class BomTable {
         }
         let calcPosition = elRight - wrapPos.left
 
+        if (calcPosition <= 0) {
+            calcPosition = -10
+        }
         this.dom._colResizer.style.left = `${calcPosition - 5}px`
         this.dom._colResizer.style.top = `${elRect.top - wrapPos.top}px`
         this.dom._colResizer.style.height = `${el.offsetHeight}px`

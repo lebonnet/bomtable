@@ -208,12 +208,13 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         opacity: 0;
 
         &:hover,
-        &:active {
+        &:active,
+        &.active {
             opacity: 1;
         }
     }
 
-    .bomtable-col-resizer:active ~ .bomtable-col-resizer-line {
+    .bomtable-col-resizer.pressed ~ .bomtable-col-resizer-line {
         opacity: 1;
     }
 
