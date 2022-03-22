@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.2'
+        this.version = '2.4.3'
 
         this._ini()
 
@@ -1287,7 +1287,13 @@ export default class BomTable {
 
             this._touchStartPoint = { x: e.pageX, y: e.pageY }
         }
-        this._onmousedown(e)
+        this._countTouch = touches.length
+        if (this._checkContainer(e)) {
+            let res = this._onmousedown(e)
+            console.log(res)
+            return res
+        }
+        return true
     }
 
     /**
@@ -1296,19 +1302,19 @@ export default class BomTable {
      * @private
      */
     _onmousedown(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) {
+            return false
+        }
 
         let el = e.target
         this._hideColResizer(e)
 
         if (el.classList.contains('bomtable-context-btn')) {
             this.createContextMenu(e)
-            return
+            return false
         }
 
         if (this.isTouch && !this.input) {
-            this._countTouch++
-
             if (this.tapped === el) {
                 this._onContainerDblclick(e)
                 clearTimeout(this.tapTimeout)
@@ -1322,31 +1328,34 @@ export default class BomTable {
             }
         }
 
-        if (this.input && el === this.input.el) return
+        if (this.input && el === this.input.el) {
+            return false
+        }
 
         this._removeInput(true)
 
         if (this._checkClickOnContextMenu(e)) {
-            return
+            return false
         }
 
         this.closeContextMenu(e)
 
         if (!helper.parents(el).some(p => p === this.dom.table || p === this.dom.copyTable)) {
-            this.mouseBtnPressed = 1
             if (this.dom.square && this.dom.square === el) {
                 this.mouseBtnPressed = 1
-                return
+                this.squarePressed = 1
+                return false
             }
 
             if (this.dom._colResizer === el) {
+                this.mouseBtnPressed = 1
                 this.colResizerPressedIndex = +el.dataset.colNum
                 this.dom._colResizer.classList.add('pressed')
             }
 
             this.clearActiveArea()._removeSquares()._removePressed()
 
-            return
+            return true
         }
 
         this.mouseBtnPressed = 1
@@ -1360,12 +1369,18 @@ export default class BomTable {
             }
         })
 
-        if (!helper.isTableCell(el)) return
+        if (!helper.isTableCell(el)) {
+            return false
+        }
 
         // left click on select area
-        if (e.button && this.selected.some(key => this.dataMap[key] === el)) return
+        if (e.button && this.selected.some(key => this.dataMap[key] === el)) {
+            return false
+        }
 
         this._setActiveCell(e, el)
+
+        return false
     }
 
     /**
@@ -1389,9 +1404,7 @@ export default class BomTable {
             clickOnContextMenu = this._checkClickOnContextMenu(e)
 
         if (this.isTouch) {
-            if (this._countTouch) {
-                this._countTouch--
-            }
+            this._countTouch = e.touches.length
 
             if (this._touchStartPoint.x && e.changedTouches.length) {
                 let { pageX, pageY } = e.changedTouches[0],
@@ -1443,7 +1456,7 @@ export default class BomTable {
      * @private
      */
     _ontouchmove(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) return false
 
         if (!this.mouseBtnPressed || this._countTouch > 1) return true
         e.preventDefault()
@@ -1473,12 +1486,12 @@ export default class BomTable {
         if (this.colResizerPressedIndex != null) {
             this._setColResizerPosition(this.colResizerPressedIndex, X + 2.5)
             helper.clearSelected()
-            return
+            return false
         }
 
-        if (!el || this.lastHover === el) return
+        if (!el || this.lastHover === el) return false
 
-        if (!helper.isTableCell(el)) return
+        if (!helper.isTableCell(el)) return false
 
         this.lastHover = el
 
@@ -1487,6 +1500,7 @@ export default class BomTable {
         } else if (el.tagName === 'TD') {
             this._squareAreaListener(e, el)
         }
+        return false
     }
 
     /**
