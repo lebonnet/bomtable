@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.3'
+        this.version = '2.4.4'
 
         this._ini()
 
@@ -1343,12 +1343,13 @@ export default class BomTable {
         if (!helper.parents(el).some(p => p === this.dom.table || p === this.dom.copyTable)) {
             if (this.dom.square && this.dom.square === el) {
                 this.mouseBtnPressed = 1
-                this.squarePressed = 1
+                this._squarePressed = 1
                 return false
             }
 
             if (this.dom._colResizer === el) {
                 this.mouseBtnPressed = 1
+                this._colResizerPressed = 1
                 this.colResizerPressedIndex = +el.dataset.colNum
                 this.dom._colResizer.classList.add('pressed')
             }
@@ -1429,7 +1430,8 @@ export default class BomTable {
         }
 
         this.mouseBtnPressed = 0
-        this.squarePressed = 0
+        this._squarePressed = 0
+        this._colResizerPressed = 0
 
         if (
             this.colResizerPressedIndex == null &&
@@ -1495,7 +1497,7 @@ export default class BomTable {
 
         this.lastHover = el
 
-        if (!this.squarePressed) {
+        if (!this._squarePressed) {
             this._setActiveCell(e, el)
         } else if (el.tagName === 'TD') {
             this._squareAreaListener(e, el)
@@ -1509,13 +1511,15 @@ export default class BomTable {
      * @private
      */
     _onContainerMouseover(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) return false
 
         let el = e.target
 
-        if (!this.mouseBtnPressed || !helper.isTableCell(el)) return
+        if (!this.mouseBtnPressed || !helper.isTableCell(el) || this._squarePressed || this._colResizerPressed) {
+            return false
+        }
 
-        !this.squarePressed && this._setActiveCell(e, el)
+        this._setActiveCell(e, el)
     }
 
     /**
@@ -1547,7 +1551,7 @@ export default class BomTable {
 
         if (!this.mouseBtnPressed) return
 
-        if (this.squarePressed && el.tagName === 'TD') {
+        if (this._squarePressed && el.tagName === 'TD') {
             this._squareAreaListener(e)
         }
     }
@@ -1953,7 +1957,8 @@ export default class BomTable {
 
         if (cancel) {
             this.mouseBtnPressed = 0
-            this.squarePressed = 0
+            this._squarePressed = 0
+            this._colResizerPressed = 0
             this._removeInput(saveValue)
             e.stopPropagation()
             e.preventDefault()
@@ -2107,7 +2112,6 @@ export default class BomTable {
      */
     _setActiveArea(map, keyType = 'none') {
         if (this.destroyed) return this
-
         let startCol = map.start.colNum,
             endCol = map.end.colNum,
             startRow = map.start.rowNum,
@@ -3007,6 +3011,9 @@ export default class BomTable {
         this._manualColSize = {}
         this._countTouch = 0
         this._touchStartPoint = {}
+
+        this._colResizerPressed = 0
+        this._squarePressed = 0
 
         this.tapped = false
 
