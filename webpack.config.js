@@ -62,11 +62,13 @@ const config = {
             filename: '[name].css',
             chunkFilename: '[id].css',
         }),
-        new HtmlWebpackPlugin({
-            template: './index.html',
-            scriptLoading: 'blocking',
-        }),
-    ],
+        isDevelopment
+            ? new HtmlWebpackPlugin({
+                  template: './index.html',
+                  scriptLoading: 'blocking',
+              })
+            : null,
+    ].filter(i => i),
     devServer: {
         static: {
             directory: distPath,
