@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.4'
+        this.version = '2.4.5'
 
         this._ini()
 
@@ -1999,8 +1999,8 @@ export default class BomTable {
         let el = e.target,
             menuClass = 'bomtable-context-menu'
         return (
-            (el.classList.contains && el.classList.contains(menuClass)) ||
-            helper.parents(el).some(p => p.classList.contains && p.classList.contains(menuClass))
+            (el.classList?.contains && el.classList.contains(menuClass)) ||
+            helper.parents(el).some(p => p.classList?.contains && p.classList.contains(menuClass))
         )
     }
 
