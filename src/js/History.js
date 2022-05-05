@@ -161,7 +161,7 @@ export default class History {
                 params.data.sort((a, b) => a.row - b.row)
                 params.data.forEach(i => bt._createRow({ index: i.row, rowData: i.data, render: true }))
                 Object.keys(bt.dataMap).forEach(key => bt.dataMap[key].classList.remove('area'))
-                bt._removeSquare()
+                bt._removeSquares()
                 bt._reindex()
                 break
         }
