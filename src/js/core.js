@@ -1583,7 +1583,7 @@ export default class BomTable {
      * @private
      */
     _onBufferKeyDown(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed || !this.instanceData[0]) return
 
         let data,
             eventKey = e.key,
