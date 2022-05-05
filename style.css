@@ -33,14 +33,13 @@ pre {
 	max-height: 350px;
 }
 
-.example3::-webkit-scrollbar-track {
+div[class^="example"]::-webkit-scrollbar-track {
 	 background-color: #bbbbbb;
  }
-.example3::-webkit-scrollbar {
+div[class^="example"]::-webkit-scrollbar {
 	 width: 6px;
 	 height: 6px;
  }
-
-.example3::-webkit-scrollbar-thumb {
+div[class^="example"]::-webkit-scrollbar-thumb {
 	 background-color: #888888;
  }
