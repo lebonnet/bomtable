@@ -2590,7 +2590,7 @@ export default class BomTable {
      */
     _getColWidth(colNum) {
         let hasHeader = this.dom.header,
-            headerColW = hasHeader ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
+            headerColW = hasHeader && this.dataMap[`${colNum}::-1`] ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
             fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
             colElWidth = hasHeader && this.dom.copyColgroup.children[colNum] ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].width) : 0
         let w = this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth])
