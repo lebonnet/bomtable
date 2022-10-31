@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.8'
+        this.version = '2.4.9'
 
         this._ini()
 
@@ -1289,9 +1289,7 @@ export default class BomTable {
         }
         this._countTouch = touches.length
         if (this._checkContainer(e)) {
-            let res = this._onmousedown(e)
-            console.log(res)
-            return res
+            return this._onmousedown(e)
         }
         return true
     }
