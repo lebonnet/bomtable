@@ -925,6 +925,8 @@ export default class BomTable {
      * @private
      */
     _renderContainer() {
+        if (this.destroyed) return this
+
         let withHeader = this.config.header && this.config.header.length
 
         this._container =
