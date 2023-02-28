@@ -214,8 +214,10 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         }
     }
 
-    .bomtable-col-resizer.pressed ~ .bomtable-col-resizer-line {
-        opacity: 1;
+    .bomtable-col-resizer.pressed {
+        & ~ .bomtable-col-resizer-line {
+            opacity: 1;
+        }
     }
 
     .bomtable-col-resizer-line {

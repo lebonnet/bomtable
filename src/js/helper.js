@@ -28,7 +28,9 @@ export function createElement({ tagName, selector = '', html = null, parent = nu
  * @param {HTMLElement} el
  */
 export function removeElement(el) {
-    if (!el) return
+    if (!el) {
+        return
+    }
     el.remove ? el.remove() : el.parentNode ? el.parentNode.removeChild(el) : null
 }
 
@@ -110,12 +112,18 @@ export function firstCharToUp(str) {
  * @returns {number}
  */
 export function getNumberFromString(str) {
-    if (!str) return 0
-    if (typeof str === 'number') return str
+    if (!str) {
+        return 0
+    }
+    if (typeof str === 'number') {
+        return str
+    }
     str = str.toString().replace(/[^0-9.,]/g, '')
     str = str.replace(/,/g, '.')
     str = str.match(/^\d*\.?\d*([^.])/)
-    if (!str) return 0
+    if (!str) {
+        return 0
+    }
     return +str[0]
 }
 
@@ -128,9 +136,15 @@ export function getNumberFromString(str) {
 export function mergeValues(v1, v2) {
     let type1 = typeof v1,
         type2 = typeof v2
-    if (type1 === type2 && v1 === v2 && !v1) return v1 // null, empty and undefined
-    if (v1 == null) v1 = ''
-    if (v2 == null) v2 = ''
+    if (type1 === type2 && v1 === v2 && !v1) {
+        return v1
+    } // null, empty and undefined
+    if (v1 == null) {
+        v1 = ''
+    }
+    if (v2 == null) {
+        v2 = ''
+    }
     return type1 === 'number' && type1 === type2 ? v1 + v2 : prepareValue(`${v1} ${v2}`)
 }
 
@@ -140,7 +154,9 @@ export function mergeValues(v1, v2) {
  * @returns {string | number}
  */
 export function prepareValue(val) {
-    if (!val) return val
+    if (!val) {
+        return val
+    }
     return typeof val === 'number'
         ? val
         : val
@@ -164,12 +180,7 @@ export function rand(min, max) {
  * @return {String}
  */
 export function randKey() {
-    return Date.now()
-        .toString()
-        .split('')
-        .reverse()
-        .map(() => rand(0, 9))
-        .join('')
+    return new Array(12).fill().map(() => rand(0, 9)).join('')
 }
 
 /**

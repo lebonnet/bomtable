@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.11'
+        this.version = '2.4.12'
 
         this._ini()
 
@@ -1602,13 +1602,13 @@ export default class BomTable {
 
         let el = e.target
 
-        if (this.lastHover === el) {
-            return
+        if (this.colResizerPressedIndex != null) {
+            this._setColResizerPosition(this.colResizerPressedIndex, e.clientX)
+            helper.clearSelected()
         }
 
-        if (this.colResizerPressedIndex != null) {
-            this._setColResizerPosition(this.colResizerPressedIndex, e.clientX + 2.5)
-            helper.clearSelected()
+        if (this.lastHover === el) {
+            return
         }
 
         let isFirstEl = this.dom.header
@@ -2857,6 +2857,7 @@ export default class BomTable {
         if (!el || (this.mouseBtnPressed && !this._colResizerPressed)) {
             return this
         }
+
         let wrapPos = this._getWrapTopLeftPosition(),
             elRect = el.getBoundingClientRect(),
             elRight = position || elRect.right,
