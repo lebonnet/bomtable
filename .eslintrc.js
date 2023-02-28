@@ -15,4 +15,8 @@ module.exports = {
             { avoidQuotes: false },
         ],
     },
+    parserOptions: {
+        ecmaVersion: 2018,
+        sourceType: "module"
+    }
 }

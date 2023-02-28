@@ -106,7 +106,9 @@ export default class BomTable {
      * @param {Array} data
      */
     set data(data) {
-        if (!Array.isArray(data)) throw new Error('Data must be an array')
+        if (!Array.isArray(data)) {
+            throw new Error('Data must be an array')
+        }
         let prevData = helper.cloneArray(this.data)
         this.config.header = this.header
         this.config.data = data
@@ -127,7 +129,9 @@ export default class BomTable {
      * @param {Array} header
      */
     set header(header) {
-        if (header && !Array.isArray(header)) throw new Error('Header must be an array')
+        if (header && !Array.isArray(header)) {
+            throw new Error('Header must be an array')
+        }
         let prevHeader = [...this.header]
         this.config.header = header
         this.removeHeader()._renderHeader().render()
@@ -170,7 +174,9 @@ export default class BomTable {
             prevVal = this.instanceData[row][col],
             valType = typeof val
 
-        if (td.bomtableValType === valType && val === prevVal) return this
+        if (td.bomtableValType === valType && val === prevVal) {
+            return this
+        }
 
         td.bomtableValType = valType
 
@@ -221,9 +227,13 @@ export default class BomTable {
     get metaDataCell() {
         return ({ col, row, propName }) => {
             let el = this.dataMap[`${col}::${row}`]
-            if (!el) return undefined
+            if (!el) {
+                return undefined
+            }
             let key = el.bomtableKey
-            if (!this.cellMeta[key]) return undefined
+            if (!this.cellMeta[key]) {
+                return undefined
+            }
             return this.cellMeta[key][propName]
         }
     }
@@ -237,7 +247,9 @@ export default class BomTable {
     removeMetaDataCell({ col, row, propName }) {
         let el = this.dataMap[`${col}::${row}`],
             key = el.bomtableKey
-        if (!this.cellMeta[key]) return
+        if (!this.cellMeta[key]) {
+            return
+        }
         delete this.cellMeta[key][propName]
     }
 
@@ -247,10 +259,14 @@ export default class BomTable {
      * @param {Array} data
      */
     set dataRow({ row, data }) {
-        if (!this.instanceData[row]) return
+        if (!this.instanceData[row]) {
+            return
+        }
         this.instanceData[row].forEach((cell, cellIndex) => {
             let newVal = data[cellIndex] !== undefined ? helper.prepareValue(data[cellIndex]) : ''
-            if (newVal === cell) return
+            if (newVal === cell) {
+                return
+            }
             this.dataMap[`${cellIndex}::${row}`].innerHTML = newVal
             this.instanceData[row][cellIndex] = newVal
         })
@@ -278,7 +294,9 @@ export default class BomTable {
         this.instanceData.forEach((row, rowIndex) => {
             let newVal = data[rowIndex] !== undefined ? helper.prepareValue(data[rowIndex]) : '',
                 cell = row[col]
-            if (newVal === cell) return
+            if (newVal === cell) {
+                return
+            }
             this.dataMap[`${col}::${rowIndex}`].innerHTML = newVal
             this.instanceData[rowIndex][col] = newVal
         })
@@ -312,7 +330,9 @@ export default class BomTable {
 
         this.selectedMap.forEach(key => {
             let [colNum, rowNum] = helper._splitKey(key)
-            if (!data[rowNum]) data[rowNum] = []
+            if (!data[rowNum]) {
+                data[rowNum] = []
+            }
             data[rowNum].push(this.instanceData[rowNum][colNum])
         })
 
@@ -328,7 +348,9 @@ export default class BomTable {
         let countCols = data.reduce((max, arr) => (max > arr.length ? max : arr.length), 0)
         data.forEach(col => {
             col = col.map(cell => helper.prepareValue(cell)) // copy and clear array
-            while (countCols > col.length) col.push('')
+            while (countCols > col.length) {
+                col.push('')
+            }
             this.instanceData.push(col)
         })
         return this
@@ -344,7 +366,9 @@ export default class BomTable {
             this.instanceHeader = []
             return
         }
-        while (this.instanceData[0].length > header.length) header.push('')
+        while (this.instanceData[0].length > header.length) {
+            header.push('')
+        }
         header.length = this.instanceData[0].length
         this.instanceHeader = header
     }
@@ -400,7 +424,9 @@ export default class BomTable {
             this.dom.rows[index] = tr
         }
 
-        if (!render) return tr
+        if (!render) {
+            return tr
+        }
 
         if (nextTr) {
             tableBody.insertBefore(tr, nextTr)
@@ -466,7 +492,9 @@ export default class BomTable {
             copyCol = col.cloneNode(false)
         if (index != null) {
             Object.keys(this.dataMap).forEach(key => {
-                if (key.indexOf(`${index}::`) !== 0) return
+                if (key.indexOf(`${index}::`) !== 0) {
+                    return
+                }
 
                 let el = this.dataMap[key],
                     parent = el.parentElement,
@@ -515,15 +543,16 @@ export default class BomTable {
      * @return {BomTable}
      */
     removeRows(nums = []) {
-        let rows = nums.length ? nums : this.selectedRows
-
-        let tmp = [],
+        let rows = nums.length ? nums : this.selectedRows,
+            tmp = [],
             rowValues = []
 
         rows.forEach(rowNum => {
             let firstTd = this.dataMap[`0::${rowNum}`],
                 parentTr = firstTd && firstTd.parentNode
-            if (!parentTr) return
+            if (!parentTr) {
+                return
+            }
 
             rowValues.push({ row: rowNum, data: this.dataRow(rowNum) })
             tmp.push(rowNum)
@@ -541,12 +570,12 @@ export default class BomTable {
      * @private
      */
     _removeRows(rows) {
-        if (!rows.length) return this
+        if (!rows.length) {
+            return this
+        }
         rows.forEach(rowNum => {
             let parentTr = this.dataMap[`0::${rowNum}`].parentNode
-            helper._likeArray(parentTr.children).forEach(td => {
-                delete this.cellMeta[td.bomtableKey]
-            })
+            helper._likeArray(parentTr.children).forEach(td => delete this.cellMeta[td.bomtableKey])
             helper.removeElement(parentTr)
         })
         return this._reindex()
@@ -575,7 +604,9 @@ export default class BomTable {
      * @private
      */
     _removeCols(cols) {
-        if (!cols.length) return this
+        if (!cols.length) {
+            return this
+        }
         cols.forEach(colNum => {
             Object.keys(this.dataMap).forEach(key => {
                 if (!key.indexOf(`${colNum}::`)) {
@@ -610,7 +641,9 @@ export default class BomTable {
     unionRows(nums = []) {
         let rows = nums.length ? nums : this.selectedRows
 
-        if (rows.length === 1) return this
+        if (rows.length === 1) {
+            return this
+        }
         let firstRowIndex = rows.shift(),
             data = this.data,
             prevData = helper.cloneArray(data),
@@ -640,7 +673,9 @@ export default class BomTable {
     unionCols(nums = []) {
         let cols = nums.length ? nums : this.selectedCols
 
-        if (cols.length === 1) return this
+        if (cols.length === 1) {
+            return this
+        }
 
         let firstColNum = cols.shift(),
             data = this.data,
@@ -655,7 +690,9 @@ export default class BomTable {
                 cell = cell ? cell.toString().trim() : ''
 
                 if (cols.includes(colNum) && firstVal !== cell) {
-                    if (!newRow[firstColNum]) newRow[firstColNum] = ''
+                    if (!newRow[firstColNum]) {
+                        newRow[firstColNum] = ''
+                    }
                     newRow[firstColNum] += ' ' + cell
                 }
 
@@ -683,7 +720,9 @@ export default class BomTable {
      * @returns {BomTable}}
      */
     undo() {
-        if (!this.history) return this
+        if (!this.history) {
+            return this
+        }
         this.history.undo()
         return this
     }
@@ -693,7 +732,9 @@ export default class BomTable {
      * @returns {BomTable}}
      */
     redo() {
-        if (!this.history) return this
+        if (!this.history) {
+            return this
+        }
         this.history.redo()
         return this
     }
@@ -763,7 +804,9 @@ export default class BomTable {
      * @private
      */
     _calcColsWidth() {
-        if (!this.dom.colgroup) return this
+        if (!this.dom.colgroup) {
+            return this
+        }
         this.dom.table.style.width = 'auto'
         let hasHeader = this.dom.header,
             colGroupChildren = helper._likeArray(this.dom.colgroup.children),
@@ -797,7 +840,9 @@ export default class BomTable {
 
         if (this.dom.header && this.dom.header.firstElementChild) {
             ;['header', 'copyHeader'].forEach(h => {
-                if (!this.dom[h].firstElementChild) return
+                if (!this.dom[h].firstElementChild) {
+                    return
+                }
                 helper._likeArray(this.dom[h].firstElementChild.children).forEach((th, colNum) => {
                     let childWrap = helper
                             ._likeArray(th.children[0].children)
@@ -869,7 +914,9 @@ export default class BomTable {
 
         this._prepareData(this.config.data)
 
-        if (!this.instanceData[0]) return this
+        if (!this.instanceData[0]) {
+            return this
+        }
 
         if (!this.dom.wrapper) {
             this.dom.colgroup = helper.createElement({
@@ -910,7 +957,9 @@ export default class BomTable {
         this._container.instanceKey = this.key
         this._container.style.opacity = '0'
         setTimeout(() => {
-            if (!this.dom.wrapper) return
+            if (!this.dom.wrapper) {
+                return
+            }
             this._setContainerWidth()._calcColsWidth()
             this.dom.body.classList.remove('building')
             this._container.style.opacity = ''
@@ -925,7 +974,9 @@ export default class BomTable {
      * @private
      */
     _renderContainer() {
-        if (this.destroyed) return this
+        if (this.destroyed) {
+            return this
+        }
 
         let withHeader = this.config.header && this.config.header.length
 
@@ -960,7 +1011,9 @@ export default class BomTable {
      * @private
      */
     _renderHeader() {
-        if (!this.instanceData[0]) return this
+        if (!this.instanceData[0]) {
+            return this
+        }
 
         let renders = this.config.renders
 
@@ -1073,7 +1126,9 @@ export default class BomTable {
     removeHeader() {
         ;['header', 'copyHeader'].forEach(key => {
             let el = this.dom[key]
-            if (!el) return
+            if (!el) {
+                return
+            }
             helper.removeElement(el)
             this.dom[key] = null
         })
@@ -1178,7 +1233,9 @@ export default class BomTable {
      * @private
      */
     _createMenu(e, menuName) {
-        if (this.destroyed) return this
+        if (this.destroyed) {
+            return this
+        }
 
         let html = '',
             history = this.history,
@@ -1241,7 +1298,9 @@ export default class BomTable {
         let el = e && e.target,
             action
 
-        if (!this.dom[menuName]) return this
+        if (!this.dom[menuName]) {
+            return this
+        }
 
         if (
             el &&
@@ -1320,12 +1379,11 @@ export default class BomTable {
                 clearTimeout(this.tapTimeout)
                 this.tapped = false
                 return false
-            } else {
-                this.tapped = el
-                this.tapTimeout = setTimeout(() => {
-                    this.tapped = false
-                }, 500)
             }
+            this.tapped = el
+            this.tapTimeout = setTimeout(() => {
+                this.tapped = false
+            }, 500)
         }
 
         if (this.input && el === this.input.el) {
@@ -1364,10 +1422,11 @@ export default class BomTable {
         this._removeSquares()
 
         helper.parents(el).some(p => {
-            if (p.tagName === 'TH') {
-                el = p
-                return true
+            if (p.tagName !== 'TH') {
+                return false
             }
+            el = p
+            return true
         })
 
         if (!helper.isTableCell(el)) {
@@ -1399,7 +1458,9 @@ export default class BomTable {
      * @private
      */
     _onmouseup(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) {
+            return
+        }
 
         let el = e.target,
             clickOnContextMenu = this._checkClickOnContextMenu(e)
@@ -1435,7 +1496,7 @@ export default class BomTable {
 
         if (
             this.colResizerPressedIndex == null &&
-            (e.which === 1 || this.isTouch) &&
+            (!e.button || this.isTouch) &&
             el.classList.contains('bomtable-header-cell-btn') &&
             !el.parentNode.classList.contains('active')
         ) {
@@ -1458,9 +1519,13 @@ export default class BomTable {
      * @private
      */
     _ontouchmove(e) {
-        if (!this || this.destroyed) return false
+        if (!this || this.destroyed) {
+            return false
+        }
 
-        if (!this.mouseBtnPressed || this._countTouch > 1) return true
+        if (!this.mouseBtnPressed || this._countTouch > 1) {
+            return true
+        }
         e.preventDefault()
 
         let touch = e.targetTouches[0],
@@ -1479,10 +1544,11 @@ export default class BomTable {
                     rect.left + rect.width > X &&
                     windowYScroll + rect.top + rect.height > Y
 
-            if (isHover) {
-                el = i
-                return true
+            if (!isHover) {
+                return false
             }
+            el = i
+            return true
         })
 
         if (this.colResizerPressedIndex != null) {
@@ -1491,9 +1557,9 @@ export default class BomTable {
             return false
         }
 
-        if (!el || this.lastHover === el) return false
-
-        if (!helper.isTableCell(el)) return false
+        if (!el || this.lastHover === el || !helper.isTableCell(el)) {
+            return false
+        }
 
         this.lastHover = el
 
@@ -1511,7 +1577,9 @@ export default class BomTable {
      * @private
      */
     _onContainerMouseover(e) {
-        if (!this || this.destroyed) return false
+        if (!this || this.destroyed) {
+            return false
+        }
 
         let el = e.target
 
@@ -1528,16 +1596,20 @@ export default class BomTable {
      * @private
      */
     _onContainerMousemove(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) {
+            return
+        }
 
         let el = e.target
+
+        if (this.lastHover === el) {
+            return
+        }
 
         if (this.colResizerPressedIndex != null) {
             this._setColResizerPosition(this.colResizerPressedIndex, e.clientX + 2.5)
             helper.clearSelected()
         }
-
-        if (this.lastHover === el) return
 
         let isFirstEl = this.dom.header
             ? el.tagName === 'TH'
@@ -1549,7 +1621,9 @@ export default class BomTable {
 
         this.lastHover = el
 
-        if (!this.mouseBtnPressed) return
+        if (!this.mouseBtnPressed) {
+            return
+        }
 
         if (this._squarePressed && el.tagName === 'TD') {
             this._squareAreaListener(e)
@@ -1562,15 +1636,15 @@ export default class BomTable {
      * @private
      */
     _onContainerDblclick(e) {
-        if (!this || this.destroyed) return true
-
-        let el = e.target
-
-        if (el.tagName !== 'TD') {
+        if (!this || this.destroyed) {
             return true
         }
 
-        if (!this._checkContainer(e)) return true
+        let el = e.target
+
+        if (el.tagName !== 'TD' || !this._checkContainer(e)) {
+            return true
+        }
 
         this._setActiveCell(e, el)
 
@@ -1583,7 +1657,9 @@ export default class BomTable {
      * @private
      */
     _onBufferKeyDown(e) {
-        if (!this || this.destroyed || !this.instanceData[0]) return
+        if (!this || this.destroyed || !this.instanceData[0]) {
+            return
+        }
 
         let data,
             eventKey = e.key,
@@ -1595,7 +1671,7 @@ export default class BomTable {
             map = { start: { colNum, rowNum }, end: { colNum, rowNum } },
             keyMustIgnore = helper._keysIgnore(eventKey)
 
-        if (this.selected.length > 1 && this.mouseDownElement && eventKey.substr(0, 5) === 'Arrow') {
+        if (this.selected.length > 1 && this.mouseDownElement && eventKey.substring(0, 5) === 'Arrow') {
             rowNum = map.start.rowNum = map.end.rowNum = this.mouseDownElement.rowNum
             colNum = map.start.colNum = map.end.colNum = this.mouseDownElement.colNum
         }
@@ -1608,7 +1684,9 @@ export default class BomTable {
                 }
                 if (!colNum) {
                     moveSelect = true
-                    if (!rowNum) rowNum = totalRows + 1
+                    if (!rowNum) {
+                        rowNum = totalRows + 1
+                    }
                     map.start.rowNum = map.end.rowNum = rowNum - 1
                     map.start.colNum = map.end.colNum = totalCols
                 }
@@ -1616,7 +1694,9 @@ export default class BomTable {
             case 'ArrowRight':
                 if (totalCols === colNum) {
                     moveSelect = true
-                    if (rowNum === totalRows) rowNum = -1
+                    if (rowNum === totalRows) {
+                        rowNum = -1
+                    }
                     map.start.colNum = map.end.colNum = 0
                     map.start.rowNum = map.end.rowNum = rowNum + 1
                 }
@@ -1632,7 +1712,9 @@ export default class BomTable {
                 }
                 if (!rowNum) {
                     moveSelect = true
-                    if (!colNum) colNum = totalCols + 1
+                    if (!colNum) {
+                        colNum = totalCols + 1
+                    }
                     map.start.rowNum = map.end.rowNum = totalRows
                     map.start.colNum = map.end.colNum = colNum - 1
                 }
@@ -1644,7 +1726,9 @@ export default class BomTable {
                 }
                 if (rowNum === totalRows) {
                     moveSelect = true
-                    if (colNum === totalCols) colNum = -1
+                    if (colNum === totalCols) {
+                        colNum = -1
+                    }
                     map.start.rowNum = map.end.rowNum = 0
                     map.start.colNum = map.end.colNum = colNum + 1
                 }
@@ -1704,8 +1788,12 @@ export default class BomTable {
         if (moveSelect) {
             e.preventDefault()
             this._removeInput()
-            if (map.start.rowNum < 1) map.start.rowNum = 0
-            if (map.end.rowNum < 1) map.end.rowNum = 0
+            if (map.start.rowNum < 1) {
+                map.start.rowNum = 0
+            }
+            if (map.end.rowNum < 1) {
+                map.end.rowNum = 0
+            }
             this._removePressed()
             this._setActiveArea(map)
         } else if (!e.ctrlKey && !e.shiftKey && !keyMustIgnore && !this.mouseBtnPressed) {
@@ -1719,14 +1807,15 @@ export default class BomTable {
      * @private
      */
     _oncontextmenu(e) {
-        if (!this || this.destroyed || this.input) return
+        if (!this || this.destroyed || this.input) {
+            return
+        }
 
         let el = e.target
 
-        if (!helper.parents(el).some(p => p === this._container)) {
+        if (!helper.parents(el).some(p => p === this._container) || !this._checkContainer(e)) {
             return
         }
-        if (!this._checkContainer(e)) return
 
         this.createContextMenu(e)
     }
@@ -1737,7 +1826,9 @@ export default class BomTable {
      * @private
      */
     _onkeydown(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) {
+            return
+        }
 
         if (e.key === 'Escape') {
             if (this.mouseBtnPressed && this.dom.copyAreaLeft) {
@@ -1755,21 +1846,23 @@ export default class BomTable {
             }
         }
 
-        if (!this.instanceData[0]) return
+        if (!this.instanceData[0]) {
+            return
+        }
 
         let el = this.input && this.input.el,
-            eventKey = e.key
+            eventKey = e.key.toLowerCase()
 
-        if (e.ctrlKey && !el && eventKey.toLowerCase() !== 'a' && this._checkContainer(e)) {
+        if (e.ctrlKey && !el && eventKey !== 'a' && this._checkContainer(e)) {
             this._focusBuffer(e)._setValueToBuffer()
         }
 
-        if (e.ctrlKey && eventKey.toLowerCase() === 'z') {
+        if (e.ctrlKey && eventKey === 'z') {
             this.undo()
             return
         }
 
-        if (e.ctrlKey && eventKey.toLowerCase() === 'y') {
+        if (e.ctrlKey && eventKey === 'y') {
             this.redo()
             return
         }
@@ -1785,7 +1878,9 @@ export default class BomTable {
      * @private
      */
     _onBufferPaste(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) {
+            return
+        }
 
         e.stopPropagation()
         e.preventDefault()
@@ -1815,7 +1910,9 @@ export default class BomTable {
                 lengthPasteData = pasteData.length
             while (selectedArea.length > pasteData.length) {
                 pasteData.push(pasteData[index++])
-                if (index === lengthPasteData) index = 0
+                if (index === lengthPasteData) {
+                    index = 0
+                }
             }
         } else if (oneSelected && pasteData.length > selectedArea.length) {
             let lastRowIndex = selectedRows[selectedRows.length - 1]
@@ -1829,7 +1926,9 @@ export default class BomTable {
             }
         }
 
-        if (!selectedArea[0] || !pasteData[0]) return
+        if (!selectedArea[0] || !pasteData[0]) {
+            return
+        }
 
         if (selectedArea[0].length > pasteData[0].length) {
             pasteData.forEach(row => {
@@ -1837,7 +1936,9 @@ export default class BomTable {
                     lengthPasteData = pasteData[0].length
                 while (selectedArea[0].length > row.length) {
                     row.push(row[index++])
-                    if (index === lengthPasteData) index = 0
+                    if (index === lengthPasteData) {
+                        index = 0
+                    }
                 }
             })
         } else if (oneSelected && pasteData[0].length > selectedArea[0].length) {
@@ -1850,18 +1951,25 @@ export default class BomTable {
             }
         }
 
-        let map = { start: {}, end: {} }
-
-        let prevValues = []
+        let map = { start: {}, end: {} },
+            prevValues = []
         selectedArea.forEach((row, rowIndex) => {
             row.forEach((key, colIndex) => {
                 let [colNum, rowNum] = helper._splitKey(key)
 
-                if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = colNum
-                if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = rowNum
+                if (map.start.colNum == null || map.start.colNum > colNum) {
+                    map.start.colNum = colNum
+                }
+                if (map.start.rowNum == null || map.start.rowNum > rowNum) {
+                    map.start.rowNum = rowNum
+                }
 
-                if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = colNum
-                if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = rowNum
+                if (map.end.colNum == null || colNum > map.end.colNum) {
+                    map.end.colNum = colNum
+                }
+                if (map.end.rowNum == null || rowNum > map.end.rowNum) {
+                    map.end.rowNum = rowNum
+                }
 
                 if (this.dataMap[key]) {
                     prevValues.push({ col: colNum, row: rowNum, val: this.dataCell(colNum, rowNum) })
@@ -1884,11 +1992,15 @@ export default class BomTable {
      * @private
      */
     _onContainerScroll(e) {
-        if (!this || this.destroyed) return
+        if (!this || this.destroyed) {
+            return
+        }
         clearTimeout(this.containerScrollTimeout)
         this.containerScrollTimeout = setTimeout(() => {
             let elHelper = this.dom.elHelper
-            if (!elHelper || !this.lastSelected) return
+            if (!elHelper || !this.lastSelected) {
+                return
+            }
             let td = this.lastSelected.el,
                 tdRect = td.getBoundingClientRect(),
                 wrapPos = this._getWrapTopLeftPosition(),
@@ -1905,7 +2017,9 @@ export default class BomTable {
      * @private
      */
     _onInput() {
-        if (!this || this.destroyed || !this.dom.elHelper || !this.input) return this
+        if (!this || this.destroyed || !this.dom.elHelper || !this.input) {
+            return this
+        }
         this._updateInputSize()
     }
 
@@ -1915,7 +2029,9 @@ export default class BomTable {
      * @private
      */
     _onInputKeyDown(e) {
-        if (!this || this.destroyed || !e.target) return
+        if (!this || this.destroyed || !e.target) {
+            return
+        }
 
         let el = e.target,
             val = el.value
@@ -1976,13 +2092,17 @@ export default class BomTable {
      * @private
      */
     _focusBuffer(e) {
-        if (this.destroyed) return this
+        if (this.destroyed) {
+            return this
+        }
 
-        if (!this._checkContainer(e) || this.isTouch) return this
+        if (!this._checkContainer(e) || this.isTouch) {
+            return this
+        }
 
         let el = e.target,
-            wrapPos = this._getWrapTopLeftPosition()
-        let rect = el.getBoundingClientRect()
+            wrapPos = this._getWrapTopLeftPosition(),
+            rect = el.getBoundingClientRect()
         this.dom._buffer.style.top = rect.top - wrapPos.top + 'px'
         this.dom._buffer.style.left = rect.left - wrapPos.left + 'px'
         this.dom._buffer.focus()
@@ -2010,12 +2130,12 @@ export default class BomTable {
      * @private
      */
     _setValueToBuffer() {
-        if (this.destroyed) return this
+        if (this.destroyed) {
+            return this
+        }
 
         let str = []
-        this.selectedData.forEach(row => {
-            str.push(row.join('\t'))
-        })
+        this.selectedData.forEach(row => str.push(row.join('\t')))
         this.dom._buffer.value = str.join('\n')
         this.dom._buffer.select()
 
@@ -2032,7 +2152,9 @@ export default class BomTable {
         let type = e.type,
             keyType = 'none'
 
-        if (!el) return {}
+        if (!el) {
+            return {}
+        }
 
         if (e.shiftKey) {
             keyType = 'shiftKey'
@@ -2047,7 +2169,9 @@ export default class BomTable {
         }
 
         let res = this._colNumRowNumByEl(el)
-        if (!res) return {}
+        if (!res) {
+            return {}
+        }
 
         let [colNum, rowNum] = res
 
@@ -2098,7 +2222,9 @@ export default class BomTable {
      * @private
      */
     _setLastSelected(el, colNum, rowNum) {
-        if (this.lastSelected && this.lastSelected.el === el) return
+        if (this.lastSelected && this.lastSelected.el === el) {
+            return
+        }
 
         return (this.lastSelected = { el, colNum, rowNum })
     }
@@ -2111,7 +2237,9 @@ export default class BomTable {
      * @private
      */
     _setActiveArea(map, keyType = 'none') {
-        if (this.destroyed) return this
+        if (this.destroyed) {
+            return this
+        }
         let startCol = map.start.colNum,
             endCol = map.end.colNum,
             startRow = map.start.rowNum,
@@ -2175,7 +2303,9 @@ export default class BomTable {
 
         cols.forEach(col => {
             rows.forEach(row => {
-                if (row === -1) return
+                if (row === -1) {
+                    return
+                }
                 let key = `${col}::${row}`,
                     el = this.dataMap[key]
                 if (this.selected.includes(key)) {
@@ -2227,11 +2357,15 @@ export default class BomTable {
     _ariaPosition({ startCol, startRow, endCol, endRow }, borderWidth = 1) {
         let borderHalf = Math.ceil(borderWidth / 2),
             firstTd = this.dataMap[`${startCol}::${startRow}`]
-        if (!firstTd) return false
+        if (!firstTd) {
+            return false
+        }
 
         let firstRect = firstTd.getBoundingClientRect(),
             lastTd = this.dataMap[`${endCol}::${endRow}`]
-        if (!lastTd) return false
+        if (!lastTd) {
+            return false
+        }
 
         let lastRect = lastTd.getBoundingClientRect()
 
@@ -2249,15 +2383,21 @@ export default class BomTable {
      * @private
      */
     _rerenderActiveArea() {
-        if (this.destroyed) return this
-        if (!Object.keys(this.lastSelectArea).length) return this
+        if (this.destroyed) {
+            return this
+        }
+        if (!Object.keys(this.lastSelectArea).length) {
+            return this
+        }
         let area = this.lastSelectArea,
             startCol = area.start.col,
             startRow = area.start.row,
             endCol = area.end.col,
-            endRow = area.end.row
-        let position = this._ariaPosition({ startCol, startRow, endCol, endRow })
-        if (!position) return this
+            endRow = area.end.row,
+            position = this._ariaPosition({ startCol, startRow, endCol, endRow })
+        if (!position) {
+            return this
+        }
         return this._addSquareArea(position, 'activeArea')._createSquares()
     }
 
@@ -2268,7 +2408,9 @@ export default class BomTable {
      */
     _scrollToActive() {
         let selected = this.selected
-        if (selected.length > 1 || !this.dataMap[selected[0]]) return this
+        if (selected.length > 1 || !this.dataMap[selected[0]]) {
+            return this
+        }
         let container = this._container,
             elRect = this.dataMap[selected[0]].getBoundingClientRect(),
             wrapPos = this._getWrapTopLeftPosition(),
@@ -2296,7 +2438,9 @@ export default class BomTable {
             scrollX = leftPoint + right - rightPoint
         }
 
-        if (scrollX < 1 && scrollY < 1) return this
+        if (scrollX < 1 && scrollY < 1) {
+            return this
+        }
         container.scrollTo(scrollX, scrollY)
 
         return this
@@ -2316,7 +2460,9 @@ export default class BomTable {
      * @private
      */
     _clearActiveArea() {
-        if (!this.lastSelected && !this.selected.length) return this
+        if (!this.lastSelected && !this.selected.length) {
+            return this
+        }
 
         this.instanceData.length &&
             this.selectedMap.forEach(key => {
@@ -2370,14 +2516,18 @@ export default class BomTable {
     _createSquares() {
         let { col: endCol, row: endRow } = this.lastSelectArea.end
 
-        if (!this.instanceData || !this.instanceData.length) return this
+        if (!this.instanceData || !this.instanceData.length) {
+            return this
+        }
 
         let downRightTd = this.dataMap[`${endCol}::${endRow}`],
             topCorrector = this.instanceData.length === endRow + 1 ? 3 : 0,
             rightCorrector = this.instanceData[0].length === endCol + 1 ? 3 : 0,
             wrapPos = this._getWrapTopLeftPosition()
 
-        if (!downRightTd || downRightTd.tagName !== 'TD') return this
+        if (!downRightTd || downRightTd.tagName !== 'TD') {
+            return this
+        }
 
         let rectDownRight = downRightTd.getBoundingClientRect()
 
@@ -2445,7 +2595,9 @@ export default class BomTable {
      * @private
      */
     _squareAreaListener(e, el = null) {
-        if (!el) el = e.target
+        if (!el) {
+            el = e.target
+        }
 
         let w = window,
             bottomRightSelectTr = this.dataMap[`${this.lastSelectArea.end.col}::${this.lastSelectArea.end.row}`],
@@ -2465,7 +2617,9 @@ export default class BomTable {
             let td = this.dataMap[key],
                 splitKey
 
-            if (td !== el) return false
+            if (td !== el) {
+                return false
+            }
 
             splitKey = helper._splitKey(key)
             elMap.col = splitKey[0]
@@ -2575,7 +2729,9 @@ export default class BomTable {
      * @private
      */
     _removeSquareArea(name) {
-        if (!this.dom[`${name}Left`]) return
+        if (!this.dom[`${name}Left`]) {
+            return
+        }
         ;['Left', 'Top', 'Right', 'Bottom'].forEach(key => {
             helper.removeElement(this.dom[`${name}${key}`])
             this.dom[`${name}${key}`] = null
@@ -2592,7 +2748,10 @@ export default class BomTable {
         let hasHeader = this.dom.header,
             headerColW = hasHeader && this.dataMap[`${colNum}::-1`] ? this.dataMap[`${colNum}::-1`].offsetWidth : 0,
             fistTdW = this.dataMap[`${colNum}::0`].offsetWidth,
-            colElWidth = hasHeader && this.dom.copyColgroup.children[colNum] ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].width) : 0
+            colElWidth =
+                hasHeader && this.dom.copyColgroup.children[colNum]
+                    ? helper.getNumberFromString(this.dom.copyColgroup.children[colNum].width)
+                    : 0
         let w = this._manualColSize[colNum] || Math.max.apply(Math, [headerColW, fistTdW, colElWidth, this.minColWidth])
         return Math.ceil(w)
     }
@@ -2638,7 +2797,9 @@ export default class BomTable {
      * @private
      */
     _setColSize(event) {
-        if (this.colResizerPressedIndex == null) return this
+        if (this.colResizerPressedIndex == null) {
+            return this
+        }
 
         let hasHeader = this.dom.header
 
@@ -2652,7 +2813,9 @@ export default class BomTable {
             wrapPosLeft = this._getWrapTopLeftPosition().left,
             width = this.dom._colResizerLine.getBoundingClientRect().x - wrapPosLeft - (leftEl - wrapPosLeft),
             colEl = helper._likeArray(this.dom.colgroup.children)[colNum]
-        if (width < this.minColWidth) width = this.minColWidth
+        if (width < this.minColWidth) {
+            width = this.minColWidth
+        }
         colEl.width = width
 
         this._manualColSize[colNum] = width
@@ -2691,13 +2854,17 @@ export default class BomTable {
     _setColResizerPosition(colNum, position = null) {
         let el = this.dom.header ? this.dataMap[`${colNum}::-2`] : this.dataMap[`${colNum}::0`]
 
-        if (!el) return this
+        if (!el || (this.mouseBtnPressed && !this._colResizerPressed)) {
+            return this
+        }
         let wrapPos = this._getWrapTopLeftPosition(),
             elRect = el.getBoundingClientRect(),
             elRight = position || elRect.right,
             containerRightPosition = this._container.getBoundingClientRect().right
 
-        if (elRight < wrapPos.left) elRight = wrapPos.left
+        if (elRight < wrapPos.left) {
+            elRight = wrapPos.left
+        }
         if (elRight > containerRightPosition) {
             elRight = containerRightPosition
         }
@@ -2723,7 +2890,9 @@ export default class BomTable {
      * @private
      */
     _removeCopyArea(saveValue = true) {
-        if (!this.dom.copyAreaLeft) return this
+        if (!this.dom.copyAreaLeft) {
+            return this
+        }
         this._removeSquareArea('copyArea')
 
         let map
@@ -2746,8 +2915,12 @@ export default class BomTable {
 
             this.squareDragArea.forEach(key => {
                 let rowNum = +key.split('::')[1]
-                if (rowNum < 0) return
-                if (!squareAreaMap[rowNum]) squareAreaMap[rowNum] = []
+                if (rowNum < 0) {
+                    return
+                }
+                if (!squareAreaMap[rowNum]) {
+                    squareAreaMap[rowNum] = []
+                }
                 squareAreaMap[rowNum].push(key)
             })
 
@@ -2760,7 +2933,9 @@ export default class BomTable {
                     while (squareAreaMap.length > copyDataKeys.length) {
                         if (this.direction.y === 'down') {
                             copyDataKeys.push(copyDataKeys[index++])
-                            if (index === lengthData) index = 0
+                            if (index === lengthData) {
+                                index = 0
+                            }
                         } else {
                             copyDataKeys.unshift(copyDataKeys[copyDataKeys.length - ++index])
                         }
@@ -2774,7 +2949,9 @@ export default class BomTable {
                         while (squareAreaMap[0].length > row.length) {
                             if (this.direction.x === 'right') {
                                 row.push(row[index++])
-                                if (index === lengthData) index = 0
+                                if (index === lengthData) {
+                                    index = 0
+                                }
                             } else {
                                 row.unshift(row[row.length - ++index])
                             }
@@ -2788,13 +2965,23 @@ export default class BomTable {
                         let copyKey = copyDataKeys[rowIndex][colIndex],
                             [colNum, rowNum] = helper._splitKey(key)
 
-                        if (map.start.colNum == null || map.start.colNum > colNum) map.start.colNum = colNum
-                        if (map.start.rowNum == null || map.start.rowNum > rowNum) map.start.rowNum = rowNum
+                        if (map.start.colNum == null || map.start.colNum > colNum) {
+                            map.start.colNum = colNum
+                        }
+                        if (map.start.rowNum == null || map.start.rowNum > rowNum) {
+                            map.start.rowNum = rowNum
+                        }
 
-                        if (map.end.colNum == null || colNum > map.end.colNum) map.end.colNum = colNum
-                        if (map.end.rowNum == null || rowNum > map.end.rowNum) map.end.rowNum = rowNum
+                        if (map.end.colNum == null || colNum > map.end.colNum) {
+                            map.end.colNum = colNum
+                        }
+                        if (map.end.rowNum == null || rowNum > map.end.rowNum) {
+                            map.end.rowNum = rowNum
+                        }
 
-                        if (copyKey === key) return
+                        if (copyKey === key) {
+                            return
+                        }
 
                         let [colCopyNum, rowCopyNum] = helper._splitKey(copyKey),
                             val = this.dataCell(colCopyNum, rowCopyNum)
@@ -2828,7 +3015,9 @@ export default class BomTable {
      * @return BomTable
      */
     _createInput(setCellValue = true) {
-        if (!this.lastSelected || this.lastSelected.el.tagName !== 'TD') return this
+        if (!this.lastSelected || this.lastSelected.el.tagName !== 'TD') {
+            return this
+        }
 
         let td = this.lastSelected.el,
             tdRect = td.getBoundingClientRect(),
@@ -2875,7 +3064,9 @@ export default class BomTable {
      * @private
      */
     _updateInputSize() {
-        if (!this.dom.elHelper || !this.input) return this
+        if (!this.dom.elHelper || !this.input) {
+            return this
+        }
 
         let elHelper = this.dom.elHelper,
             textarea = this.input.el,
@@ -2906,7 +3097,9 @@ export default class BomTable {
      * @private
      */
     _removeInput(saveValue = true) {
-        if (!this.input) return this
+        if (!this.input) {
+            return this
+        }
 
         let val = this.input.el.value,
             col = this.input.colNum,
@@ -2921,7 +3114,9 @@ export default class BomTable {
 
         this.input = null
 
-        if (!saveValue) return this
+        if (!saveValue) {
+            return this
+        }
         this.dataCell = { col, row, val }
 
         return this
@@ -2984,9 +3179,13 @@ export default class BomTable {
      */
     _checkContainer(e) {
         let el = e.target
-        if (!el || !el.parentNode) return true
+        if (!el || !el.parentNode) {
+            return true
+        }
         let container = helper.parents(el).find(e => e === this._container)
-        if (!container) return false
+        if (!container) {
+            return false
+        }
         return this.key === container.instanceKey
     }
 
@@ -3019,7 +3218,9 @@ export default class BomTable {
 
         this.lastSelectArea = {}
         Object.keys(this.dom).forEach(nodeName => {
-            if (!this.dom[nodeName]) return
+            if (!this.dom[nodeName]) {
+                return
+            }
             if (typeof this.dom[nodeName] === 'object') {
                 Object.keys(this.dom[nodeName]).forEach(key => {
                     helper.removeElement(this.dom[nodeName][key])
@@ -3043,7 +3244,7 @@ export default class BomTable {
      */
     destroy() {
         Object.keys(this.handlers).forEach(event => {
-            let domEvent = event.substr(3)
+            let domEvent = event.substring(3)
             document.removeEventListener(domEvent, this.handlers[event])
         })
 
