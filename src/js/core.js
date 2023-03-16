@@ -985,6 +985,10 @@ export default class BomTable {
                 ? document.querySelector(this.config.container)
                 : this.config.container
 
+        if (!this._container.style || !this._container.style) {
+            return this
+        }
+
         this.dom.wrapper = helper.createElement({
             tagName: 'div',
             selector: 'bomtable-wrapper',
