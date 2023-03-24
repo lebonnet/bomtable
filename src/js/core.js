@@ -804,7 +804,7 @@ export default class BomTable {
      * @private
      */
     _calcColsWidth() {
-        if (!this.dom.colgroup) {
+        if (!this.dom.colgroup || !this.instanceData[0]) {
             return this
         }
         this.dom.table.style.width = 'auto'
