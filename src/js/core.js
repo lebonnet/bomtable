@@ -49,7 +49,7 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.12'
+        this.version = '2.4.13'
 
         this._ini()
 
