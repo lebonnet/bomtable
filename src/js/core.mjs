@@ -1,7 +1,9 @@
 import History from './History'
 import * as helper from './helper'
 
-export default class BomTable {
+import '../scss/bomtable.scss'
+
+export class BomTable {
     constructor(opts = {}) {
         /**
          * Config
@@ -49,7 +51,6 @@ export default class BomTable {
 
         this.minColWidth = 60
         this.isTouch = this.config.touchSupport && 'ontouchstart' in window
-        this.version = '2.4.13'
 
         this._ini()
 
