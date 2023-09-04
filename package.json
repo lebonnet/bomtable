@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "v-patch": "node v-patch.mjs"
+    "v-patch": "node v-patch.mjs",
+    "postversion": "npm publish"
   },
   "repository": {
     "type": "git",
