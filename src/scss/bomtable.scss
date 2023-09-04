@@ -184,6 +184,9 @@ $darkBlue: scale-color($blue, $lightness: -15%);
         min-height: auto;
         max-height: unset;
         box-sizing: border-box;
+        &:focus-visible {
+            outline: none;
+        }
     }
 
     .bomtable-buffer {

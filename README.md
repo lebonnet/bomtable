@@ -187,7 +187,7 @@ beforeHeaderMenuRender (instance: {BomTable}, menuList: {Object})
 
 ### Browser support
 ### поддержка браузерами
-Chrome 67+, Mozilla Firefox 59+, IE9+,
+Chrome 116+, Mozilla Firefox 114+,
 Touch support
 <br/>
 
