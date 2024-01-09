@@ -718,7 +718,7 @@ export class BomTable {
 
     /**
      * undo
-     * @returns {BomTable}}
+     * @return {BomTable}
      */
     undo() {
         if (!this.history) {
@@ -730,7 +730,7 @@ export class BomTable {
 
     /**
      * redo
-     * @returns {BomTable}}
+     * @return {BomTable}
      */
     redo() {
         if (!this.history) {
@@ -1855,19 +1855,19 @@ export class BomTable {
             return
         }
 
-        let el = this.input && this.input.el,
-            eventKey = e.key.toLowerCase()
+        const el = this.input && this.input.el
+        const keyCode = e.code
 
-        if (e.ctrlKey && !el && eventKey !== 'a' && this._checkContainer(e)) {
+        if (e.ctrlKey && !el && keyCode !== 'KeyA' && this._checkContainer(e)) {
             this._focusBuffer(e)._setValueToBuffer()
         }
 
-        if (e.ctrlKey && eventKey === 'z') {
+        if (e.ctrlKey && keyCode === 'KeyZ') {
             this.undo()
             return
         }
 
-        if (e.ctrlKey && eventKey === 'y') {
+        if (e.ctrlKey && keyCode === 'KeyY') {
             this.redo()
             return
         }
