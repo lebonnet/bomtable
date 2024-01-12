@@ -1,9 +1,3 @@
-// ie babel fix
-// @see https://stackoverflow.com/questions/53331180/babel-polyfill-being-included-but-foreach-still-doesnt-work-in-ie11-on-nodelis
-if (window.NodeList && !NodeList.prototype.forEach) {
-    NodeList.prototype.forEach = Array.prototype.forEach
-}
-
 /**
  * Create new HTML element
  * @param {String} tagName - name created tag
@@ -180,7 +174,7 @@ export function rand(min, max) {
  * @return {String}
  */
 export function randKey() {
-    return new Array(12).fill().map(() => rand(0, 9)).join('')
+    return Array.from({ length: 12 }).map(() => rand(0, 9)).join('')
 }
 
 /**
