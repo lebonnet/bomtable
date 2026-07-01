@@ -236,7 +236,7 @@ export class BomTable {
     /**
      * Set new data
      */
-    setData(data: TBomtableOptions['data']) {
+    setData(data: TCellValue[][]) {
         if (!Array.isArray(data)) {
             throw new TypeError('Data must be an array')
         }
@@ -257,7 +257,7 @@ export class BomTable {
     /**
      * Set new header
      */
-    setHeader(header: TBomtableOptions['header']) {
+    setHeader(header: TCellValue[]) {
         if (header && !Array.isArray(header)) {
             throw new Error('Header must be an array')
         }

@@ -134,13 +134,13 @@ new BomTable({
             bomTable[action]()
         },
     },
-    renders: (instance, el, colNum, rowNum) => {
-        if (rowNum === -1 || rowNum === -2) {
-            return
-        }
-        el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
-    },
     hooks: {
+        afterTdRender: (inst, td, colNum, rowNum, val, cellMeta) => {
+            if (rowNum === -1 || rowNum === -2) {
+                return
+            }
+            el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
+        },
         beforeHeaderMenuRender: (instance, list) => {
             delete list.hr
             delete list.removeRows
@@ -219,12 +219,6 @@ new BomTable({
                 ['Volkswagen Tiguan', 27666, 10660, '+160%'],
             ],
             header: ['Модель', '2017 год, шт.', '2016 год, шт.', 'Динамика'],
-            renders: (instance, el, colNum, rowNum) => {
-                if (rowNum === -1 || rowNum === -2) {
-                    return
-                }
-                el.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
-            },
             headerMenu: {
                 items: {
                     addRow: 'add row',
@@ -244,6 +238,12 @@ new BomTable({
                 },
             },
             hooks: {
+                afterTdRender: (inst, td, colNum, rowNum, val, cellMeta) => {
+                    if (rowNum === -1 || rowNum === -2) {
+                        return
+                    }
+                    td.style.background = (colNum + rowNum) % 2 === 0 ? '#eaeaea' : '#fff'
+                },
                 beforeHeaderMenuRender: (instance, list) => {
                     delete list.hr
                     delete list.removeRows

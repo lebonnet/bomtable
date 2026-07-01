@@ -33,7 +33,7 @@ yarn add bomtable
 ```
 
 ```javascript
-let instance = new BomTable({
+const instance = new BomTable({
     tableClass: 'ex-tbl',
     container: '.example',
     data: [[0, 7, 8, 9], [1, 20, 30], [2, 5], [3], [4, 56, 55, 22, 15, 18], [5, 7, 1], [6]],
@@ -48,17 +48,18 @@ let instance = new BomTable({
 
 renders example
 ```javascript
-let instance = new BomTable({
+const instance = new BomTable({
     tableClass: 'ex-tbl',
     container: '.example',
     data: [[0, 7, 8, 9], [1, 20, 30], [2, 5], [3], [4, 56, 55, 22, 15, 18], [5, 7, 1], [6]],
     header: ['0', '1', '2', '3', '4', '5', '6'],
 
-    renders: (inst, td, colNum, rowNum, val, cellMeta) => {
-        if (colNum === 2) td.style.color = 'tomato'
-        if (val === 1) td.style.color = 'green'
-    },
-
+    hooks: {
+        afterTdRender: (inst, td, colNum, rowNum, val, cellMeta) => {
+            if (colNum === 2) td.style.color = 'tomato'
+            if (val === 1) td.style.color = 'green'
+        }
+    }
 });
 ```
 
@@ -67,7 +68,7 @@ let instance = new BomTable({
 ### Options
 ### параметры
 ```javascript
-let opts = {
+const opts = {
     data: [], // data for table body (default empty array) | массив с данными
     header: null, // table header (default null) | массив с заголовками для таблицы
     stickyHeader: true, // sticky table header (default true) | прилипающий заголовок таблицы 
@@ -113,40 +114,40 @@ let opts = {
 ### Methods
 ### методы
 ```
-data - (getter) get table data | получить данные из таблицы ({Array})
+getData() - get table data | получить данные из таблицы ((string | number | null)[][])
 
-header - (getter) get table header | получить заголовки таблицы ({Array})
+getHeader() - get table header | получить заголовки таблицы ((string | number | null)[])
 
-selectedMap - (getter) get selected map | получить карту выделенных элементов ({Array})
+getSelectedMap() - get selected map | получить карту выделенных элементов (string[])
 
-selectedData - (getter) get data of selected area | получить данные с выделенной области ({Array})
+getSelectedData() - get data of selected area | получить данные с выделенной области ((string | number | null)[][])
 
-dataCell(col {number}, row {number}) - (getter) get cell value | получить значение ячейки
+getDataCell(col: number, row: number) - get cell value | получить значение ячейки (string | number | null)
 
-selectedRows - (getter) get index of selected rows | получить индексы выделенных строк ({Array})
+getSelectedRows() - get index of selected rows | получить индексы выделенных строк (number[])
 
-selectedCols - (getter) get index of selected cols | получить индексы выделенных столбцов ({Array})
+getSelectedCols() - get index of selected cols | получить индексы выделенных столбцов (number[])
 
-dataRow - (getter) get row data by index | получить данные строки по индексу ({Array})
+getDataRow(row: number) - get row data by index | получить данные строки по индексу ((string | number | null)[])
  
-dataCol - (getter) get col data by index | получить данные столбца по индексу ({Array})
+getDataCol(col: number) - get col data by index | получить данные столбца по индексу ((string | number | null)[])
 
-metaDataCell - (getter) get cell meta data by property name | получить мета данные ячейки по имени свойства ({Any})
+getMetaDataCell({ col: number, row: number, propName: string }) get cell meta data by property name | получить мета данные ячейки по имени свойства (any)
 ```
 <br/>
 
 ```
-data = {Array} - (setter) set new data | установить новые данные
+setData((string | number | null)[][]) - set new data | установить новые данные
 
-header = {Array} - (setter) set new data header | установить новые заголовки
+setHeader((string | number | null)[]) set new data header | установить новые заголовки
 
-dataCell = {col: {number}, {row: {number}, val: {*}) - (setter) set new value in cell | установить новое значение ячейки
+setDataCell({ col: number, row: number, val: (string | number | null)[]}) - set new value in cell | установить новое значение ячейки
 
-dataRow - {row: {number(rowIndex)}, data: {Array}} (setter) - set new row values | установить новые значени для строки 
+setDataRow({ row: number, data: (string | number | null)[] }) - set new row values | установить новые значени для строки 
  
-dataCol - {col: {number(colIndex)}, data: {Array}} (setter) - set new col values | установить новые значени для столбца
+setDataCol({ col: number, data: (string | number | null)[] }) - set new col values | установить новые значени для столбца
 
-metaDataCell - {col: {number}, row: {number}, propName: {String} val: {Any}} - set any data for cell by property name | установить любые мета данные для ячейки по имени свойства
+setMetaDataCell({ col: number, row: number, propName: string, val: any }) - set any data for cell by property name | установить любые мета данные для ячейки по имени свойства
 ```
 <br/>
 
@@ -155,13 +156,13 @@ addRow() - create new row | создать новую строку
 
 addCol() - create new col | создать новый столбец
 
-removeRows({Array}) - remove get rows or selected rows | удалить строки по индексам передающихся входным параметром
+removeRows(number[]) - remove get rows or selected rows | удалить строки по индексам передающихся входным параметром
 
-removeCols({Array}) - remove get cols or selected cols | удалить столбцы по индексам передающихся входным параметром
+removeCols(number[]) - remove get cols or selected cols | удалить столбцы по индексам передающихся входным параметром
 
-unionRows({Array})  - union get rows or selected rows | объеденить строки по индексам
+unionRows(number[])  - union get rows or selected rows | объеденить строки по индексам
 
-unionCols({Array})  - union get cols or selected cols | объеденить столбцы по индексам
+unionCols(number[])  - union get cols or selected cols | объеденить столбцы по индексам
 
 removeHeader() - remove table header | удалить заголовок таблицы
 ```
@@ -179,15 +180,15 @@ destroy() - destroy instance | разрушить instance
 ### Hooks
 ### Хуки
 ```
-beforeContextMenuRender (instance: {BomTable}, menuList: {Object})
-
-beforeHeaderMenuRender (instance: {BomTable}, menuList: {Object})
+beforeHeaderMenuRender(instance: TBomTable, menu: Record<string, string>) => void
+beforeContextMenuRender(instance: TBomTable, menu: Record<string, string>) => void
+afterTdRender(instance: TBomTable, td: TBomTableTd, colNum: number, rowNum: number, cell: TCellValue, meta: Record<string, any>) => void
 ```
 <br/>
 
 ### Browser support
 ### поддержка браузерами
-Chrome 116+, Mozilla Firefox 114+,
+Chrome 149+, Mozilla Firefox 152+,
 Touch support
 <br/>
 
