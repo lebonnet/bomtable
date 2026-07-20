@@ -7,6 +7,7 @@ export default defineConfig({
         open: '/example/index.html',
     },
     build: {
+        target: 'es2020',
         sourcemap: true,
         lib: {
             entry: 'src/Bomtable.ts',

@@ -1,7 +1,7 @@
 {
   "name": "bomtable",
   "description": "web table like simple excel",
-  "version": "26.01.07",
+  "version": "26.07.20",
   "type": "module",
   "scripts": {
     "dev": "vite",
