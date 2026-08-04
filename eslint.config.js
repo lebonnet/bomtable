@@ -33,13 +33,13 @@ export default config({
             // https://eslint.style/rules/js/function-call-spacing
             'style/function-call-spacing': ['error', 'never'],
             // https://eslint.style/rules/js/max-statements-per-line
-            'style/max-statements-per-line': ['error', {max: 1}],
+            'style/max-statements-per-line': ['error', { max: 1 }],
             // https://eslint.style/rules/js/brace-style
 
             // https://eslint.style/rules/js/brace-style
-            'style/brace-style': ['error', '1tbs', {allowSingleLine: false}],
+            'style/brace-style': ['error', '1tbs', { allowSingleLine: false }],
             // https://eslint.style/rules/js/arrow-parens
-            'style/arrow-parens': ['error', 'as-needed', {requireForBlockBody: false}],
+            'style/arrow-parens': ['error', 'as-needed', { requireForBlockBody: false }],
 
             // https://github.com/eslint-community/eslint-plugin-n/blob/master/docs/rules/prefer-global/process.md
             'node/prefer-global/process': 'off',
