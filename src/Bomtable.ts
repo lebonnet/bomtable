@@ -1,8 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
 
 import * as helper from './helper.ts'
-import { _splitKey } from './helper.ts'
-import { History } from './History.ts'
+import {_splitKey} from './helper.ts'
+import {History} from './History.ts'
 
 export type TBomTable = InstanceType<typeof BomTable>
 export type TCellValue = string | number | null
@@ -38,7 +38,10 @@ export interface TBomtableOptions {
 
     headerMenu?: {
         items: Record<string, string>
-        callback: () => void
+        callback: (action: string, instance: TBomTable, event: MouseEvent | KeyboardEvent, lastSelected: {
+            colNum?: number | null
+            rowNum?: number | null
+        }) => void
     }
 }
 
