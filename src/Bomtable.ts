@@ -1364,7 +1364,7 @@ export class BomTable {
 
             if (action) {
                 if (this.#config[menuName]?.callback) {
-                    this.#config[menuName].callback(action, this, e, this.#lastSelected || {
+                    this.#config[menuName].callback(action, this, e, this.#lastSelected || this.#mouseDownElement || {
                         colNum: null,
                         rowNum: null,
                     })
