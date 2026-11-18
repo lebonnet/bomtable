@@ -1,8 +1,8 @@
 // noinspection JSUnusedGlobalSymbols
 
 import * as helper from './helper.ts'
-import {_splitKey} from './helper.ts'
-import {History} from './History.ts'
+import { _splitKey } from './helper.ts'
+import { History } from './History.ts'
 
 export type TBomTable = InstanceType<typeof BomTable>
 export type TCellValue = string | number | null
@@ -47,18 +47,18 @@ export interface TBomtableOptions {
 
 type TDocumentHandlersName
     = '_oncontextmenu'
-    | '_onkeydown'
-    | '_ontouchstart'
-    | '_ontouchend'
-    | '_ontouchmove'
-    | '_onmousedown'
-    | '_onmouseup'
+        | '_onkeydown'
+        | '_ontouchstart'
+        | '_ontouchend'
+        | '_ontouchmove'
+        | '_onmousedown'
+        | '_onmouseup'
 
 type TContainerHandlersName
     = '_onContainerscroll'
-    | '_onContainerdblclick'
-    | '_onContainermousemove'
-    | '_onContainermouseover'
+        | '_onContainerdblclick'
+        | '_onContainermousemove'
+        | '_onContainermouseover'
 
 type TMenuName = 'contextMenu' | 'headerMenu'
 
@@ -245,9 +245,9 @@ export class BomTable {
         events.forEach(event => {
             const opts = ['touchstart', 'touchmove', 'touchend'].includes(event)
                 ? {
-                    passive: false,
-                    cancelable: true,
-                }
+                        passive: false,
+                        cancelable: true,
+                    }
                 : undefined
 
             const _event: TDocumentHandlersName = `_on${event}` as TDocumentHandlersName
