@@ -47,18 +47,18 @@ export interface TBomtableOptions {
 
 type TDocumentHandlersName
     = '_oncontextmenu'
-        | '_onkeydown'
-        | '_ontouchstart'
-        | '_ontouchend'
-        | '_ontouchmove'
-        | '_onmousedown'
-        | '_onmouseup'
+    | '_onkeydown'
+    | '_ontouchstart'
+    | '_ontouchend'
+    | '_ontouchmove'
+    | '_onmousedown'
+    | '_onmouseup'
 
 type TContainerHandlersName
     = '_onContainerscroll'
-        | '_onContainerdblclick'
-        | '_onContainermousemove'
-        | '_onContainermouseover'
+    | '_onContainerdblclick'
+    | '_onContainermousemove'
+    | '_onContainermouseover'
 
 type TMenuName = 'contextMenu' | 'headerMenu'
 
@@ -139,8 +139,8 @@ export class BomTable {
     #colResizerPressed: boolean = false
     #colResizerPressedIndex: number | null = null
 
-    #tapTimeout: ReturnType<typeof setTimeout> = 0
-    #containerScrollTimeout: ReturnType<typeof setTimeout> = 0
+    #tapTimeout: ReturnType<typeof setTimeout> | undefined
+    #containerScrollTimeout: ReturnType<typeof setTimeout> | undefined
 
     #squareDragArea: string[] = []
 
@@ -245,9 +245,9 @@ export class BomTable {
         events.forEach(event => {
             const opts = ['touchstart', 'touchmove', 'touchend'].includes(event)
                 ? {
-                        passive: false,
-                        cancelable: true,
-                    }
+                    passive: false,
+                    cancelable: true,
+                }
                 : undefined
 
             const _event: TDocumentHandlersName = `_on${event}` as TDocumentHandlersName
@@ -310,15 +310,15 @@ export class BomTable {
      */
     #setDataCell({ col, row, val }: { col: number, row: number, val: TCellValue }): TBomTable {
         const td = this.#dataMap[`${col}::${row}`]
-        const prevVal = this.#instanceData[row][col]
+        const prevVal = this.#instanceData[row]?.[col]
         const valType = typeof val
 
-        if (td.bomtableValType === valType && val === prevVal) {
+        if (!td || (td.bomtableValType === valType && val === prevVal)) {
             return this
         }
 
         td.bomtableValType = valType
-        td.innerHTML = this.#instanceData[row][col] = String(helper.prepareValue(val || ''))
+        td.innerHTML = this.#instanceData[row]![col] = String(helper.prepareValue(val || ''))
         return this
     }
 
@@ -326,7 +326,7 @@ export class BomTable {
      * Get cell value
      */
     getDataCell(col: number, row: number): TCellValue {
-        return this.#instanceData[row][col]
+        return this.#instanceData[row]![col]!
     }
 
     /**
@@ -334,6 +334,9 @@ export class BomTable {
      */
     setMetaDataCell({ col, row, propName, val }: { col: number, row: number, propName: string, val: any }) {
         const el = this.#dataMap[`${col}::${row}`]
+        if (!el) {
+            throw new Error(`element col: ${col}, row: ${row} is not found`)
+        }
         const key = el.bomtableKey
         if (!this.#cellMeta[key]) {
             this.#cellMeta[key] = {}
@@ -381,7 +384,7 @@ export class BomTable {
                 return
             }
             this.#dataMap[`${cellIndex}::${row}`]!.innerHTML = newVal ? newVal.toString() : ''
-            this.#instanceData[row][cellIndex] = newVal
+            this.#instanceData[row]![cellIndex] = newVal
         })
 
         this.#rerenderActiveArea()
@@ -391,7 +394,7 @@ export class BomTable {
      * Get row by index
      */
     getDataRow(row: number): TCellValue[] {
-        return this.#instanceData[row]
+        return this.#instanceData[row]!
     }
 
     /**
@@ -405,7 +408,7 @@ export class BomTable {
                 return
             }
             this.#dataMap[`${col}::${rowIndex}`]!.innerHTML = newVal ? newVal.toString() : ''
-            this.#instanceData[rowIndex][col] = newVal
+            this.#instanceData[rowIndex]![col] = newVal
         })
 
         this.#rerenderActiveArea()
@@ -415,7 +418,7 @@ export class BomTable {
      * Get col by index
      */
     getDataCol(col: number): TCellValue[] {
-        return this.#instanceData.map(row => row[col])
+        return this.#instanceData.map(row => row[col]!)
     }
 
     /**
@@ -436,7 +439,7 @@ export class BomTable {
             if (!data[rowNum]) {
                 data[rowNum] = []
             }
-            data[rowNum].push(this.#instanceData[rowNum][colNum])
+            data[rowNum].push(this.#instanceData[rowNum]![colNum]!)
         })
 
         return Object.values(data)
@@ -465,10 +468,10 @@ export class BomTable {
             this.#instanceHeader = []
             return
         }
-        while (this.#instanceData[0].length > header.length) {
+        while (this.#instanceData[0]!.length > header.length) {
             header.push('')
         }
-        header.length = this.#instanceData[0].length
+        header.length = this.#instanceData[0]!.length
         this.#instanceHeader = header
     }
 
@@ -485,12 +488,12 @@ export class BomTable {
         }
         const nextTr = this.#dom.rows[index]
         const tableBody = this.#dom.body!
-        const length = this.#instanceData.length ? this.#instanceData[0].length : this.#instanceHeader.length
+        const length = this.#instanceData.length ? this.#instanceData[0]!.length : this.#instanceHeader.length
 
         const tr = helper.createElement({ tagName: 'tr', selector: this.#config.rowsClass })
 
         for (let colNum = 0; colNum < length; colNum++) {
-            const cell = rowData[colNum] != null ? helper.prepareValue(rowData[colNum]) : ''
+            const cell = rowData[colNum] != null ? helper.prepareValue(rowData[colNum]!) : ''
             const td = helper.createElement({
                 tagName: 'td',
                 selector: this.#config.colsClass,
@@ -508,12 +511,12 @@ export class BomTable {
             Object.keys(this.#dom.rows || {}).forEach(rowIndex => {
                 const _rowIndex = Number.parseFloat(rowIndex)
                 if (_rowIndex < index) {
-                    tmp[_rowIndex] = this.#dom.rows![_rowIndex]
+                    tmp[_rowIndex] = this.#dom.rows![_rowIndex]!
                 } else if (_rowIndex === +index) {
                     tmp[index] = tr
-                    tmp[_rowIndex + 1] = this.#dom.rows![_rowIndex]
+                    tmp[_rowIndex + 1] = this.#dom.rows![_rowIndex]!
                 } else {
-                    tmp[_rowIndex + 1] = this.#dom.rows![_rowIndex]
+                    tmp[_rowIndex + 1] = this.#dom.rows![_rowIndex]!
                 }
             })
             this.#dom.rows = tmp
@@ -551,7 +554,7 @@ export class BomTable {
         this.#createRow({ index, render: true })
 
         Object.keys(this.#dataMap).forEach(key => {
-            this.#dataMap[key].classList.remove('area')
+            this.#dataMap[key]!.classList.remove('area')
         })
 
         this.#removeSquares()
@@ -838,7 +841,7 @@ export class BomTable {
     }
 
     /**
-     * Public render +
+     * Public render
      */
     public render(): TBomTable {
         const renders = this.#config.hooks?.afterTdRender
@@ -846,24 +849,27 @@ export class BomTable {
         this.#instanceData.forEach((row, rowNum) => {
             row.forEach((cell, colNum) => {
                 const td = this.#dataMap[`${colNum}::${rowNum}`]
+                if (!td) {
+                    return
+                }
                 const meta = this.#cellMeta[td.bomtableKey] || {}
                 if (td.innerHTML !== cell) {
                     td.innerHTML = String(cell)
                 }
-                renders && renders(this, td, colNum, rowNum, row[colNum], meta)
+                renders && renders(this, td, colNum, rowNum, row[colNum]!, meta)
             })
         })
 
         this.#instanceHeader.forEach((cell, colNum) => {
             const th = this.#dataMap[`${colNum}::-1`]
             const thc = this.#dataMap[`${colNum}::-2`]
-            const childWrap = ([...th.children[0].children] as HTMLElement[])
+            const childWrap = ([...th!.children[0]!.children] as HTMLElement[])
                 .find(c => c.classList.contains('bomtable-header-cell-wrap'))
             const val = childWrap?.innerHTML ?? ''
             if (childWrap && cell !== val) {
-                childWrap.innerHTML = val
-                thc.innerHTML = th.innerHTML
-                renders && renders(this, thc, colNum, -2, val, {})
+                childWrap.innerHTML = String(cell)
+                thc!.innerHTML = th!.innerHTML
+                renders && renders(this, thc!, colNum, -2, val, {})
             }
         })
 
@@ -898,7 +904,7 @@ export class BomTable {
      * Create new index DOM
      */
     #reindex(): TBomTable {
-        const renders = this.#config.hooks?.afterTdRender
+        const hookRender = this.#config.hooks?.afterTdRender
 
         this.#dom.rows = {}
         this.#dataMap = {}
@@ -919,8 +925,8 @@ export class BomTable {
                     this.#dataMap[`${colNum}::${rowIndex}`] = th as TBomTableTd
                     if (rowIndex === -1) {
                         this.#instanceHeader.push(val)
-                    } else if (renders) {
-                        renders(this, (th as TBomTableTd), colNum, rowIndex, val, {})
+                    } else if (hookRender) {
+                        hookRender(this, (th as TBomTableTd), colNum, rowIndex, val, {})
                     }
                 })
             })
@@ -942,7 +948,7 @@ export class BomTable {
                     }
                     this.#dataMap[`${colNum}::${rowNum}`] = _td
                     this.#instanceData[rowNum].push(val)
-                    renders && renders(this, _td, colNum, rowNum, val, meta)
+                    hookRender && hookRender(this, _td, colNum, rowNum, val, meta)
                 })
             })
         }
@@ -954,7 +960,7 @@ export class BomTable {
      * Render table
      */
     #render(): TBomTable {
-        const renders = this.#config.hooks?.afterTdRender
+        const hookRender = this.#config.hooks?.afterTdRender
 
         this.#dom.table = helper.createElement({
             tagName: 'table',
@@ -991,6 +997,11 @@ export class BomTable {
         }
 
         this.#renderHeader()
+
+        hookRender && this.#instanceHeader.forEach((value, colNum) => {
+            hookRender(this, this.#dataMap[`${colNum}::-2`]!, colNum, -2, value, {})
+        })
+
         this.#dom.body = helper.createElement({
             tagName: 'tbody',
             parent: this.#dom.table,
@@ -1000,7 +1011,7 @@ export class BomTable {
         this.#instanceData.forEach((row, rowNum) => {
             const tr = this.#createRow({ index: rowNum, rowData: row, render: true })
             tr.childNodes.forEach((td, colNum) => {
-                renders && renders(this, (td as TBomTableTd), colNum, rowNum, row[colNum], {})
+                hookRender && hookRender(this, (td as TBomTableTd), colNum, rowNum, row[colNum]!, {})
                 this.#dataMap[`${colNum}::${rowNum}`] = (td as TBomTableTd)
             })
         })
@@ -1067,7 +1078,6 @@ export class BomTable {
             return this
         }
 
-        const renders = this.#config.hooks?.afterTdRender
         this.#prepareHeader(this.#config.header)
 
         if (!this.#dom.header && this.#instanceHeader.length) {
@@ -1113,9 +1123,12 @@ export class BomTable {
         }
 
         this.#instanceHeader.forEach((value, colNum) => {
+            // if the values have changed, the setting will be in the renderer
+            if (this.#dataMap[`${colNum}::-1`]) {
+                return
+            }
             this.#dataMap[`${colNum}::-1`] = this.#createHeaderCell(value)
             this.#dataMap[`${colNum}::-2`] = this.#createHeaderCell(value, true)
-            renders && renders(this, this.#dataMap[`${colNum}::-2`], colNum, -2, value, {})
         })
 
         if (!this.#instanceHeader.length) {
